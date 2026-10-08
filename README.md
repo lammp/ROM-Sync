@@ -74,6 +74,10 @@ ROM-Sync\ROM-Sync (browser).bat   serves on 127.0.0.1:8765 in your browser
 
 Both wrap `python -m romsync.app`.
 
+Planning work on it? [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) is the lint of the
+current code and the plan to split it into an engine, a browser UI and a desktop
+UI. [docs/SETTINGS.md](docs/SETTINGS.md) is the Settings page design.
+
 New here? [docs/USER-GUIDE.md](docs/USER-GUIDE.md) walks through first run,
 metadata, connecting a device, choosing games and syncing, without assuming you
 will read the code.
