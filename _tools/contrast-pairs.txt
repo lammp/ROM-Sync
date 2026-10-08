@@ -1,0 +1,35 @@
+# ROM-Sync interface contrast pairs, taken from the real rule bodies in ui/app.css.
+# label	foreground	background	target
+# Text, 4.5:1
+body text on page	--fg	--bg	4.5
+body text on panel	--fg	--bg2	4.5
+body text on raised	--fg	--bg3	4.5
+body text on selected row	--fg	#2a3a5c	4.5
+detail summary	#cfd2da	--bg2	4.5
+muted text on page	--muted	--bg	4.5
+muted text on panel	--muted	--bg2	4.5
+muted text on raised	--muted	--bg3	4.5
+device state line	#9aa3ad	--bg2	4.5
+device figure label	#8b939d	--bg2	4.5
+device figure value	#e6e9ee	--bg2	4.5
+link and accent text	--accent	--bg2	4.5
+ok text	--ok	--bg2	4.5
+warn text	--warn	--bg2	4.5
+bad text	--bad	--bg2	4.5
+ok pill	#8ef0b4	#1f4d33	4.5
+warn pill	#ffd98a	#4d3d1f	4.5
+bad pill	#ff9aa0	#4d1f24	4.5
+toast text	#ffffff	#2a3a5c	4.5
+primary button label	#ffffff	--accent	4.5
+segmented active label	#ffffff	--accent	4.5
+system file active row label	#ffffff	--accent	4.5
+selection tick glyph	#006622	--ok	4.5
+twin duplicate glyph	#1a1206	--warn	4.5
+# Non-text, 3:1
+control border on page	--line	--bg	3.0
+control border on panel	--line	--bg2	3.0
+control border on raised	--line	--bg3	3.0
+meter track on panel	--bg3	--bg2	3.0
+lamp off on panel	#3a3f47	--bg2	3.0
+lamp on on panel	#33d17a	--bg2	3.0
+lamp trouble on panel	#e05252	--bg2	3.0

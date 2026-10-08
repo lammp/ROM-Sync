@@ -49,6 +49,18 @@
 /docs/*
 !/docs/*.md
 
+# Subdirectories of docs/. The rewrite specification set and the design
+# capture live one level down, so each folder is allowed back, its contents
+# denied, then its markdown allowed. A data file dropped into either folder
+# stays excluded, which is the point of doing it this way rather than
+# widening /docs/* to /docs/**.
+!/docs/design/
+/docs/design/*
+!/docs/design/*.md
+!/docs/rewrite/
+/docs/rewrite/*
+!/docs/rewrite/*.md
+
 
 ###############################################################################
 #  3. Allow back: the Constitution
@@ -134,6 +146,8 @@
 !/_tools/sync-verify.py
 !/_tools/deleted-audit.py
 !/_tools/test-twins2.js
+!/_tools/contrast.py
+!/_tools/contrast-pairs.txt
 
 
 ###############################################################################
