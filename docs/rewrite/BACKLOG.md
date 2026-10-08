@@ -10,16 +10,22 @@ authoritative.
 ## Feature order
 
 ```
-F1 ─┬─ F2 ─┬─ F3 ─┬─ F4 ─┐
-    │      │      ├─ F5 ─┤
-    │      │      └─ F6 ─┴─ F7 ─┬─ F8 ─┐
-    └─ F14 │                    └─ F9 ─┴─ F10 ─┬─ F11 ─┬─ F13
-           └────────────────────────────────────└─ F12 ─┘
+F0 ─ F1 ─┬─ F2 ─┬─ F3 ─┬─ F4 ─┐
+         │      │      ├─ F5 ─┤
+         │      │      └─ F6 ─┴─ F7 ─┬─ F8 ─┐
+         └─ F14 │                    └─ F9 ─┴─ F10 ─┬─ F11 A..E ─┬─ F13
+                └──────────────────────────────────────└─ F12 ────┘
 ```
+
+F0 comes first and blocks everything, because it must run against the version 1
+application while that application still works. F11 runs in five bands, A to E;
+band E is not a phase but a set of tests that fail the gate from the moment the
+first component exists.
 
 | ID | Feature | Depends on |
 |---|---|---|
-| F1 | Foundations and the verification gate | none |
+| F0 | Parity capture from version 1 | none |
+| F1 | Foundations and the verification gate | F0 |
 | F2 | Persistence and migrations | F1 |
 | F3 | Domain model and rules | F1 |
 | F4 | Store scanning | F2, F3 |
@@ -29,13 +35,32 @@ F1 ─┬─ F2 ─┬─ F3 ─┬─ F4 ─┐
 | F8 | System files | F7 |
 | F9 | Jobs service | F2, F7 |
 | F10 | HTTP API v1 | F4, F5, F7, F9 |
-| F11 | Interface port to TypeScript | F10 |
+| F11 | Interface rebuild as atomic components | F10 |
 | F12 | Desktop shell | F10 |
 | F13 | Installer, dependency checks, release | F11, F12 |
 | F14 | Import from version 1 | F2, F3 |
 | F15 | Diagnostics and support bundle | F9, F10 |
 
 ---
+
+## F0 Parity capture from version 1
+
+Runs first. With D2 retired by [REBUILD-UI.md](REBUILD-UI.md), these fixtures
+are the only thing holding the rebuilt interface to version 1's behaviour, and
+they can only be taken while version 1 still runs.
+
+| ID | Story | Depends on | Acceptance | Tests |
+|---|---|---|---|---|
+| F0-S1 | Tag version 1 and record the tag in every fixture header | none | Every fixture names one tag | `ui/tests/parity/provenance.test.ts::every_fixture_names_a_tag` |
+| F0-S2 | Search grammar corpus: query string to parsed terms and clauses, over all 14 operator keys and all 6 comparators, quoted phrases and malformed input | F0-S1 | Version 1's `parseQuery` output is reproduced exactly | `ui/tests/parity/search.test.ts::grammar_corpus` |
+| F0-S3 | Facet corpus: a synthetic library to facet counts, ordering, caps, zero retention and above-the-fold placement | F0-S1 | Counts and order match | `ui/tests/parity/facets.test.ts::counts`, `::ordering`, `::caps`, `::zero_retained` |
+| F0-S4 | Twin corpus: title pairs to exact and loose clusters, including the known false pairs | F0-S1 | Clusters match, and loose pairs are marked loose | `ui/tests/parity/twins.test.ts::exact`, `::loose`, `::known_non_pairs` |
+| F0-S5 | Sort corpus: titles to sort keys, covering accents, leading articles and digit runs | F0-S1 | Keys match, and 2 sorts before 10 | `ui/tests/parity/sort.test.ts::keys` |
+| F0-S6 | Format corpus: bytes to strings, size strings to bytes, seconds to ETA, including negatives and nulls | F0-S1 | Output matches character for character | `ui/tests/parity/format.test.ts::corpus` |
+| F0-S7 | Grid layout corpus: viewport width and tile size to column count, measured row height and window bounds | F0-S1 | The same window is computed | `ui/tests/parity/windowing.test.ts::bounds` |
+| F0-S8 | Progress corpus: run samples to percentage, rate and ETA, including the run-banking transition and the 99 per cent cap | F0-S1 | Identical arithmetic | `ui/tests/parity/progress.test.ts::corpus` |
+| F0-S9 | Token and contrast snapshot: the as-is table from `docs/design/CAPTURE-TOKENS.md`, committed, so the correction set reads as a diff | F0-S1 | The snapshot reproduces the 31 measured pairs, and `_tools/contrast.py --strict` is the oracle | `ui/tests/parity/tokens.test.ts::as_is_snapshot` |
+| F0-S10 | Every corpus is synthetic or built from published game titles. No path, filename, hash, device identifier or catalogue row from the owner's library appears in any fixture | F0-S2 | The publication lint passes over `ui/tests/fixtures` | `_tools/repo-lint.py --strict`, `ui/tests/parity/provenance.test.ts::no_owner_data` |
 
 ## F1 Foundations and the verification gate
 
@@ -182,29 +207,76 @@ F1 ─┬─ F2 ─┬─ F3 ─┬─ F4 ─┐
 | F10-S14 | Maintenance endpoints: compact, clear cache, prune covers, prune runs, all as jobs with a dry run where destructive | F9-S1 | A destructive maintenance action dry-runs first | `tests/unit/api/test_maintenance_routes.py::test_dry_run_first` |
 | F10-S15 | Shell endpoints: reveal, pick folder, open external, each root-checked and loopback-only | F10-S4 | A path outside the roots is refused | `tests/unit/api/test_shell_routes.py::test_root_check`, `::test_scheme_allowlist` |
 
-## F11 Interface port to TypeScript
+## F11 Interface rebuild as atomic components
+
+Five bands. Band E is not a phase: each of its tests fails the gate from the
+moment the first component exists until the whole interface satisfies it.
+Specified in [REBUILD-UI.md](REBUILD-UI.md).
+
+### Band A, foundations
 
 | ID | Story | Depends on | Acceptance | Tests |
 |---|---|---|---|---|
-| F11-S1 | Vite and TypeScript strict project, bundle served by the engine, generated client | F10-S2 | The client is generated, not hand-written | `ui/tests/client.test.ts::generated_matches_openapi` |
-| F11-S2 | One state container, no module-level mutable state | F11-S1 | A lint rule fails on module-level mutation | `ui/tests/state.test.ts::single_container` |
-| F11-S3 | Platform adapter with browser and desktop implementations | F11-S1 | Every method degrades in the browser | `ui/tests/platform.test.ts::degrades`, `::no_native_dialogs` |
-| F11-S4 | Search grammar ported, pinned by a parse fixture | F11-S1 | The fixture's queries parse to the same filters as version 1 | `ui/tests/search.test.ts::grammar_corpus` |
-| F11-S5 | Facets ported: counts, ordering, zero handling, persistence | F11-S4 | Counts match the fixture | `ui/tests/facets.test.ts::counts`, `::zero_values_readable` |
-| F11-S6 | Windowed grid and list, tile sizing | F11-S1 | Rendering is stable at fixture widths | `ui/tests/grid.test.ts::windowing` |
-| F11-S7 | Detail panel, including versions and screenshots | F11-S1 | Behaviour parity | `ui/tests/detail.test.ts` |
-| F11-S8 | Twin badge and compare card, reachable by keyboard | F11-S3 | The card opens and both actions fire without a pointer | `ui/tests/twins.test.ts::keyboard_reachable`, `::switch_and_select` |
-| F11-S9 | Device page, selection controls, capacity meter with thresholds from settings | F10-S10 | Thresholds come from the engine, not the page | `ui/tests/device.test.ts::thresholds_from_settings` |
-| F11-S10 | Sync modal, live progress, job polling that survives navigation | F10-S12 | A navigation mid-sync does not detach the poller | `ui/tests/sync.test.ts::poller_survives_navigation` |
-| F11-S11 | System files page | F10-S7 | Behaviour parity | `ui/tests/sysfiles.test.ts` |
-| F11-S12 | Settings page as specified, section by section, per-section save | F10-S8 | A job completing elsewhere does not discard an edit | `ui/tests/settings.test.ts::edit_survives_job`, `::per_section_save` |
-| F11-S13 | Setup section shown while incomplete, in first-run order | F11-S12 | Each step completes from the page alone | `ui/tests/setup.test.ts::three_steps` |
-| F11-S14 | Keyboard operability across every interactive element | F11-S1 | A traversal test reaches every control | `ui/tests/a11y.test.ts::all_controls_reachable` |
-| F11-S15 | Modal semantics: role, name, focus move, focus trap, focus restore | F11-S1 | Focus cannot leave an open dialog | `ui/tests/a11y.test.ts::modal_focus` |
-| F11-S16 | Labels associated with every input; live region announces toasts | F11-S1 | No input without a programmatic label | `ui/tests/a11y.test.ts::labels`, `::live_region` |
-| F11-S17 | Contrast tokens meeting AA, verified over the palette | F11-S1 | Every foreground and background pair passes | `ui/tests/contrast.test.ts::aa_all_pairs` |
-| F11-S18 | No state carried by colour alone | F11-S17 | Each state has a non-colour channel | `ui/tests/a11y.test.ts::non_colour_channel` |
-| F11-S19 | Fetch failure produces an error state with retry, never a permanent loading state | F11-S1 | Every view recovers | `ui/tests/errors.test.ts::retry_everywhere` |
+| F11-S1 | Next.js project, App Router, strict TypeScript, static export, pinned versions, exported into the engine's static directory | F10-S2 | `next build` emits a static bundle and no runtime Node process exists | `ui/tests/build.test.ts::exports_static`, `::no_node_at_runtime` |
+| F11-S2 | `tokens.ts` as the single source, generating `tokens.css` and types, carrying the corrected values from `CAPTURE-TOKENS.md` section 6 | F0-S9 | No colour literal exists outside `tokens.ts` | `ui/tests/design/tokens.test.ts::generated_matches_source` |
+| F11-S3 | Contrast test over the generated token set, text at 4.5 and non-text at 3.0, computed rather than asserted | F11-S2 | Every pair passes, focus ring included | `ui/tests/design/contrast.test.ts::aa_all_pairs`, `::focus_ring_on_every_surface` |
+| F11-S4 | Layering test: atoms cannot import molecules, organisms, the store, the queries or the client; templates import atoms only; the colour-literal rule | F11-S1 | Six planted violations each fail | `ui/tests/layering.test.ts::no_illegal_edges`, `::detects_planted_violations` |
+| F11-S5 | Generated API client, checked against the committed OpenAPI document | F10-S2 | The committed client matches the document | `ui/tests/api/client.test.ts::generated_matches_openapi` |
+| F11-S6 | One Zustand store with six slices | F11-S1 | No module outside the store holds mutable module state | `ui/tests/store.test.ts::single_container`, `::no_module_state` |
+| F11-S7 | Query layer and the job-polling hook, cancelled on navigation | F11-S5 | A poller stops on navigation and no test touches the network | `ui/tests/queries/job.test.ts::cancels_on_navigation`, `::no_network_in_tests` |
+
+### Band B, atoms
+
+| ID | Story | Depends on | Acceptance | Tests |
+|---|---|---|---|---|
+| F11-S8 | 24 atoms with the variants in `CAPTURE-COMPONENTS.md` section 2 | F11-S2 | Every variant renders | `ui/tests/atoms/*.test.ts` |
+| F11-S9 | Focus ring: `--focus` with a two pixel offset in the surrounding surface | F11-S3 | 3:1 on every surface including a filled primary button | `ui/tests/a11y/focus.test.ts::visible_on_every_surface` |
+| F11-S10 | Every interactive atom is a button or a link | F11-S8 | The eight element classes that are `div` or `span` today are real controls | `ui/tests/a11y/keyboard.test.ts::all_atoms_operable` |
+| F11-S11 | Every input atom carries a programmatically associated label | F11-S8 | An unlabelled input fails | `ui/tests/a11y/labels.test.ts::no_unlabelled_input` |
+| F11-S12 | `prefers-reduced-motion` honoured by the spinner and the compare-card fade | F11-S8 | Both stop under the preference | `ui/tests/a11y/motion.test.ts::respects_preference` |
+
+### Band C, molecules and logic
+
+| ID | Story | Depends on | Acceptance | Tests |
+|---|---|---|---|---|
+| F11-S13 | `lib/format` | F0-S6 | The corpus reproduces | `ui/tests/parity/format.test.ts` |
+| F11-S14 | `lib/search`: 14 keys, 6 comparators | F0-S2 | The corpus reproduces | `ui/tests/parity/search.test.ts` |
+| F11-S15 | `lib/facets`: one-pass fail computation, caps, zero retention, above-the-fold chosen values | F0-S3 | The corpus reproduces | `ui/tests/parity/facets.test.ts` |
+| F11-S16 | `lib/sort` and `lib/scale` | F0-S5 | The corpus reproduces | `ui/tests/parity/sort.test.ts::keys`, `::scale` |
+| F11-S17 | `lib/windowing` as a hook: the ported algorithm, two-row overscan, one definition of the grid gap | F0-S7 | The corpus reproduces | `ui/tests/parity/windowing.test.ts` |
+| F11-S18 | `lib/progress`: removal weighting, the 99 per cent cap, rate from the first byte | F0-S8 | The corpus reproduces | `ui/tests/parity/progress.test.ts` |
+| F11-S19 | `FacetSection` and `RangeFacet`, paired-thumb constraints, persisted collapse | F11-S15 | Thumbs cannot cross and collapse survives a reload | `ui/tests/molecules/facets.test.ts::paired_thumbs`, `::collapse_persists` |
+| F11-S20 | `GameTile` and `GameRow` with all four badges | F11-S8 | Each badge appears in its own state | `ui/tests/molecules/tile.test.ts` |
+| F11-S21 | `CapacityMeter`, five states, thresholds from settings | F10-S8 | Thresholds come from the engine | `ui/tests/molecules/capacity.test.ts::thresholds_from_settings`, `::five_states` |
+| F11-S22 | `SyncControl` across idle, disabled and running | F11-S18 | Each state renders with its own content | `ui/tests/molecules/sync-control.test.ts` |
+| F11-S23 | The remaining 21 molecules | F11-S8 | Each renders its captured states | `ui/tests/molecules/*.test.ts` |
+
+### Band D, organisms, templates and pages
+
+| ID | Story | Depends on | Acceptance | Tests |
+|---|---|---|---|---|
+| F11-S24 | The five templates, slots only, no data | F11-S8 | A template cannot import the store | `ui/tests/templates/*.test.ts` |
+| F11-S25 | `Modal` with dialog role, accessible name, focus move, trap, restore and Escape; `ConfirmDialog` and `PromptDialog` replacing all six native dialogs | F11-S24 | Focus cannot leave an open dialog and no native dialog remains | `ui/tests/a11y/modal.test.ts::role_and_name`, `::trap`, `::restore`, `::escape`; `ui/tests/organisms/no-native-dialogs.test.ts` |
+| F11-S26 | `VirtualGameGrid` over the ported hook | F11-S17 | The window matches the fixture | `ui/tests/organisms/grid.test.ts::window_matches_fixture` |
+| F11-S27 | `FilterSidebar`: nine facets, two range facets, smart lists, four flags, chip list | F11-S19 | Behaviour parity | `ui/tests/organisms/sidebar.test.ts` |
+| F11-S28 | `LibraryToolbar` and `SelectionSummary`, debounced capacity refresh | F11-S21 | Rapid selection clicks coalesce into one refresh | `ui/tests/organisms/toolbar.test.ts` |
+| F11-S29 | `DetailPanel`, version picker, tag decisions, rematch | F11-S23 | Behaviour parity | `ui/tests/organisms/detail.test.ts` |
+| F11-S30 | `TwinCompareCard`, bound to the selected tile, keyboard reachable | F0-S4 | Both actions fire without a pointer, and hovering an unselected tile does nothing | `ui/tests/organisms/twins.test.ts::keyboard_reachable`, `::switch_and_select`, `::selected_tile_only` |
+| F11-S31 | `/devices`: `DeviceCard` in both variants with three candidate sub-states, and `NewProfileDialog` | F10-S10 | Every variant renders | `ui/tests/pages/devices.test.ts` |
+| F11-S32 | `/devices?id=`: systems table, plan summary, run history, the device watcher as a query | F10-S10 | The route is a search parameter and the watcher is cancellable | `ui/tests/pages/device.test.ts::search_param_route`, `::watcher_is_a_query` |
+| F11-S33 | `/system-files`: list, detail, others, and the store-only table with no device chosen | F10-S7 | Behaviour parity | `ui/tests/pages/sysfiles.test.ts` |
+| F11-S34 | `/settings` built to `SETTINGS.md`, including the setup section in first-run order | F10-S8 | Per-section save, and an edit survives a job completing | `ui/tests/pages/settings.test.ts::per_section_save`, `::edit_survives_job`, `::setup_steps` |
+| F11-S39 | `/recover`, with a nav entry that appears only when a device holds something the store does not, and copy that states the next sync would remove it | F10-S10 | The nav entry is absent when there is nothing to recover | `ui/tests/pages/recover.test.ts::lists_missing_from_store`, `::nav_hidden_when_empty`, `::states_removal_consequence` |
+| F11-S40 | Pulled-item placement per run, refusing a name the store already holds, rescanning on success | F7-S11 | A colliding name is reported, never replaced | `ui/tests/pages/recover.test.ts::place_refuses_existing_name`, `::rescan_after_place` |
+
+### Band E, cross-cutting gates
+
+| ID | Story | Depends on | Acceptance | Tests |
+|---|---|---|---|---|
+| F11-S35 | Keyboard traversal reaches every interactive element on every page | F11-S10 | A traversal test reaches every control | `ui/tests/a11y/keyboard.test.ts::all_controls_reachable` |
+| F11-S36 | The live region announces every toast | F11-S8 | Every toast is announced | `ui/tests/a11y/live-region.test.ts::announces_every_toast` |
+| F11-S37 | No state is carried by colour alone | F11-S3 | Every state has a second channel | `ui/tests/a11y/non-colour.test.ts::every_state_has_a_second_channel` |
+| F11-S38 | Every view recovers from a failed fetch with a retry | F11-S7 | No view can reach a permanent loading state | `ui/tests/organisms/errors.test.ts::retry_everywhere`, `::no_permanent_loading` |
 
 ## F12 Desktop shell
 
@@ -254,7 +326,7 @@ F1 ─┬─ F2 ─┬─ F3 ─┬─ F4 ─┐
 
 | | |
 |---|---|
-| Features | 15 |
-| Stories | 136 |
+| Features | 16 |
+| Stories | 167 |
 | Security requirements from SPEC section 12, each covered by at least one story | 9 |
 | Stories whose acceptance needs a real device or a clean machine, and therefore sit outside the gate | F6-S5, F6-S6, F13-S1, F13-S2, F13-S6; each is marked for manual verification, and [TESTING.md](TESTING.md) section 8 states what the gate does not prove |

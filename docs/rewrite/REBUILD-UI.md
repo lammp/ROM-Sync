@@ -239,8 +239,8 @@ component exists and fails the gate until the whole interface satisfies it.
 | | Before | After |
 |---|---|---|
 | Features | 15 | 16 |
-| Stories | 136 | 161 |
-| F11 stories | 19 | 38 |
+| Stories | 136 | 167 |
+| F11 stories | 19 | 40 |
 | New blocking feature | | F0, 10 stories |
 
 The dependency graph gains F0 ahead of everything, and F11 moves from one band
@@ -335,9 +335,14 @@ Two stories are added to band D:
 | | Before | After |
 |---|---|---|
 | Features | 15 | 16 |
-| Stories | 136 | 163 |
+| Stories | 136 | 167 |
 | F11 stories | 19 | 40 |
 | New blocking feature | | F0, 10 stories |
+
+136 less the 19 replaced F11 stories is 117; plus 40 rebuilt F11 stories is
+157; plus F0's 10 is 167. Earlier drafts of this document said 161 and then
+163. Both were arithmetic slips of mine, and `BACKLOG.md` is now the count of
+record: its story rows are counted by a script, not by eye.
 
 ## 13. Release, decided
 
