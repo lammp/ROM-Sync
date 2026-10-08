@@ -1,0 +1,12 @@
+# ROM-Sync application
+#   pywebview provides the desktop window over the local server. On Windows it
+#   renders with the Microsoft Edge WebView2 runtime, which must be installed;
+#   it already is on most Windows 11 machines.
+#   Everything else the application uses is in the standard library.
+pywebview>=5.0
+
+# Agent framework (Legal Framework / Common Law) only. The application does not
+# import it. scripts/memory.py parses and writes OKF frontmatter with it, so
+# without it every memory command fails and the hook reports it cannot read
+# memory. Not needed to run ROM-Sync itself.
+PyYAML>=6.0

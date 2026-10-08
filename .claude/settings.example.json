@@ -1,0 +1,23 @@
+{
+  "_comment": [
+    "Copy this file to .claude/settings.json and adjust the interpreter path.",
+    "settings.json is excluded from the repository because it carries a",
+    "machine-local absolute path. 'python' works if the interpreter that has",
+    "PyYAML installed is on PATH; otherwise give the full path to it."
+  ],
+  "hooks": {
+    "SessionStart": [
+      { "hooks": [ { "type": "command", "command": "python scripts/memory_hook.py" } ] }
+    ],
+    "UserPromptSubmit": [
+      { "hooks": [ { "type": "command", "command": "python scripts/memory_hook.py" } ] }
+    ],
+    "PreToolUse": [
+      { "matcher": "Edit|Write|MultiEdit|NotebookEdit",
+        "hooks": [ { "type": "command", "command": "python scripts/memory_hook.py" } ] }
+    ],
+    "Stop": [
+      { "hooks": [ { "type": "command", "command": "python scripts/memory_hook.py" } ] }
+    ]
+  }
+}

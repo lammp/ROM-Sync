@@ -1,0 +1,23 @@
+# Normalise line endings in the repository, check out natively.
+* text=auto eol=lf
+
+# Windows-executed files must keep CRLF or they break on checkout.
+*.bat   text eol=crlf
+*.cmd   text eol=crlf
+*.ps1   text eol=crlf
+
+# Hooks run under sh and must stay LF even on Windows.
+.githooks/*  text eol=lf
+
+# Never diff or merge these as text if one ever slips through.
+*.db     binary
+*.sqlite binary
+*.zip    binary
+*.7z     binary
+*.png    binary
+*.jpg    binary
+*.chd    binary
+*.iso    binary
+
+# Keep generated interface assets out of language statistics.
+ROM-Sync/ui/*.css linguist-vendored

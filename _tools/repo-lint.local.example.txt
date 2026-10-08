@@ -1,0 +1,22 @@
+# Machine-local identifiers, one per line. Lines starting with # are ignored.
+#
+# Copy this file to _tools/repo-lint.local.txt and fill in the real values.
+# That filename is excluded from the repository, which is the point: the lint
+# needs the literal strings in order to search for them, and publishing them
+# would defeat the exercise.
+#
+# Include anything that identifies the machine or the person operating it and
+# has no business in a public repository. The lint matches case-insensitively
+# on any occurrence, so keep the terms distinctive; a term like "games" would
+# match everywhere and drown the report.
+
+# The Windows account name
+# your-windows-username
+
+# The machine name
+# YOUR-MACHINE-NAME
+
+# Email addresses used in commits, configuration or notes
+# you@example.com
+
+# Any other handle you do not want appearing in published files

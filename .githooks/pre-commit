@@ -1,0 +1,156 @@
+#!/bin/sh
+#
+# Pre-commit gate for a repository whose working tree sits beside private data.
+# Enable once per clone with:
+#
+#     git config core.hooksPath .githooks
+#
+# The ignore rules deny by default and should make this hook redundant. It is
+# here for the case the rules cannot cover: a credential or a personal
+# identifier pasted into a file that is legitimately published. It reads staged
+# CONTENT, not just filenames.
+#
+# `git commit --no-verify` bypasses it. That is a control against a distracted
+# author, not a determined one, which is the failure mode that actually
+# happens. `_tools/repo-lint.py --strict` is the thorough check.
+#
+# Every staged file is read exactly once. An earlier version looped the
+# patterns and the identifier list over each file separately and took minutes
+# on a seventy-file commit, which is its own kind of failure: a check nobody
+# waits for is a check nobody runs.
+
+set -u
+
+RED=''
+RESET=''
+if [ -t 2 ]; then
+    RED=$(printf '\033[31m')
+    RESET=$(printf '\033[0m')
+fi
+
+TMP=$(mktemp -d) || exit 1
+cleanup() { rm -rf "$TMP"; }
+trap cleanup EXIT
+
+fail() {
+    printf '%s\n' "${RED}pre-commit: refused${RESET}" >&2
+    printf '%s\n' "$1" >&2
+    printf '\n%s\n' "Nothing has been committed. Fix the finding, or run the full" >&2
+    printf '%s\n' "audit for detail:  python _tools/repo-lint.py --strict" >&2
+    exit 1
+}
+
+STAGED=$(git diff --cached --name-only --diff-filter=ACMR)
+[ -z "$STAGED" ] && exit 0
+
+# --------------------------------------------------------------------------
+# 1. Forbidden paths and file types
+#
+# The directory skeleton is published on purpose: a .gitkeep and the unit's
+# Legislation are the only files the ignore rules let out of ROMs/, _firmware/,
+# _torrents/ and memory/. Their contents stay excluded.
+# --------------------------------------------------------------------------
+BAD_PATHS=$(printf '%s\n' "$STAGED" | grep -Ei \
+    -e '(^|/)(ROMs|_firmware|_torrents|memory|\.memory-log|\.exchange|\.venv)/' \
+    -e '(^|/)(webview|EBWebView|__pycache__|node_modules|rounds|covers|screens|runs|records)/' \
+    -e '\.(keys|pem|key|p12|pfx|jks|keystore|ppk)$' \
+    -e '\.(db|db-wal|db-shm|sqlite|sqlite3|tsv|csv|jsonl)$' \
+    -e '\.(chd|iso|cue|gdi|rvz|wbfs|nkit|xci|nsp|nsz|3ds|cia|nds|gba|gbc|gb|nes|sfc|smc|n64|z64|v64|gcm|wad|pbp|cso|m3u)$' \
+    -e '\.(bin|rom|nca|tik|sav|srm|state)$' \
+    -e '\.(zip|7z|rar|gz|bz2|xz)$' \
+    -e '(^|/)(MEMORY\.md|prod\.keys|title\.keys|\.env|\.npmrc|\.pypirc|romsync\.db)$' \
+    -e '(^|/)\.claude/settings\.json$' \
+    -e '\.local\.(txt|json|ya?ml)$' \
+    -e '\.(bak|orig|rej)(-|$)' \
+    | grep -vE '(\.example\.|/\.gitkeep$|/CLAUDE\.md$)' || true)
+
+if [ -n "$BAD_PATHS" ]; then
+    fail "These staged paths are private to this machine:
+
+$BAD_PATHS"
+fi
+
+# --------------------------------------------------------------------------
+# 2. Oversized files. Nothing publishable here is large.
+# --------------------------------------------------------------------------
+BIG=""
+for f in $STAGED; do
+    blob=$(git rev-parse ":$f" 2>/dev/null) || continue
+    size=$(git cat-file -s "$blob" 2>/dev/null || echo 0)
+    if [ "$size" -gt 2097152 ]; then
+        BIG="$BIG
+  $f ($((size / 1024)) KB)"
+    fi
+done
+[ -n "$BIG" ] && fail "Files over 2048 KB are staged:
+$BIG"
+
+# --------------------------------------------------------------------------
+# 3. Read every scannable staged file once, into one stream prefixed by path.
+#
+# Skipped: the three files that define or document the patterns below, so
+# writing them down is their job. repo-lint.py still checks them against a
+# per-file list of the labels each may contain, so a real secret is caught.
+# --------------------------------------------------------------------------
+: > "$TMP/content"
+for f in $STAGED; do
+    case "$f" in
+        .githooks/pre-commit|_tools/repo-lint.py|SECURITY.md) continue ;;
+    esac
+    case "$f" in
+        *.py|*.js|*.css|*.html|*.md|*.json|*.txt|*.bat|*.cmd|*.ps1|*.yml|*.yaml|*.toml|*.cfg|*.ini|.githooks/*) ;;
+        *) continue ;;
+    esac
+    blob=$(git rev-parse ":$f" 2>/dev/null) || continue
+    git cat-file -p "$blob" 2>/dev/null | sed "s|^|$f: |" >> "$TMP/content"
+done
+[ -s "$TMP/content" ] || exit 0
+
+cat > "$TMP/patterns" <<'PATTERNS'
+-----BEGIN [A-Z ]*PRIVATE KEY-----
+AKIA[0-9A-Z]{16}
+gh[pousr]_[A-Za-z0-9]{30,}
+xox[baprs]-[A-Za-z0-9-]{10,}
+sk-[A-Za-z0-9_-]{20,}
+eyJ[A-Za-z0-9_-]{15,}\.[A-Za-z0-9_-]{15,}\.
+client_(id|secret)["']?[[:space:]]*[:=][[:space:]]*["'][A-Za-z0-9_-]{12,}["']
+(api[_-]?key|access[_-]?token|auth[_-]?token|password|passwd|secret)["']?[[:space:]]*[:=][[:space:]]*["'][^"'[:space:]]{8,}["']
+Bearer[[:space:]]+[A-Za-z0-9_.-]{20,}
+[Cc]:\\+Users\\+[A-Za-z0-9._-]+
+%USERPROFILE%
+%USERNAME%
+PATTERNS
+
+HITS=$(grep -E -f "$TMP/patterns" "$TMP/content" | cut -d: -f1 | sort -u || true)
+if [ -n "$HITS" ]; then
+    fail "Staged content matched a credential or personal-identifier pattern.
+The matching text is not printed here, deliberately. Files:
+
+$(printf '%s\n' "$HITS" | sed 's/^/  /')"
+fi
+
+# --------------------------------------------------------------------------
+# 4. Machine-local identifiers, from the untracked local terms file.
+#
+# The GitHub account name is also the Windows account name, so a line using it
+# as github.com/<name>/ is this repository's own address, not a leak.
+# --------------------------------------------------------------------------
+TERMS_FILE="_tools/repo-lint.local.txt"
+if [ -f "$TERMS_FILE" ]; then
+    grep -v '^[[:space:]]*#' "$TERMS_FILE" | grep -v '^[[:space:]]*$' > "$TMP/terms" || true
+    if [ -s "$TMP/terms" ]; then
+        TERM_HITS=$(grep -viF 'github.com/' "$TMP/content" \
+                    | grep -iF -f "$TMP/terms" \
+                    | cut -d: -f1 | sort -u || true)
+        if [ -n "$TERM_HITS" ]; then
+            fail "Staged content contains identifiers listed in $TERMS_FILE:
+
+$(printf '%s\n' "$TERM_HITS" | sed 's/^/  /')"
+        fi
+    fi
+else
+    printf '%s\n' "pre-commit: note - $TERMS_FILE is missing, so machine-local" >&2
+    printf '%s\n' "            identifiers were not checked." >&2
+fi
+
+exit 0

@@ -1,0 +1,327 @@
+###############################################################################
+#  Games Manager — deny-by-default ignore rules
+#
+#  The first rule excludes the entire working tree. Nothing reaches a commit
+#  unless it is named below. Adding a file to this repository is therefore a
+#  deliberate act and never an accident of `git add -A`.
+#
+#  This matters because the working tree is a live ROM library. It holds
+#  several terabytes of game data, console BIOS sets, Switch firmware and
+#  production keys, an application database carrying live API credentials, and
+#  the agent's accumulated memory about its owner. None of that is publishable.
+#
+#  Two further properties are deliberate:
+#
+#    * git does not descend into an excluded directory, so ROMs/, _firmware/
+#      and _torrents/ are never walked. This is a safety property first and a
+#      performance property second.
+#
+#    * the BELT AND BRACES block at the foot of this file is evaluated last,
+#      so its patterns override every allow rule above them. If a future edit
+#      to the allow-list is careless, those patterns still hold the line.
+#
+#  Section 3 of SECURITY.md explains how to verify these rules rather than
+#  trust them.
+###############################################################################
+
+
+###############################################################################
+#  1. Exclude everything
+###############################################################################
+
+/*
+
+
+###############################################################################
+#  2. Allow back: repository metadata
+###############################################################################
+
+!/.gitignore
+!/.gitattributes
+!/.editorconfig
+!/README.md
+!/SECURITY.md
+!/LICENSE
+!/requirements.txt
+
+# User guide and known limitations.
+!/docs/
+/docs/*
+!/docs/*.md
+
+
+###############################################################################
+#  3. Allow back: the Constitution
+#
+#  The root CLAUDE.md is the top tier of the Legal Framework. Per-directory
+#  Legislation is allowed back beside the code it governs, in section 6.
+###############################################################################
+
+!/CLAUDE.md
+
+
+###############################################################################
+#  4. Allow back: git hooks
+#
+#  Enable them with:  git config core.hooksPath .githooks
+###############################################################################
+
+!/.githooks/
+!/.githooks/**
+
+
+###############################################################################
+#  5. Allow back: the Claude project
+#
+#  Skills are project capability and ship. settings.json is not shipped: it
+#  carries machine-local absolute paths. The example file is shipped instead.
+###############################################################################
+
+!/.claude/
+/.claude/*
+!/.claude/settings.example.json
+!/.claude/skills/
+!/.claude/skills/**
+
+# The Common Law engine ships. The facts it stores never do.
+!/scripts/
+/scripts/*
+!/scripts/*.py
+
+
+###############################################################################
+#  6. Allow back: the application and its tooling
+###############################################################################
+
+# ROM-Sync: source, interface, launchers and its Legislation.
+!/ROM-Sync/
+/ROM-Sync/*
+!/ROM-Sync/CLAUDE.md
+!/ROM-Sync/*.bat
+!/ROM-Sync/romsync/
+/ROM-Sync/romsync/*
+!/ROM-Sync/romsync/*.py
+!/ROM-Sync/ui/
+/ROM-Sync/ui/*
+!/ROM-Sync/ui/*.html
+!/ROM-Sync/ui/*.css
+!/ROM-Sync/ui/*.js
+
+# The data directory exists in a clone but arrives empty. It holds the SQLite
+# store (which carries the IGDB client secret), cover art, screenshots, run
+# manifests, logs and an entire embedded browser profile.
+!/ROM-Sync/data/
+/ROM-Sync/data/*
+!/ROM-Sync/data/.gitkeep
+
+# Library tooling: source only. The .tsv manifests beside these scripts
+# enumerate the library title by title and are excluded.
+!/_tools/
+/_tools/*
+!/_tools/CLAUDE.md
+!/_tools/README.txt
+!/_tools/*.example.txt
+
+# Named, not wildcarded. These are the durable tools. One-off round scripts
+# live in this directory too and encode the specifics of a particular library
+# round, so they are state rather than project. A new tool ships only when it
+# is added here deliberately.
+!/_tools/SavePoint.ps1
+!/_tools/repo-lint.py
+!/_tools/intake-plan.py
+!/_tools/intake-verify.py
+!/_tools/device-verify.py
+!/_tools/sync-verify.py
+!/_tools/deleted-audit.py
+!/_tools/test-twins2.js
+
+
+###############################################################################
+#  7. Allow back: the directory skeleton the project assumes
+#
+#  A clone reproduces the shape of the workspace without any of its contents.
+#  Each .gitkeep is the only file these directories contribute.
+###############################################################################
+
+# The library itself. Its Legislation describes formats and filtering policy
+# and contains no inventory, so it ships; the games do not.
+!/ROMs/
+/ROMs/*
+!/ROMs/CLAUDE.md
+!/ROMs/.gitkeep
+
+# Common Law facts are the agent's memory of its owner and never ship.
+!/memory/
+/memory/*
+!/memory/.gitkeep
+
+# Firmware, keys and BIOS. The real Legislation for this directory inventories
+# what is held, so a sanitised example ships in its place.
+!/_firmware/
+/_firmware/*
+!/_firmware/CLAUDE.example.md
+!/_firmware/.gitkeep
+
+# Download intake. The real Legislation names client settings and acquisition
+# paths, so a sanitised example ships in its place.
+!/_torrents/
+/_torrents/*
+!/_torrents/CLAUDE.example.md
+!/_torrents/.gitkeep
+
+
+###############################################################################
+#  8. BELT AND BRACES
+#
+#  Evaluated last, so these win over every allow rule above. Nothing here
+#  should ever match a file the allow-list wants; if it does, the allow-list
+#  is wrong. Do not add negations below this line.
+###############################################################################
+
+# --- credentials and key material -------------------------------------------
+*.keys
+prod.keys
+title.keys
+*.pem
+*.key
+*.crt
+*.cer
+*.p12
+*.pfx
+*.jks
+*.keystore
+id_rsa*
+id_ed25519*
+*.ppk
+.env
+.env.*
+*.secret
+secret*.json
+secrets.*
+credential*.*
+*token*.json
+.netrc
+_netrc
+.npmrc
+.pypirc
+*.local.txt
+
+# --- application and library state ------------------------------------------
+*.db
+*.db-wal
+*.db-shm
+*.sqlite
+*.sqlite3
+*.tsv
+*.csv
+*.jsonl
+status.json
+ROM-Sync.json
+
+# --- agent memory -----------------------------------------------------------
+MEMORY.md
+.memory-log/
+.exchange/
+
+# --- embedded browser profile -----------------------------------------------
+webview/
+EBWebView/
+
+# --- console BIOS, firmware and system files --------------------------------
+*.bin
+*.rom
+*.nca
+*.tik
+*.ncd
+*.sav
+*.srm
+*.state
+*.state[0-9]
+
+# --- game and disc images ---------------------------------------------------
+*.chd
+*.iso
+*.cue
+*.gdi
+*.rvz
+*.wbfs
+*.nkit
+*.xci
+*.nsp
+*.nsz
+*.3ds
+*.cia
+*.nds
+*.gba
+*.gbc
+*.gb
+*.nes
+*.sfc
+*.smc
+*.n64
+*.z64
+*.v64
+*.gcm
+*.wad
+*.pbp
+*.cso
+*.m3u
+
+# --- archives (a ROM set in a zip is still a ROM set) ------------------------
+*.zip
+*.7z
+*.rar
+*.tar
+*.gz
+*.bz2
+*.xz
+
+# --- media ------------------------------------------------------------------
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.webp
+*.mp4
+*.webm
+
+# --- build output, caches and virtual environments --------------------------
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+node_modules/
+dist/
+build/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# --- scratch, backups and logs ----------------------------------------------
+*.bak
+*.bak-*
+*.orig
+*.rej
+*.tmp
+*.temp
+*.part
+*.partial
+*~
+*.log
+tmp/
+_scratch*/
+_push/
+_holding/
+_deleted/
+
+# --- editor and operating system --------------------------------------------
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
+desktop.ini
+$RECYCLE.BIN/
+System Volume Information/

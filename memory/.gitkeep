@@ -1,0 +1,2 @@
+This directory holds Common Law facts, the agent memory of its owner.
+It arrives empty in a clone and is never published. See SECURITY.md.
