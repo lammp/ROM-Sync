@@ -1,0 +1,64 @@
+[project]
+name = "romsync"
+version = "2.0.0.dev0"
+description = "Curate a game library onto a handheld. One engine, two interfaces."
+requires-python = ">=3.12"
+dependencies = []
+
+[project.optional-dependencies]
+dev = [
+  "ruff>=0.6",
+  "mypy>=1.11",
+  "pytest>=8.0",
+  "pytest-xdist>=3.6",
+  "pytest-randomly>=3.15",
+  "pytest-cov>=5.0",
+]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+package-dir = {"" = "engine"}
+
+[tool.setuptools.packages.find]
+where = ["engine"]
+
+[tool.ruff]
+line-length = 96
+target-version = "py312"
+src = ["engine", "api", "desktop", "tools", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "SIM", "RUF"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["romsync", "romsync_api", "romsync_desktop", "tools", "tests"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+files = ["engine", "api", "desktop", "tools"]
+warn_unreachable = true
+disallow_any_explicit = false
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q --strict-markers --strict-config"
+pythonpath = ["engine", "api", "desktop", "."]
+markers = [
+  "device: needs a real device; never part of the gate",
+]
+
+[tool.coverage.run]
+branch = true
+source = ["engine/romsync", "api/romsync_api", "desktop/romsync_desktop"]
+
+[tool.coverage.report]
+exclude_lines = [
+  "pragma: no cover  #",
+  "if TYPE_CHECKING:",
+  "raise NotImplementedError",
+  "\\.\\.\\.",
+]

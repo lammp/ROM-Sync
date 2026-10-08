@@ -182,6 +182,61 @@
 /_torrents/*
 !/_torrents/CLAUDE.example.md
 !/_torrents/.gitkeep
+###############################################################################
+#  8. Allow back: version 2
+#
+#  The rewrite lives in its own trees beside version 1 until version 1 is
+#  retired. Source and tests only. The virtual environment, the caches, the
+#  coverage report and the build metadata stay out, and the belt and braces
+#  below is still evaluated after this section, so nothing here can let a
+#  game, a key or a manifest through.
+###############################################################################
+!/pyproject.toml
+
+!/engine/
+/engine/*
+!/engine/**/
+!/engine/**/*.py
+
+!/api/
+/api/*
+!/api/**/
+!/api/**/*.py
+!/api/openapi.json
+
+!/desktop/
+/desktop/*
+!/desktop/**/
+!/desktop/**/*.py
+
+!/tools/
+/tools/*
+!/tools/*.py
+
+!/tests/
+/tests/*
+!/tests/**/
+!/tests/**/*.py
+!/tests/**/.gitkeep
+
+# Workflow files. The gate and the nightly, and nothing else.
+!/.github/
+/.github/*
+!/.github/workflows/
+/.github/workflows/*
+!/.github/workflows/*.yml
+
+# Never, whatever the rules above say.
+.venv/
+/reports/
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+coverage.xml
+
+
 
 
 ###############################################################################

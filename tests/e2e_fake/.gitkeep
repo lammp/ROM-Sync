@@ -1,0 +1,3 @@
+# This directory is declared in SPEC section 1 and tested for by
+# tests/unit/test_layout.py. The marker keeps it in the repository until
+# its first real file arrives.

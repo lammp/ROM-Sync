@@ -1,0 +1,200 @@
+"""The domain error taxonomy.
+
+Every failure the engine reports is one of these, and every one carries a
+stable code. The codes are the contract: the interface switches on them, the
+support bundle groups by them, and renaming one is a breaking change.
+
+Nothing here imports anything outside the standard library, which is the whole
+point of the domain layer.
+"""
+
+from __future__ import annotations
+
+
+class RomSyncError(Exception):
+    """Base of the taxonomy. Never raised directly."""
+
+    code = "romsync.error"
+
+    def __init__(self, message: str, *, field: str | None = None) -> None:
+        super().__init__(message)
+        self.message = message
+        self.field = field
+
+    def as_envelope(self) -> dict[str, str | None]:
+        """The single error shape the HTTP layer serialises."""
+        return {"code": self.code, "message": self.message, "field": self.field}
+
+
+# --- paths and containment ---------------------------------------------------
+
+
+class PathEscape(RomSyncError):
+    """A path resolved outside the root it was constructed against."""
+
+    code = "path.escape"
+
+
+class NotAName(RomSyncError):
+    """A single name was required and something path-shaped was given."""
+
+    code = "path.not_a_name"
+
+
+# --- configuration -----------------------------------------------------------
+
+
+class UnknownConfigKey(RomSyncError):
+    """A key that the registry does not declare."""
+
+    code = "config.unknown_key"
+
+
+class ConfigOutOfRange(RomSyncError):
+    """A value outside the range or allowed set the registry declares."""
+
+    code = "config.out_of_range"
+
+
+class ConfigWrongType(RomSyncError):
+    """A value whose type the registry does not accept."""
+
+    code = "config.wrong_type"
+
+
+class ConfigMissing(RomSyncError):
+    """A value with no default that nothing has set."""
+
+    code = "config.missing"
+
+
+# --- store and library -------------------------------------------------------
+
+
+class StoreUnreadable(RomSyncError):
+    """The store root, or something required inside it, could not be read."""
+
+    code = "store.unreadable"
+
+
+class SystemFileUnreadable(RomSyncError):
+    """A system's own descriptor could not be read, so its games are unknown."""
+
+    code = "store.system_file_unreadable"
+
+
+class NothingIndexed(RomSyncError):
+    """A scan indexed no systems, so a prune would delete everything."""
+
+    code = "store.nothing_indexed"
+
+
+# --- destinations ------------------------------------------------------------
+
+
+class DestinationUnavailable(RomSyncError):
+    """The destination is not reachable now."""
+
+    code = "dest.unavailable"
+
+
+class DestinationRootMissing(RomSyncError):
+    """The destination's root does not exist and was not created."""
+
+    code = "dest.root_missing"
+
+
+class CapabilityUnsupported(RomSyncError):
+    """A port was asked of an adapter that does not declare it."""
+
+    code = "dest.capability_unsupported"
+
+
+class TransferFailed(RomSyncError):
+    """One operation failed. The run reports it; it never passes silently."""
+
+    code = "dest.transfer_failed"
+
+
+class VerificationFailed(RomSyncError):
+    """A transferred item did not match its source."""
+
+    code = "dest.verification_failed"
+
+
+class MarkerUntrusted(RomSyncError):
+    """A device marker carried a path that failed validation on ingress."""
+
+    code = "dest.marker_untrusted"
+
+
+# --- guards ------------------------------------------------------------------
+
+
+class GuardRefused(RomSyncError):
+    """A destructive operation named something the guards protect."""
+
+    code = "guard.refused"
+
+
+class DoesNotFit(RomSyncError):
+    """The plan's peak usage exceeds the destination's capacity."""
+
+    code = "plan.does_not_fit"
+
+
+# --- metadata ----------------------------------------------------------------
+
+
+class MetadataCredentialsMissing(RomSyncError):
+    """The metadata client was composed without credentials."""
+
+    code = "metadata.credentials_missing"
+
+
+class MetadataRejected(RomSyncError):
+    """The metadata service rejected the credentials."""
+
+    code = "metadata.rejected"
+
+
+class MetadataThrottled(RomSyncError):
+    """The metadata service asked us to slow down."""
+
+    code = "metadata.throttled"
+
+
+# --- persistence -------------------------------------------------------------
+
+
+class SchemaTooNew(RomSyncError):
+    """The database was written by a later version of the application."""
+
+    code = "db.schema_too_new"
+
+
+class MigrationFailed(RomSyncError):
+    """A migration step failed. The pre-migration backup is retained."""
+
+    code = "db.migration_failed"
+
+
+# --- jobs --------------------------------------------------------------------
+
+
+class JobConflict(RomSyncError):
+    """A job of a conflicting kind is already running against this target."""
+
+    code = "job.conflict"
+
+
+class JobCancelled(RomSyncError):
+    """The job stopped because its cancel token was set."""
+
+    code = "job.cancelled"
+
+
+class JobInterrupted(RomSyncError):
+    """The job was running when the process stopped. Found at startup."""
+
+    code = "job.interrupted"
