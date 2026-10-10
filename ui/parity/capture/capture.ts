@@ -14,6 +14,7 @@ import { PROGRESS } from '../progress/progress.capture.ts'
 import { SEARCH } from '../search/search.capture.ts'
 import { SORT } from '../sort/sort.capture.ts'
 import { TOKENS } from '../tokens/tokens.capture.ts'
+import { writeTitles } from '../titles/titles.capture.ts'
 import { TWINS } from '../twins/twins.capture.ts'
 import { WINDOWING } from '../windowing/windowing.capture.ts'
 
@@ -34,11 +35,20 @@ export const CORPORA: readonly Corpus[] = [
   TOKENS,
 ]
 
+/** Corpora that live outside `ui/` and are written in place, not as fixtures. */
+export const WRITERS: Readonly<Record<string, () => Promise<string>>> = { titles: writeTitles }
+
 export async function captureAll(names: readonly string[]): Promise<string[]> {
+  const written: string[] = []
+  for (const name of names.filter((n) => n in WRITERS)) {
+    const writer = WRITERS[name]
+    if (writer) written.push(await writer())
+  }
+  names = names.filter((n) => !(n in WRITERS))
+  if (written.length && !names.length) return written
   const unknown = names.filter((n) => !CORPORA.some((c) => c.name === n))
   if (unknown.length) throw new Error(`no such corpus: ${unknown.join(', ')}`)
   const chosen = names.length ? CORPORA.filter((c) => names.includes(c.name)) : CORPORA
-  const written: string[] = []
   for (const corpus of chosen) {
     writeFixture(corpus.fixture, corpus.name, await corpus.capture())
     written.push(corpus.fixture)
