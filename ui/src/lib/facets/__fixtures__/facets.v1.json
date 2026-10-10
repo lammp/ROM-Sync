@@ -1,0 +1,7236 @@
+{
+  "header": {
+    "tag": "parity-source-v1",
+    "commit": "eeb055f836f867924dacde413ae2a2660590332d",
+    "source": "ROM-Sync/ui/app.js",
+    "corpus": "facets",
+    "locale": "en-AU"
+  },
+  "cases": [
+    {
+      "state": {
+        "name": "nothing chosen"
+      },
+      "shown": [
+        51,
+        64,
+        33,
+        56,
+        48,
+        32,
+        41,
+        44,
+        42,
+        68,
+        3,
+        4,
+        9,
+        10,
+        45,
+        5,
+        6,
+        46,
+        39,
+        40,
+        57,
+        72,
+        52,
+        47,
+        62,
+        69,
+        66,
+        58,
+        43,
+        38,
+        1,
+        2,
+        71,
+        30,
+        31,
+        11,
+        36,
+        12,
+        74,
+        26,
+        53,
+        27,
+        73,
+        7,
+        8,
+        70,
+        67,
+        63,
+        54,
+        35,
+        50,
+        34,
+        13,
+        14,
+        15,
+        16,
+        65,
+        22,
+        21,
+        49,
+        20,
+        19,
+        61,
+        28,
+        29,
+        60,
+        23,
+        24,
+        25,
+        55,
+        59,
+        17,
+        18,
+        37
+      ],
+      "facets": {
+        "system": [
+          {
+            "v": "nes",
+            "label": "Nintendo Entertainment System",
+            "n": 12,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "snes",
+            "label": "Super Nintendo",
+            "n": 9,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "gb",
+            "label": "Game Boy",
+            "n": 7,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "n64",
+            "label": "Nintendo 64",
+            "n": 6,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "ps2",
+            "label": "PlayStation 2",
+            "n": 6,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "wii",
+            "label": "Wii",
+            "n": 5,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "arcade",
+            "label": "Arcade",
+            "n": 4,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "gba",
+            "label": "Game Boy Advance",
+            "n": 4,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "n3ds",
+            "label": "Nintendo 3DS",
+            "n": 4,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "nds",
+            "label": "Nintendo DS",
+            "n": 4,
+            "on": false,
+            "zero": false
+          },
+          {
+            "more": "1",
+            "label": "more…",
+            "n": "+4"
+          }
+        ],
+        "genre": [
+          {
+            "v": "Adventure",
+            "label": "Adventure",
+            "n": 13,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Racing",
+            "label": "Racing",
+            "n": 13,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Simulator",
+            "label": "Simulator",
+            "n": 12,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Platform",
+            "label": "Platform",
+            "n": 7,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Arcade",
+            "label": "Arcade",
+            "n": 6,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Fighting",
+            "label": "Fighting",
+            "n": 6,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Music",
+            "label": "Music",
+            "n": 6,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Puzzle",
+            "label": "Puzzle",
+            "n": 6,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Role-playing (RPG)",
+            "label": "Role-playing (RPG)",
+            "n": 6,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Shooter",
+            "label": "Shooter",
+            "n": 6,
+            "on": false,
+            "zero": false
+          },
+          {
+            "more": "1",
+            "label": "more…",
+            "n": "+2"
+          }
+        ],
+        "tag": [
+          {
+            "v": "Tag 01",
+            "label": "Tag 01",
+            "n": 9,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 08",
+            "label": "Tag 08",
+            "n": 9,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 15",
+            "label": "Tag 15",
+            "n": 9,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 22",
+            "label": "Tag 22",
+            "n": 9,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 43",
+            "label": "Tag 43",
+            "n": 9,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Unsorted",
+            "label": "Unsorted",
+            "n": 9,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 29",
+            "label": "Tag 29",
+            "n": 8,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 36",
+            "label": "Tag 36",
+            "n": 8,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 50",
+            "label": "Tag 50",
+            "n": 8,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 57",
+            "label": "Tag 57",
+            "n": 8,
+            "on": false,
+            "zero": false
+          },
+          {
+            "more": "1",
+            "label": "more…",
+            "n": "+50"
+          }
+        ],
+        "franchise": [
+          {
+            "v": "Mario",
+            "label": "Mario",
+            "n": 5,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Zelda",
+            "label": "Zelda",
+            "n": 4,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Mega Man",
+            "label": "Mega Man",
+            "n": 3,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Metroid",
+            "label": "Metroid",
+            "n": 3,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Dragon Quest",
+            "label": "Dragon Quest",
+            "n": 2,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Final Fantasy",
+            "label": "Final Fantasy",
+            "n": 2,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Pokemon",
+            "label": "Pokemon",
+            "n": 2,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Sonic",
+            "label": "Sonic",
+            "n": 2,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Street Fighter",
+            "label": "Street Fighter",
+            "n": 2,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Castlevania",
+            "label": "Castlevania",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "more": "1",
+            "label": "more…",
+            "n": "+2"
+          }
+        ],
+        "theme": [
+          {
+            "v": "Fantasy",
+            "label": "Fantasy",
+            "n": 13,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Science fiction",
+            "label": "Science fiction",
+            "n": 13,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Action",
+            "label": "Action",
+            "n": 12,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Comedy",
+            "label": "Comedy",
+            "n": 12,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Historical",
+            "label": "Historical",
+            "n": 12,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Horror",
+            "label": "Horror",
+            "n": 12,
+            "on": false,
+            "zero": false
+          }
+        ],
+        "mode": [
+          {
+            "v": "Single player",
+            "label": "Single player",
+            "n": 19,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Split screen",
+            "label": "Split screen",
+            "n": 19,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Co-operative",
+            "label": "Co-operative",
+            "n": 18,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Multiplayer",
+            "label": "Multiplayer",
+            "n": 18,
+            "on": false,
+            "zero": false
+          }
+        ],
+        "perspective": [
+          {
+            "v": "Side view",
+            "label": "Side view",
+            "n": 19,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Third person",
+            "label": "Third person",
+            "n": 19,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Bird's eye view",
+            "label": "Bird's eye view",
+            "n": 18,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "First person",
+            "label": "First person",
+            "n": 18,
+            "on": false,
+            "zero": false
+          }
+        ],
+        "decade": [
+          {
+            "v": "1980s",
+            "label": "1980s",
+            "n": 18,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "1990s",
+            "label": "1990s",
+            "n": 23,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "2000s",
+            "label": "2000s",
+            "n": 20,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "2010s",
+            "label": "2010s",
+            "n": 11,
+            "on": false,
+            "zero": false
+          }
+        ],
+        "region": [
+          {
+            "v": "USA",
+            "label": "USA",
+            "n": 37,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Europe",
+            "label": "Europe",
+            "n": 25,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Japan",
+            "label": "Japan",
+            "n": 24,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "World",
+            "label": "World",
+            "n": 12,
+            "on": false,
+            "zero": false
+          }
+        ]
+      }
+    },
+    {
+      "state": {
+        "name": "one system",
+        "sets": {
+          "system": [
+            "nes"
+          ]
+        }
+      },
+      "shown": [
+        32,
+        41,
+        42,
+        39,
+        38,
+        11,
+        26,
+        13,
+        28,
+        29,
+        25,
+        37
+      ],
+      "facets": {
+        "system": [
+          {
+            "v": "nes",
+            "label": "Nintendo Entertainment System",
+            "n": 12,
+            "on": true,
+            "zero": false
+          },
+          {
+            "v": "snes",
+            "label": "Super Nintendo",
+            "n": 9,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "gb",
+            "label": "Game Boy",
+            "n": 7,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "n64",
+            "label": "Nintendo 64",
+            "n": 6,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "ps2",
+            "label": "PlayStation 2",
+            "n": 6,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "wii",
+            "label": "Wii",
+            "n": 5,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "arcade",
+            "label": "Arcade",
+            "n": 4,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "gba",
+            "label": "Game Boy Advance",
+            "n": 4,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "n3ds",
+            "label": "Nintendo 3DS",
+            "n": 4,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "nds",
+            "label": "Nintendo DS",
+            "n": 4,
+            "on": false,
+            "zero": false
+          },
+          {
+            "more": "1",
+            "label": "more…",
+            "n": "+4"
+          }
+        ],
+        "genre": [
+          {
+            "v": "Racing",
+            "label": "Racing",
+            "n": 4,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Platform",
+            "label": "Platform",
+            "n": 3,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Adventure",
+            "label": "Adventure",
+            "n": 2,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Puzzle",
+            "label": "Puzzle",
+            "n": 2,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Simulator",
+            "label": "Simulator",
+            "n": 2,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Arcade",
+            "label": "Arcade",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Role-playing (RPG)",
+            "label": "Role-playing (RPG)",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Shooter",
+            "label": "Shooter",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Strategy",
+            "label": "Strategy",
+            "n": 1,
+            "on": false,
+            "zero": false
+          }
+        ],
+        "tag": [
+          {
+            "v": "Tag 08",
+            "label": "Tag 08",
+            "n": 3,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 57",
+            "label": "Tag 57",
+            "n": 3,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 01",
+            "label": "Tag 01",
+            "n": 2,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 36",
+            "label": "Tag 36",
+            "n": 2,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 50",
+            "label": "Tag 50",
+            "n": 2,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Unsorted",
+            "label": "Unsorted",
+            "n": 2,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 05",
+            "label": "Tag 05",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 15",
+            "label": "Tag 15",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 18",
+            "label": "Tag 18",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 20",
+            "label": "Tag 20",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "more": "1",
+            "label": "more…",
+            "n": "+8"
+          }
+        ],
+        "franchise": [
+          {
+            "v": "Mario",
+            "label": "Mario",
+            "n": 2,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Zelda",
+            "label": "Zelda",
+            "n": 2,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Castlevania",
+            "label": "Castlevania",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Final Fantasy",
+            "label": "Final Fantasy",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Mega Man",
+            "label": "Mega Man",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Metroid",
+            "label": "Metroid",
+            "n": 1,
+            "on": false,
+            "zero": false
+          }
+        ],
+        "theme": [
+          {
+            "v": "Comedy",
+            "label": "Comedy",
+            "n": 3,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Fantasy",
+            "label": "Fantasy",
+            "n": 3,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Science fiction",
+            "label": "Science fiction",
+            "n": 3,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Action",
+            "label": "Action",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Historical",
+            "label": "Historical",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Horror",
+            "label": "Horror",
+            "n": 1,
+            "on": false,
+            "zero": false
+          }
+        ],
+        "mode": [
+          {
+            "v": "Single player",
+            "label": "Single player",
+            "n": 5,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Split screen",
+            "label": "Split screen",
+            "n": 3,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Co-operative",
+            "label": "Co-operative",
+            "n": 2,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Multiplayer",
+            "label": "Multiplayer",
+            "n": 2,
+            "on": false,
+            "zero": false
+          }
+        ],
+        "perspective": [
+          {
+            "v": "Side view",
+            "label": "Side view",
+            "n": 5,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Third person",
+            "label": "Third person",
+            "n": 3,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Bird's eye view",
+            "label": "Bird's eye view",
+            "n": 2,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "First person",
+            "label": "First person",
+            "n": 2,
+            "on": false,
+            "zero": false
+          }
+        ],
+        "decade": [
+          {
+            "v": "1980s",
+            "label": "1980s",
+            "n": 12,
+            "on": false,
+            "zero": false
+          }
+        ],
+        "region": [
+          {
+            "v": "USA",
+            "label": "USA",
+            "n": 7,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Europe",
+            "label": "Europe",
+            "n": 6,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Japan",
+            "label": "Japan",
+            "n": 2,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "World",
+            "label": "World",
+            "n": 1,
+            "on": false,
+            "zero": false
+          }
+        ]
+      }
+    },
+    {
+      "state": {
+        "name": "two systems",
+        "sets": {
+          "system": [
+            "nes",
+            "snes"
+          ]
+        }
+      },
+      "shown": [
+        33,
+        32,
+        41,
+        44,
+        42,
+        45,
+        5,
+        46,
+        39,
+        40,
+        43,
+        38,
+        11,
+        26,
+        13,
+        20,
+        28,
+        29,
+        25,
+        17,
+        37
+      ],
+      "facets": {
+        "system": [
+          {
+            "v": "nes",
+            "label": "Nintendo Entertainment System",
+            "n": 12,
+            "on": true,
+            "zero": false
+          },
+          {
+            "v": "snes",
+            "label": "Super Nintendo",
+            "n": 9,
+            "on": true,
+            "zero": false
+          },
+          {
+            "v": "gb",
+            "label": "Game Boy",
+            "n": 7,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "n64",
+            "label": "Nintendo 64",
+            "n": 6,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "ps2",
+            "label": "PlayStation 2",
+            "n": 6,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "wii",
+            "label": "Wii",
+            "n": 5,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "arcade",
+            "label": "Arcade",
+            "n": 4,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "gba",
+            "label": "Game Boy Advance",
+            "n": 4,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "n3ds",
+            "label": "Nintendo 3DS",
+            "n": 4,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "nds",
+            "label": "Nintendo DS",
+            "n": 4,
+            "on": false,
+            "zero": false
+          },
+          {
+            "more": "1",
+            "label": "more…",
+            "n": "+4"
+          }
+        ],
+        "genre": [
+          {
+            "v": "Simulator",
+            "label": "Simulator",
+            "n": 5,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Adventure",
+            "label": "Adventure",
+            "n": 4,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Puzzle",
+            "label": "Puzzle",
+            "n": 4,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Racing",
+            "label": "Racing",
+            "n": 4,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Platform",
+            "label": "Platform",
+            "n": 3,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Strategy",
+            "label": "Strategy",
+            "n": 3,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Shooter",
+            "label": "Shooter",
+            "n": 2,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Sport",
+            "label": "Sport",
+            "n": 2,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Arcade",
+            "label": "Arcade",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Fighting",
+            "label": "Fighting",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "more": "1",
+            "label": "more…",
+            "n": "+1"
+          }
+        ],
+        "tag": [
+          {
+            "v": "Tag 29",
+            "label": "Tag 29",
+            "n": 4,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 08",
+            "label": "Tag 08",
+            "n": 3,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 15",
+            "label": "Tag 15",
+            "n": 3,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 36",
+            "label": "Tag 36",
+            "n": 3,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 57",
+            "label": "Tag 57",
+            "n": 3,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 64",
+            "label": "Tag 64",
+            "n": 3,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Unsorted",
+            "label": "Unsorted",
+            "n": 3,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 01",
+            "label": "Tag 01",
+            "n": 2,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 43",
+            "label": "Tag 43",
+            "n": 2,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 50",
+            "label": "Tag 50",
+            "n": 2,
+            "on": false,
+            "zero": false
+          },
+          {
+            "more": "1",
+            "label": "more…",
+            "n": "+17"
+          }
+        ],
+        "franchise": [
+          {
+            "v": "Final Fantasy",
+            "label": "Final Fantasy",
+            "n": 2,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Mario",
+            "label": "Mario",
+            "n": 2,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Zelda",
+            "label": "Zelda",
+            "n": 2,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Castlevania",
+            "label": "Castlevania",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Kirby",
+            "label": "Kirby",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Mega Man",
+            "label": "Mega Man",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Metroid",
+            "label": "Metroid",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Street Fighter",
+            "label": "Street Fighter",
+            "n": 1,
+            "on": false,
+            "zero": false
+          }
+        ],
+        "theme": [
+          {
+            "v": "Comedy",
+            "label": "Comedy",
+            "n": 5,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Science fiction",
+            "label": "Science fiction",
+            "n": 5,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Fantasy",
+            "label": "Fantasy",
+            "n": 4,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Action",
+            "label": "Action",
+            "n": 3,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Horror",
+            "label": "Horror",
+            "n": 3,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Historical",
+            "label": "Historical",
+            "n": 1,
+            "on": false,
+            "zero": false
+          }
+        ],
+        "mode": [
+          {
+            "v": "Single player",
+            "label": "Single player",
+            "n": 9,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Multiplayer",
+            "label": "Multiplayer",
+            "n": 5,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Split screen",
+            "label": "Split screen",
+            "n": 4,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Co-operative",
+            "label": "Co-operative",
+            "n": 3,
+            "on": false,
+            "zero": false
+          }
+        ],
+        "perspective": [
+          {
+            "v": "Side view",
+            "label": "Side view",
+            "n": 9,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Bird's eye view",
+            "label": "Bird's eye view",
+            "n": 5,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Third person",
+            "label": "Third person",
+            "n": 4,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "First person",
+            "label": "First person",
+            "n": 3,
+            "on": false,
+            "zero": false
+          }
+        ],
+        "decade": [
+          {
+            "v": "1980s",
+            "label": "1980s",
+            "n": 12,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "1990s",
+            "label": "1990s",
+            "n": 8,
+            "on": false,
+            "zero": false
+          }
+        ],
+        "region": [
+          {
+            "v": "Europe",
+            "label": "Europe",
+            "n": 10,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "USA",
+            "label": "USA",
+            "n": 10,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Japan",
+            "label": "Japan",
+            "n": 4,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "World",
+            "label": "World",
+            "n": 3,
+            "on": false,
+            "zero": false
+          }
+        ]
+      }
+    },
+    {
+      "state": {
+        "name": "system and genre",
+        "sets": {
+          "system": [
+            "nes"
+          ],
+          "genre": [
+            "Platform"
+          ]
+        }
+      },
+      "shown": [
+        13,
+        25,
+        37
+      ],
+      "facets": {
+        "system": [
+          {
+            "v": "nes",
+            "label": "Nintendo Entertainment System",
+            "n": 3,
+            "on": true,
+            "zero": false
+          },
+          {
+            "v": "n64",
+            "label": "Nintendo 64",
+            "n": 2,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "arcade",
+            "label": "Arcade",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "md",
+            "label": "Mega Drive",
+            "n": 1,
+            "on": false,
+            "zero": false
+          }
+        ],
+        "genre": [
+          {
+            "v": "Racing",
+            "label": "Racing",
+            "n": 4,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Platform",
+            "label": "Platform",
+            "n": 3,
+            "on": true,
+            "zero": false
+          },
+          {
+            "v": "Adventure",
+            "label": "Adventure",
+            "n": 2,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Puzzle",
+            "label": "Puzzle",
+            "n": 2,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Simulator",
+            "label": "Simulator",
+            "n": 2,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Arcade",
+            "label": "Arcade",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Role-playing (RPG)",
+            "label": "Role-playing (RPG)",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Shooter",
+            "label": "Shooter",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Strategy",
+            "label": "Strategy",
+            "n": 1,
+            "on": false,
+            "zero": false
+          }
+        ],
+        "tag": [
+          {
+            "v": "Tag 15",
+            "label": "Tag 15",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 20",
+            "label": "Tag 20",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 29",
+            "label": "Tag 29",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 36",
+            "label": "Tag 36",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 43",
+            "label": "Tag 43",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 52",
+            "label": "Tag 52",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Unsorted",
+            "label": "Unsorted",
+            "n": 1,
+            "on": false,
+            "zero": false
+          }
+        ],
+        "franchise": [
+          {
+            "v": "Zelda",
+            "label": "Zelda",
+            "n": 1,
+            "on": false,
+            "zero": false
+          }
+        ],
+        "theme": [
+          {
+            "v": "Fantasy",
+            "label": "Fantasy",
+            "n": 3,
+            "on": false,
+            "zero": false
+          }
+        ],
+        "mode": [
+          {
+            "v": "Single player",
+            "label": "Single player",
+            "n": 3,
+            "on": false,
+            "zero": false
+          }
+        ],
+        "perspective": [
+          {
+            "v": "Side view",
+            "label": "Side view",
+            "n": 3,
+            "on": false,
+            "zero": false
+          }
+        ],
+        "decade": [
+          {
+            "v": "1980s",
+            "label": "1980s",
+            "n": 3,
+            "on": false,
+            "zero": false
+          }
+        ],
+        "region": [
+          {
+            "v": "USA",
+            "label": "USA",
+            "n": 3,
+            "on": false,
+            "zero": false
+          }
+        ]
+      }
+    },
+    {
+      "state": {
+        "name": "a tag past the fold",
+        "sets": {
+          "tag": [
+            "Tag 56"
+          ]
+        }
+      },
+      "shown": [
+        5
+      ],
+      "facets": {
+        "system": [
+          {
+            "v": "snes",
+            "label": "Super Nintendo",
+            "n": 1,
+            "on": false,
+            "zero": false
+          }
+        ],
+        "genre": [
+          {
+            "v": "Puzzle",
+            "label": "Puzzle",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Simulator",
+            "label": "Simulator",
+            "n": 1,
+            "on": false,
+            "zero": false
+          }
+        ],
+        "tag": [
+          {
+            "v": "Tag 01",
+            "label": "Tag 01",
+            "n": 9,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 08",
+            "label": "Tag 08",
+            "n": 9,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 15",
+            "label": "Tag 15",
+            "n": 9,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 22",
+            "label": "Tag 22",
+            "n": 9,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 43",
+            "label": "Tag 43",
+            "n": 9,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Unsorted",
+            "label": "Unsorted",
+            "n": 9,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 29",
+            "label": "Tag 29",
+            "n": 8,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 36",
+            "label": "Tag 36",
+            "n": 8,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 50",
+            "label": "Tag 50",
+            "n": 8,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 57",
+            "label": "Tag 57",
+            "n": 8,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 56",
+            "label": "Tag 56",
+            "n": 1,
+            "on": true,
+            "zero": false
+          },
+          {
+            "more": "1",
+            "label": "more…",
+            "n": "+49"
+          }
+        ],
+        "franchise": [
+          {
+            "empty": "—"
+          }
+        ],
+        "theme": [
+          {
+            "v": "Comedy",
+            "label": "Comedy",
+            "n": 1,
+            "on": false,
+            "zero": false
+          }
+        ],
+        "mode": [
+          {
+            "v": "Single player",
+            "label": "Single player",
+            "n": 1,
+            "on": false,
+            "zero": false
+          }
+        ],
+        "perspective": [
+          {
+            "v": "Side view",
+            "label": "Side view",
+            "n": 1,
+            "on": false,
+            "zero": false
+          }
+        ],
+        "decade": [
+          {
+            "v": "1990s",
+            "label": "1990s",
+            "n": 1,
+            "on": false,
+            "zero": false
+          }
+        ],
+        "region": [
+          {
+            "v": "Europe",
+            "label": "Europe",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "USA",
+            "label": "USA",
+            "n": 1,
+            "on": false,
+            "zero": false
+          }
+        ]
+      }
+    },
+    {
+      "state": {
+        "name": "a tag past the cap",
+        "sets": {
+          "tag": [
+            "Tag 70"
+          ]
+        }
+      },
+      "shown": [
+        33
+      ],
+      "facets": {
+        "system": [
+          {
+            "v": "snes",
+            "label": "Super Nintendo",
+            "n": 1,
+            "on": false,
+            "zero": false
+          }
+        ],
+        "genre": [
+          {
+            "v": "Adventure",
+            "label": "Adventure",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Sport",
+            "label": "Sport",
+            "n": 1,
+            "on": false,
+            "zero": false
+          }
+        ],
+        "tag": [
+          {
+            "v": "Tag 01",
+            "label": "Tag 01",
+            "n": 9,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 08",
+            "label": "Tag 08",
+            "n": 9,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 15",
+            "label": "Tag 15",
+            "n": 9,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 22",
+            "label": "Tag 22",
+            "n": 9,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 43",
+            "label": "Tag 43",
+            "n": 9,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Unsorted",
+            "label": "Unsorted",
+            "n": 9,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 29",
+            "label": "Tag 29",
+            "n": 8,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 36",
+            "label": "Tag 36",
+            "n": 8,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 50",
+            "label": "Tag 50",
+            "n": 8,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 57",
+            "label": "Tag 57",
+            "n": 8,
+            "on": false,
+            "zero": false
+          },
+          {
+            "more": "1",
+            "label": "more…",
+            "n": "+50"
+          }
+        ],
+        "franchise": [
+          {
+            "empty": "—"
+          }
+        ],
+        "theme": [
+          {
+            "v": "Action",
+            "label": "Action",
+            "n": 1,
+            "on": false,
+            "zero": false
+          }
+        ],
+        "mode": [
+          {
+            "v": "Single player",
+            "label": "Single player",
+            "n": 1,
+            "on": false,
+            "zero": false
+          }
+        ],
+        "perspective": [
+          {
+            "v": "Side view",
+            "label": "Side view",
+            "n": 1,
+            "on": false,
+            "zero": false
+          }
+        ],
+        "decade": [
+          {
+            "empty": "—"
+          }
+        ],
+        "region": [
+          {
+            "v": "Japan",
+            "label": "Japan",
+            "n": 1,
+            "on": false,
+            "zero": false
+          }
+        ]
+      }
+    },
+    {
+      "state": {
+        "name": "a chosen value with no games",
+        "sets": {
+          "franchise": [
+            "Not A Franchise"
+          ]
+        }
+      },
+      "shown": [],
+      "facets": {
+        "system": [
+          {
+            "empty": "—"
+          }
+        ],
+        "genre": [
+          {
+            "empty": "—"
+          }
+        ],
+        "tag": [
+          {
+            "empty": "—"
+          }
+        ],
+        "franchise": [
+          {
+            "v": "Mario",
+            "label": "Mario",
+            "n": 5,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Zelda",
+            "label": "Zelda",
+            "n": 4,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Mega Man",
+            "label": "Mega Man",
+            "n": 3,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Metroid",
+            "label": "Metroid",
+            "n": 3,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Dragon Quest",
+            "label": "Dragon Quest",
+            "n": 2,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Final Fantasy",
+            "label": "Final Fantasy",
+            "n": 2,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Pokemon",
+            "label": "Pokemon",
+            "n": 2,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Sonic",
+            "label": "Sonic",
+            "n": 2,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Street Fighter",
+            "label": "Street Fighter",
+            "n": 2,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Castlevania",
+            "label": "Castlevania",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Not A Franchise",
+            "label": "Not A Franchise",
+            "n": 0,
+            "on": true,
+            "zero": true
+          },
+          {
+            "more": "1",
+            "label": "more…",
+            "n": "+2"
+          }
+        ],
+        "theme": [
+          {
+            "empty": "—"
+          }
+        ],
+        "mode": [
+          {
+            "empty": "—"
+          }
+        ],
+        "perspective": [
+          {
+            "empty": "—"
+          }
+        ],
+        "decade": [
+          {
+            "empty": "—"
+          }
+        ],
+        "region": [
+          {
+            "empty": "—"
+          }
+        ]
+      }
+    },
+    {
+      "state": {
+        "name": "a chosen value emptied by another facet",
+        "sets": {
+          "system": [
+            "arcade"
+          ],
+          "region": [
+            "Japan"
+          ]
+        }
+      },
+      "shown": [
+        72
+      ],
+      "facets": {
+        "system": [
+          {
+            "v": "gb",
+            "label": "Game Boy",
+            "n": 3,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "n64",
+            "label": "Nintendo 64",
+            "n": 3,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "wii",
+            "label": "Wii",
+            "n": 3,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "gba",
+            "label": "Game Boy Advance",
+            "n": 2,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "nes",
+            "label": "Nintendo Entertainment System",
+            "n": 2,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "ps2",
+            "label": "PlayStation 2",
+            "n": 2,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "ps3",
+            "label": "PlayStation 3",
+            "n": 2,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "snes",
+            "label": "Super Nintendo",
+            "n": 2,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "arcade",
+            "label": "Arcade",
+            "n": 1,
+            "on": true,
+            "zero": false
+          },
+          {
+            "v": "md",
+            "label": "Mega Drive",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "more": "1",
+            "label": "more…",
+            "n": "+3"
+          }
+        ],
+        "genre": [
+          {
+            "v": "Music",
+            "label": "Music",
+            "n": 1,
+            "on": false,
+            "zero": false
+          }
+        ],
+        "tag": [
+          {
+            "v": "Tag 08",
+            "label": "Tag 08",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 17",
+            "label": "Tag 17",
+            "n": 1,
+            "on": false,
+            "zero": false
+          }
+        ],
+        "franchise": [
+          {
+            "empty": "—"
+          }
+        ],
+        "theme": [
+          {
+            "v": "Historical",
+            "label": "Historical",
+            "n": 1,
+            "on": false,
+            "zero": false
+          }
+        ],
+        "mode": [
+          {
+            "v": "Multiplayer",
+            "label": "Multiplayer",
+            "n": 1,
+            "on": false,
+            "zero": false
+          }
+        ],
+        "perspective": [
+          {
+            "v": "Bird's eye view",
+            "label": "Bird's eye view",
+            "n": 1,
+            "on": false,
+            "zero": false
+          }
+        ],
+        "decade": [
+          {
+            "v": "1980s",
+            "label": "1980s",
+            "n": 1,
+            "on": false,
+            "zero": false
+          }
+        ],
+        "region": [
+          {
+            "v": "USA",
+            "label": "USA",
+            "n": 3,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Europe",
+            "label": "Europe",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Japan",
+            "label": "Japan",
+            "n": 1,
+            "on": true,
+            "zero": false
+          }
+        ]
+      }
+    },
+    {
+      "state": {
+        "name": "tags expanded",
+        "expanded": [
+          "tag"
+        ]
+      },
+      "shown": [
+        51,
+        64,
+        33,
+        56,
+        48,
+        32,
+        41,
+        44,
+        42,
+        68,
+        3,
+        4,
+        9,
+        10,
+        45,
+        5,
+        6,
+        46,
+        39,
+        40,
+        57,
+        72,
+        52,
+        47,
+        62,
+        69,
+        66,
+        58,
+        43,
+        38,
+        1,
+        2,
+        71,
+        30,
+        31,
+        11,
+        36,
+        12,
+        74,
+        26,
+        53,
+        27,
+        73,
+        7,
+        8,
+        70,
+        67,
+        63,
+        54,
+        35,
+        50,
+        34,
+        13,
+        14,
+        15,
+        16,
+        65,
+        22,
+        21,
+        49,
+        20,
+        19,
+        61,
+        28,
+        29,
+        60,
+        23,
+        24,
+        25,
+        55,
+        59,
+        17,
+        18,
+        37
+      ],
+      "facets": {
+        "system": [
+          {
+            "v": "nes",
+            "label": "Nintendo Entertainment System",
+            "n": 12,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "snes",
+            "label": "Super Nintendo",
+            "n": 9,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "gb",
+            "label": "Game Boy",
+            "n": 7,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "n64",
+            "label": "Nintendo 64",
+            "n": 6,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "ps2",
+            "label": "PlayStation 2",
+            "n": 6,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "wii",
+            "label": "Wii",
+            "n": 5,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "arcade",
+            "label": "Arcade",
+            "n": 4,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "gba",
+            "label": "Game Boy Advance",
+            "n": 4,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "n3ds",
+            "label": "Nintendo 3DS",
+            "n": 4,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "nds",
+            "label": "Nintendo DS",
+            "n": 4,
+            "on": false,
+            "zero": false
+          },
+          {
+            "more": "1",
+            "label": "more…",
+            "n": "+4"
+          }
+        ],
+        "genre": [
+          {
+            "v": "Adventure",
+            "label": "Adventure",
+            "n": 13,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Racing",
+            "label": "Racing",
+            "n": 13,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Simulator",
+            "label": "Simulator",
+            "n": 12,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Platform",
+            "label": "Platform",
+            "n": 7,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Arcade",
+            "label": "Arcade",
+            "n": 6,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Fighting",
+            "label": "Fighting",
+            "n": 6,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Music",
+            "label": "Music",
+            "n": 6,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Puzzle",
+            "label": "Puzzle",
+            "n": 6,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Role-playing (RPG)",
+            "label": "Role-playing (RPG)",
+            "n": 6,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Shooter",
+            "label": "Shooter",
+            "n": 6,
+            "on": false,
+            "zero": false
+          },
+          {
+            "more": "1",
+            "label": "more…",
+            "n": "+2"
+          }
+        ],
+        "tag": [
+          {
+            "v": "Tag 01",
+            "label": "Tag 01",
+            "n": 9,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 08",
+            "label": "Tag 08",
+            "n": 9,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 15",
+            "label": "Tag 15",
+            "n": 9,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 22",
+            "label": "Tag 22",
+            "n": 9,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 43",
+            "label": "Tag 43",
+            "n": 9,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Unsorted",
+            "label": "Unsorted",
+            "n": 9,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 29",
+            "label": "Tag 29",
+            "n": 8,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 36",
+            "label": "Tag 36",
+            "n": 8,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 50",
+            "label": "Tag 50",
+            "n": 8,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 57",
+            "label": "Tag 57",
+            "n": 8,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 64",
+            "label": "Tag 64",
+            "n": 8,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 04",
+            "label": "Tag 04",
+            "n": 2,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 17",
+            "label": "Tag 17",
+            "n": 2,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 30",
+            "label": "Tag 30",
+            "n": 2,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 02",
+            "label": "Tag 02",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 03",
+            "label": "Tag 03",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 05",
+            "label": "Tag 05",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 06",
+            "label": "Tag 06",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 07",
+            "label": "Tag 07",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 09",
+            "label": "Tag 09",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 10",
+            "label": "Tag 10",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 11",
+            "label": "Tag 11",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 12",
+            "label": "Tag 12",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 13",
+            "label": "Tag 13",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 14",
+            "label": "Tag 14",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 16",
+            "label": "Tag 16",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 18",
+            "label": "Tag 18",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 19",
+            "label": "Tag 19",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 20",
+            "label": "Tag 20",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 21",
+            "label": "Tag 21",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 23",
+            "label": "Tag 23",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 24",
+            "label": "Tag 24",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 25",
+            "label": "Tag 25",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 26",
+            "label": "Tag 26",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 27",
+            "label": "Tag 27",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 28",
+            "label": "Tag 28",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 31",
+            "label": "Tag 31",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 32",
+            "label": "Tag 32",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 33",
+            "label": "Tag 33",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 34",
+            "label": "Tag 34",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 35",
+            "label": "Tag 35",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 37",
+            "label": "Tag 37",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 38",
+            "label": "Tag 38",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 39",
+            "label": "Tag 39",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 40",
+            "label": "Tag 40",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 41",
+            "label": "Tag 41",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 42",
+            "label": "Tag 42",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 44",
+            "label": "Tag 44",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 45",
+            "label": "Tag 45",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 46",
+            "label": "Tag 46",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 47",
+            "label": "Tag 47",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 48",
+            "label": "Tag 48",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 49",
+            "label": "Tag 49",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 51",
+            "label": "Tag 51",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 52",
+            "label": "Tag 52",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 53",
+            "label": "Tag 53",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 54",
+            "label": "Tag 54",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 55",
+            "label": "Tag 55",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 56",
+            "label": "Tag 56",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 58",
+            "label": "Tag 58",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "more": "0",
+            "label": "less…",
+            "n": ""
+          }
+        ],
+        "franchise": [
+          {
+            "v": "Mario",
+            "label": "Mario",
+            "n": 5,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Zelda",
+            "label": "Zelda",
+            "n": 4,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Mega Man",
+            "label": "Mega Man",
+            "n": 3,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Metroid",
+            "label": "Metroid",
+            "n": 3,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Dragon Quest",
+            "label": "Dragon Quest",
+            "n": 2,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Final Fantasy",
+            "label": "Final Fantasy",
+            "n": 2,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Pokemon",
+            "label": "Pokemon",
+            "n": 2,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Sonic",
+            "label": "Sonic",
+            "n": 2,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Street Fighter",
+            "label": "Street Fighter",
+            "n": 2,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Castlevania",
+            "label": "Castlevania",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "more": "1",
+            "label": "more…",
+            "n": "+2"
+          }
+        ],
+        "theme": [
+          {
+            "v": "Fantasy",
+            "label": "Fantasy",
+            "n": 13,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Science fiction",
+            "label": "Science fiction",
+            "n": 13,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Action",
+            "label": "Action",
+            "n": 12,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Comedy",
+            "label": "Comedy",
+            "n": 12,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Historical",
+            "label": "Historical",
+            "n": 12,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Horror",
+            "label": "Horror",
+            "n": 12,
+            "on": false,
+            "zero": false
+          }
+        ],
+        "mode": [
+          {
+            "v": "Single player",
+            "label": "Single player",
+            "n": 19,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Split screen",
+            "label": "Split screen",
+            "n": 19,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Co-operative",
+            "label": "Co-operative",
+            "n": 18,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Multiplayer",
+            "label": "Multiplayer",
+            "n": 18,
+            "on": false,
+            "zero": false
+          }
+        ],
+        "perspective": [
+          {
+            "v": "Side view",
+            "label": "Side view",
+            "n": 19,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Third person",
+            "label": "Third person",
+            "n": 19,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Bird's eye view",
+            "label": "Bird's eye view",
+            "n": 18,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "First person",
+            "label": "First person",
+            "n": 18,
+            "on": false,
+            "zero": false
+          }
+        ],
+        "decade": [
+          {
+            "v": "1980s",
+            "label": "1980s",
+            "n": 18,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "1990s",
+            "label": "1990s",
+            "n": 23,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "2000s",
+            "label": "2000s",
+            "n": 20,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "2010s",
+            "label": "2010s",
+            "n": 11,
+            "on": false,
+            "zero": false
+          }
+        ],
+        "region": [
+          {
+            "v": "USA",
+            "label": "USA",
+            "n": 37,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Europe",
+            "label": "Europe",
+            "n": 25,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Japan",
+            "label": "Japan",
+            "n": 24,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "World",
+            "label": "World",
+            "n": 12,
+            "on": false,
+            "zero": false
+          }
+        ]
+      }
+    },
+    {
+      "state": {
+        "name": "every facet expanded",
+        "expanded": [
+          "system",
+          "genre",
+          "tag",
+          "franchise",
+          "theme",
+          "mode",
+          "perspective",
+          "decade",
+          "region"
+        ]
+      },
+      "shown": [
+        51,
+        64,
+        33,
+        56,
+        48,
+        32,
+        41,
+        44,
+        42,
+        68,
+        3,
+        4,
+        9,
+        10,
+        45,
+        5,
+        6,
+        46,
+        39,
+        40,
+        57,
+        72,
+        52,
+        47,
+        62,
+        69,
+        66,
+        58,
+        43,
+        38,
+        1,
+        2,
+        71,
+        30,
+        31,
+        11,
+        36,
+        12,
+        74,
+        26,
+        53,
+        27,
+        73,
+        7,
+        8,
+        70,
+        67,
+        63,
+        54,
+        35,
+        50,
+        34,
+        13,
+        14,
+        15,
+        16,
+        65,
+        22,
+        21,
+        49,
+        20,
+        19,
+        61,
+        28,
+        29,
+        60,
+        23,
+        24,
+        25,
+        55,
+        59,
+        17,
+        18,
+        37
+      ],
+      "facets": {
+        "system": [
+          {
+            "v": "nes",
+            "label": "Nintendo Entertainment System",
+            "n": 12,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "snes",
+            "label": "Super Nintendo",
+            "n": 9,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "gb",
+            "label": "Game Boy",
+            "n": 7,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "n64",
+            "label": "Nintendo 64",
+            "n": 6,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "ps2",
+            "label": "PlayStation 2",
+            "n": 6,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "wii",
+            "label": "Wii",
+            "n": 5,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "arcade",
+            "label": "Arcade",
+            "n": 4,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "gba",
+            "label": "Game Boy Advance",
+            "n": 4,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "n3ds",
+            "label": "Nintendo 3DS",
+            "n": 4,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "nds",
+            "label": "Nintendo DS",
+            "n": 4,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "ps3",
+            "label": "PlayStation 3",
+            "n": 4,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "md",
+            "label": "Mega Drive",
+            "n": 3,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "psp",
+            "label": "PlayStation Portable",
+            "n": 3,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "sms",
+            "label": "Master System",
+            "n": 3,
+            "on": false,
+            "zero": false
+          },
+          {
+            "more": "0",
+            "label": "less…",
+            "n": ""
+          }
+        ],
+        "genre": [
+          {
+            "v": "Adventure",
+            "label": "Adventure",
+            "n": 13,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Racing",
+            "label": "Racing",
+            "n": 13,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Simulator",
+            "label": "Simulator",
+            "n": 12,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Platform",
+            "label": "Platform",
+            "n": 7,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Arcade",
+            "label": "Arcade",
+            "n": 6,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Fighting",
+            "label": "Fighting",
+            "n": 6,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Music",
+            "label": "Music",
+            "n": 6,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Puzzle",
+            "label": "Puzzle",
+            "n": 6,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Role-playing (RPG)",
+            "label": "Role-playing (RPG)",
+            "n": 6,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Shooter",
+            "label": "Shooter",
+            "n": 6,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Sport",
+            "label": "Sport",
+            "n": 6,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Strategy",
+            "label": "Strategy",
+            "n": 6,
+            "on": false,
+            "zero": false
+          },
+          {
+            "more": "0",
+            "label": "less…",
+            "n": ""
+          }
+        ],
+        "tag": [
+          {
+            "v": "Tag 01",
+            "label": "Tag 01",
+            "n": 9,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 08",
+            "label": "Tag 08",
+            "n": 9,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 15",
+            "label": "Tag 15",
+            "n": 9,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 22",
+            "label": "Tag 22",
+            "n": 9,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 43",
+            "label": "Tag 43",
+            "n": 9,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Unsorted",
+            "label": "Unsorted",
+            "n": 9,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 29",
+            "label": "Tag 29",
+            "n": 8,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 36",
+            "label": "Tag 36",
+            "n": 8,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 50",
+            "label": "Tag 50",
+            "n": 8,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 57",
+            "label": "Tag 57",
+            "n": 8,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 64",
+            "label": "Tag 64",
+            "n": 8,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 04",
+            "label": "Tag 04",
+            "n": 2,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 17",
+            "label": "Tag 17",
+            "n": 2,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 30",
+            "label": "Tag 30",
+            "n": 2,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 02",
+            "label": "Tag 02",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 03",
+            "label": "Tag 03",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 05",
+            "label": "Tag 05",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 06",
+            "label": "Tag 06",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 07",
+            "label": "Tag 07",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 09",
+            "label": "Tag 09",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 10",
+            "label": "Tag 10",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 11",
+            "label": "Tag 11",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 12",
+            "label": "Tag 12",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 13",
+            "label": "Tag 13",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 14",
+            "label": "Tag 14",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 16",
+            "label": "Tag 16",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 18",
+            "label": "Tag 18",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 19",
+            "label": "Tag 19",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 20",
+            "label": "Tag 20",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 21",
+            "label": "Tag 21",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 23",
+            "label": "Tag 23",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 24",
+            "label": "Tag 24",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 25",
+            "label": "Tag 25",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 26",
+            "label": "Tag 26",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 27",
+            "label": "Tag 27",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 28",
+            "label": "Tag 28",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 31",
+            "label": "Tag 31",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 32",
+            "label": "Tag 32",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 33",
+            "label": "Tag 33",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 34",
+            "label": "Tag 34",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 35",
+            "label": "Tag 35",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 37",
+            "label": "Tag 37",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 38",
+            "label": "Tag 38",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 39",
+            "label": "Tag 39",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 40",
+            "label": "Tag 40",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 41",
+            "label": "Tag 41",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 42",
+            "label": "Tag 42",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 44",
+            "label": "Tag 44",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 45",
+            "label": "Tag 45",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 46",
+            "label": "Tag 46",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 47",
+            "label": "Tag 47",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 48",
+            "label": "Tag 48",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 49",
+            "label": "Tag 49",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 51",
+            "label": "Tag 51",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 52",
+            "label": "Tag 52",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 53",
+            "label": "Tag 53",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 54",
+            "label": "Tag 54",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 55",
+            "label": "Tag 55",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 56",
+            "label": "Tag 56",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 58",
+            "label": "Tag 58",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "more": "0",
+            "label": "less…",
+            "n": ""
+          }
+        ],
+        "franchise": [
+          {
+            "v": "Mario",
+            "label": "Mario",
+            "n": 5,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Zelda",
+            "label": "Zelda",
+            "n": 4,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Mega Man",
+            "label": "Mega Man",
+            "n": 3,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Metroid",
+            "label": "Metroid",
+            "n": 3,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Dragon Quest",
+            "label": "Dragon Quest",
+            "n": 2,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Final Fantasy",
+            "label": "Final Fantasy",
+            "n": 2,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Pokemon",
+            "label": "Pokemon",
+            "n": 2,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Sonic",
+            "label": "Sonic",
+            "n": 2,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Street Fighter",
+            "label": "Street Fighter",
+            "n": 2,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Castlevania",
+            "label": "Castlevania",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Fire Emblem",
+            "label": "Fire Emblem",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Kirby",
+            "label": "Kirby",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "more": "0",
+            "label": "less…",
+            "n": ""
+          }
+        ],
+        "theme": [
+          {
+            "v": "Fantasy",
+            "label": "Fantasy",
+            "n": 13,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Science fiction",
+            "label": "Science fiction",
+            "n": 13,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Action",
+            "label": "Action",
+            "n": 12,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Comedy",
+            "label": "Comedy",
+            "n": 12,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Historical",
+            "label": "Historical",
+            "n": 12,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Horror",
+            "label": "Horror",
+            "n": 12,
+            "on": false,
+            "zero": false
+          }
+        ],
+        "mode": [
+          {
+            "v": "Single player",
+            "label": "Single player",
+            "n": 19,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Split screen",
+            "label": "Split screen",
+            "n": 19,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Co-operative",
+            "label": "Co-operative",
+            "n": 18,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Multiplayer",
+            "label": "Multiplayer",
+            "n": 18,
+            "on": false,
+            "zero": false
+          }
+        ],
+        "perspective": [
+          {
+            "v": "Side view",
+            "label": "Side view",
+            "n": 19,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Third person",
+            "label": "Third person",
+            "n": 19,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Bird's eye view",
+            "label": "Bird's eye view",
+            "n": 18,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "First person",
+            "label": "First person",
+            "n": 18,
+            "on": false,
+            "zero": false
+          }
+        ],
+        "decade": [
+          {
+            "v": "1980s",
+            "label": "1980s",
+            "n": 18,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "1990s",
+            "label": "1990s",
+            "n": 23,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "2000s",
+            "label": "2000s",
+            "n": 20,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "2010s",
+            "label": "2010s",
+            "n": 11,
+            "on": false,
+            "zero": false
+          }
+        ],
+        "region": [
+          {
+            "v": "USA",
+            "label": "USA",
+            "n": 37,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Europe",
+            "label": "Europe",
+            "n": 25,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Japan",
+            "label": "Japan",
+            "n": 24,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "World",
+            "label": "World",
+            "n": 12,
+            "on": false,
+            "zero": false
+          }
+        ]
+      }
+    },
+    {
+      "state": {
+        "name": "decades",
+        "sets": {
+          "decade": [
+            "1990s",
+            "1980s"
+          ]
+        }
+      },
+      "shown": [
+        64,
+        48,
+        32,
+        41,
+        44,
+        42,
+        45,
+        5,
+        6,
+        46,
+        39,
+        40,
+        72,
+        47,
+        62,
+        43,
+        38,
+        30,
+        11,
+        12,
+        74,
+        26,
+        27,
+        73,
+        63,
+        35,
+        34,
+        13,
+        22,
+        21,
+        49,
+        20,
+        19,
+        61,
+        28,
+        29,
+        23,
+        24,
+        25,
+        17,
+        37
+      ],
+      "facets": {
+        "system": [
+          {
+            "v": "nes",
+            "label": "Nintendo Entertainment System",
+            "n": 12,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "snes",
+            "label": "Super Nintendo",
+            "n": 8,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "gb",
+            "label": "Game Boy",
+            "n": 6,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "n64",
+            "label": "Nintendo 64",
+            "n": 5,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "arcade",
+            "label": "Arcade",
+            "n": 4,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "md",
+            "label": "Mega Drive",
+            "n": 3,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "sms",
+            "label": "Master System",
+            "n": 3,
+            "on": false,
+            "zero": false
+          }
+        ],
+        "genre": [
+          {
+            "v": "Racing",
+            "label": "Racing",
+            "n": 9,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Simulator",
+            "label": "Simulator",
+            "n": 7,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Adventure",
+            "label": "Adventure",
+            "n": 6,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Platform",
+            "label": "Platform",
+            "n": 6,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Arcade",
+            "label": "Arcade",
+            "n": 4,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Music",
+            "label": "Music",
+            "n": 4,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Puzzle",
+            "label": "Puzzle",
+            "n": 4,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Role-playing (RPG)",
+            "label": "Role-playing (RPG)",
+            "n": 3,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Shooter",
+            "label": "Shooter",
+            "n": 3,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Strategy",
+            "label": "Strategy",
+            "n": 3,
+            "on": false,
+            "zero": false
+          },
+          {
+            "more": "1",
+            "label": "more…",
+            "n": "+2"
+          }
+        ],
+        "tag": [
+          {
+            "v": "Tag 08",
+            "label": "Tag 08",
+            "n": 7,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Unsorted",
+            "label": "Unsorted",
+            "n": 6,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 15",
+            "label": "Tag 15",
+            "n": 5,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 22",
+            "label": "Tag 22",
+            "n": 5,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 29",
+            "label": "Tag 29",
+            "n": 5,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 43",
+            "label": "Tag 43",
+            "n": 5,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 57",
+            "label": "Tag 57",
+            "n": 5,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 01",
+            "label": "Tag 01",
+            "n": 4,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 36",
+            "label": "Tag 36",
+            "n": 4,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 64",
+            "label": "Tag 64",
+            "n": 4,
+            "on": false,
+            "zero": false
+          },
+          {
+            "more": "1",
+            "label": "more…",
+            "n": "+36"
+          }
+        ],
+        "franchise": [
+          {
+            "v": "Mario",
+            "label": "Mario",
+            "n": 3,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Final Fantasy",
+            "label": "Final Fantasy",
+            "n": 2,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Mega Man",
+            "label": "Mega Man",
+            "n": 2,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Metroid",
+            "label": "Metroid",
+            "n": 2,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Sonic",
+            "label": "Sonic",
+            "n": 2,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Street Fighter",
+            "label": "Street Fighter",
+            "n": 2,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Zelda",
+            "label": "Zelda",
+            "n": 2,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Castlevania",
+            "label": "Castlevania",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Kirby",
+            "label": "Kirby",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Pokemon",
+            "label": "Pokemon",
+            "n": 1,
+            "on": false,
+            "zero": false
+          }
+        ],
+        "theme": [
+          {
+            "v": "Comedy",
+            "label": "Comedy",
+            "n": 8,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Fantasy",
+            "label": "Fantasy",
+            "n": 8,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Historical",
+            "label": "Historical",
+            "n": 7,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Science fiction",
+            "label": "Science fiction",
+            "n": 7,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Horror",
+            "label": "Horror",
+            "n": 6,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Action",
+            "label": "Action",
+            "n": 5,
+            "on": false,
+            "zero": false
+          }
+        ],
+        "mode": [
+          {
+            "v": "Single player",
+            "label": "Single player",
+            "n": 12,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Multiplayer",
+            "label": "Multiplayer",
+            "n": 10,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Split screen",
+            "label": "Split screen",
+            "n": 10,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Co-operative",
+            "label": "Co-operative",
+            "n": 9,
+            "on": false,
+            "zero": false
+          }
+        ],
+        "perspective": [
+          {
+            "v": "Side view",
+            "label": "Side view",
+            "n": 12,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Bird's eye view",
+            "label": "Bird's eye view",
+            "n": 10,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Third person",
+            "label": "Third person",
+            "n": 10,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "First person",
+            "label": "First person",
+            "n": 9,
+            "on": false,
+            "zero": false
+          }
+        ],
+        "decade": [
+          {
+            "v": "1980s",
+            "label": "1980s",
+            "n": 18,
+            "on": true,
+            "zero": false
+          },
+          {
+            "v": "1990s",
+            "label": "1990s",
+            "n": 23,
+            "on": true,
+            "zero": false
+          },
+          {
+            "v": "2000s",
+            "label": "2000s",
+            "n": 20,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "2010s",
+            "label": "2010s",
+            "n": 11,
+            "on": false,
+            "zero": false
+          }
+        ],
+        "region": [
+          {
+            "v": "USA",
+            "label": "USA",
+            "n": 23,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Europe",
+            "label": "Europe",
+            "n": 15,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Japan",
+            "label": "Japan",
+            "n": 12,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "World",
+            "label": "World",
+            "n": 6,
+            "on": false,
+            "zero": false
+          }
+        ]
+      }
+    },
+    {
+      "state": {
+        "name": "regions split on commas",
+        "sets": {
+          "region": [
+            "Europe"
+          ]
+        }
+      },
+      "shown": [
+        56,
+        32,
+        41,
+        44,
+        68,
+        5,
+        47,
+        62,
+        38,
+        2,
+        71,
+        11,
+        74,
+        26,
+        53,
+        8,
+        35,
+        50,
+        14,
+        65,
+        20,
+        29,
+        23,
+        59,
+        17
+      ],
+      "facets": {
+        "system": [
+          {
+            "v": "nes",
+            "label": "Nintendo Entertainment System",
+            "n": 6,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "snes",
+            "label": "Super Nintendo",
+            "n": 4,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "gb",
+            "label": "Game Boy",
+            "n": 3,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "ps3",
+            "label": "PlayStation 3",
+            "n": 2,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "wii",
+            "label": "Wii",
+            "n": 2,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "arcade",
+            "label": "Arcade",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "gba",
+            "label": "Game Boy Advance",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "md",
+            "label": "Mega Drive",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "n3ds",
+            "label": "Nintendo 3DS",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "n64",
+            "label": "Nintendo 64",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "more": "1",
+            "label": "more…",
+            "n": "+3"
+          }
+        ],
+        "genre": [
+          {
+            "v": "Adventure",
+            "label": "Adventure",
+            "n": 7,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Arcade",
+            "label": "Arcade",
+            "n": 6,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Puzzle",
+            "label": "Puzzle",
+            "n": 6,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Simulator",
+            "label": "Simulator",
+            "n": 6,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Strategy",
+            "label": "Strategy",
+            "n": 6,
+            "on": false,
+            "zero": false
+          }
+        ],
+        "tag": [
+          {
+            "v": "Tag 50",
+            "label": "Tag 50",
+            "n": 4,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 01",
+            "label": "Tag 01",
+            "n": 3,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 08",
+            "label": "Tag 08",
+            "n": 3,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 22",
+            "label": "Tag 22",
+            "n": 3,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 29",
+            "label": "Tag 29",
+            "n": 3,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 43",
+            "label": "Tag 43",
+            "n": 3,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 57",
+            "label": "Tag 57",
+            "n": 3,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 64",
+            "label": "Tag 64",
+            "n": 3,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 15",
+            "label": "Tag 15",
+            "n": 2,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 36",
+            "label": "Tag 36",
+            "n": 2,
+            "on": false,
+            "zero": false
+          },
+          {
+            "more": "1",
+            "label": "more…",
+            "n": "+21"
+          }
+        ],
+        "franchise": [
+          {
+            "v": "Metroid",
+            "label": "Metroid",
+            "n": 2,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Pokemon",
+            "label": "Pokemon",
+            "n": 2,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Zelda",
+            "label": "Zelda",
+            "n": 2,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Castlevania",
+            "label": "Castlevania",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Mario",
+            "label": "Mario",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Mega Man",
+            "label": "Mega Man",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Street Fighter",
+            "label": "Street Fighter",
+            "n": 1,
+            "on": false,
+            "zero": false
+          }
+        ],
+        "theme": [
+          {
+            "v": "Science fiction",
+            "label": "Science fiction",
+            "n": 13,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Comedy",
+            "label": "Comedy",
+            "n": 12,
+            "on": false,
+            "zero": false
+          }
+        ],
+        "mode": [
+          {
+            "v": "Split screen",
+            "label": "Split screen",
+            "n": 7,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Co-operative",
+            "label": "Co-operative",
+            "n": 6,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Multiplayer",
+            "label": "Multiplayer",
+            "n": 6,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Single player",
+            "label": "Single player",
+            "n": 6,
+            "on": false,
+            "zero": false
+          }
+        ],
+        "perspective": [
+          {
+            "v": "Third person",
+            "label": "Third person",
+            "n": 7,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Bird's eye view",
+            "label": "Bird's eye view",
+            "n": 6,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "First person",
+            "label": "First person",
+            "n": 6,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Side view",
+            "label": "Side view",
+            "n": 6,
+            "on": false,
+            "zero": false
+          }
+        ],
+        "decade": [
+          {
+            "v": "1980s",
+            "label": "1980s",
+            "n": 7,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "1990s",
+            "label": "1990s",
+            "n": 8,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "2000s",
+            "label": "2000s",
+            "n": 6,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "2010s",
+            "label": "2010s",
+            "n": 3,
+            "on": false,
+            "zero": false
+          }
+        ],
+        "region": [
+          {
+            "v": "USA",
+            "label": "USA",
+            "n": 37,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Europe",
+            "label": "Europe",
+            "n": 25,
+            "on": true,
+            "zero": false
+          },
+          {
+            "v": "Japan",
+            "label": "Japan",
+            "n": 24,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "World",
+            "label": "World",
+            "n": 12,
+            "on": false,
+            "zero": false
+          }
+        ]
+      }
+    },
+    {
+      "state": {
+        "name": "query with facets",
+        "q": "year>1990",
+        "sets": {
+          "genre": [
+            "Puzzle"
+          ]
+        }
+      },
+      "shown": [
+        5,
+        53,
+        65,
+        17
+      ],
+      "facets": {
+        "system": [
+          {
+            "v": "snes",
+            "label": "Super Nintendo",
+            "n": 2,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "gba",
+            "label": "Game Boy Advance",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "ps2",
+            "label": "PlayStation 2",
+            "n": 1,
+            "on": false,
+            "zero": false
+          }
+        ],
+        "genre": [
+          {
+            "v": "Adventure",
+            "label": "Adventure",
+            "n": 9,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Simulator",
+            "label": "Simulator",
+            "n": 9,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Racing",
+            "label": "Racing",
+            "n": 8,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Fighting",
+            "label": "Fighting",
+            "n": 6,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Sport",
+            "label": "Sport",
+            "n": 5,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Strategy",
+            "label": "Strategy",
+            "n": 5,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Arcade",
+            "label": "Arcade",
+            "n": 4,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Music",
+            "label": "Music",
+            "n": 4,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Puzzle",
+            "label": "Puzzle",
+            "n": 4,
+            "on": true,
+            "zero": false
+          },
+          {
+            "v": "Role-playing (RPG)",
+            "label": "Role-playing (RPG)",
+            "n": 4,
+            "on": false,
+            "zero": false
+          },
+          {
+            "more": "1",
+            "label": "more…",
+            "n": "+2"
+          }
+        ],
+        "tag": [
+          {
+            "v": "Tag 29",
+            "label": "Tag 29",
+            "n": 2,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 02",
+            "label": "Tag 02",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 15",
+            "label": "Tag 15",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 43",
+            "label": "Tag 43",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 50",
+            "label": "Tag 50",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 56",
+            "label": "Tag 56",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 66",
+            "label": "Tag 66",
+            "n": 1,
+            "on": false,
+            "zero": false
+          }
+        ],
+        "franchise": [
+          {
+            "v": "Metroid",
+            "label": "Metroid",
+            "n": 1,
+            "on": false,
+            "zero": false
+          }
+        ],
+        "theme": [
+          {
+            "v": "Comedy",
+            "label": "Comedy",
+            "n": 4,
+            "on": false,
+            "zero": false
+          }
+        ],
+        "mode": [
+          {
+            "v": "Single player",
+            "label": "Single player",
+            "n": 4,
+            "on": false,
+            "zero": false
+          }
+        ],
+        "perspective": [
+          {
+            "v": "Side view",
+            "label": "Side view",
+            "n": 4,
+            "on": false,
+            "zero": false
+          }
+        ],
+        "decade": [
+          {
+            "v": "1990s",
+            "label": "1990s",
+            "n": 2,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "2000s",
+            "label": "2000s",
+            "n": 2,
+            "on": false,
+            "zero": false
+          }
+        ],
+        "region": [
+          {
+            "v": "Europe",
+            "label": "Europe",
+            "n": 4,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "USA",
+            "label": "USA",
+            "n": 4,
+            "on": false,
+            "zero": false
+          }
+        ]
+      }
+    },
+    {
+      "state": {
+        "name": "ranges and flags",
+        "ranges": {
+          "yearMin": 1990,
+          "yearMax": 2005,
+          "matched": true
+        }
+      },
+      "shown": [
+        51,
+        56,
+        48,
+        44,
+        45,
+        5,
+        6,
+        47,
+        62,
+        66,
+        71,
+        30,
+        12,
+        74,
+        53,
+        27,
+        54,
+        35,
+        15,
+        65,
+        21,
+        20,
+        17,
+        18
+      ],
+      "facets": {
+        "system": [
+          {
+            "v": "snes",
+            "label": "Super Nintendo",
+            "n": 5,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "n64",
+            "label": "Nintendo 64",
+            "n": 4,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "gb",
+            "label": "Game Boy",
+            "n": 3,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "gba",
+            "label": "Game Boy Advance",
+            "n": 3,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "ps2",
+            "label": "PlayStation 2",
+            "n": 3,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "md",
+            "label": "Mega Drive",
+            "n": 2,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "nds",
+            "label": "Nintendo DS",
+            "n": 2,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "arcade",
+            "label": "Arcade",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "psp",
+            "label": "PlayStation Portable",
+            "n": 1,
+            "on": false,
+            "zero": false
+          }
+        ],
+        "genre": [
+          {
+            "v": "Racing",
+            "label": "Racing",
+            "n": 5,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Adventure",
+            "label": "Adventure",
+            "n": 4,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Puzzle",
+            "label": "Puzzle",
+            "n": 4,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Simulator",
+            "label": "Simulator",
+            "n": 4,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Arcade",
+            "label": "Arcade",
+            "n": 3,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Role-playing (RPG)",
+            "label": "Role-playing (RPG)",
+            "n": 3,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Strategy",
+            "label": "Strategy",
+            "n": 3,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Music",
+            "label": "Music",
+            "n": 2,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Sport",
+            "label": "Sport",
+            "n": 2,
+            "on": false,
+            "zero": false
+          }
+        ],
+        "tag": [
+          {
+            "v": "Tag 29",
+            "label": "Tag 29",
+            "n": 5,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 43",
+            "label": "Tag 43",
+            "n": 4,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 01",
+            "label": "Tag 01",
+            "n": 3,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 22",
+            "label": "Tag 22",
+            "n": 3,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 36",
+            "label": "Tag 36",
+            "n": 3,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 50",
+            "label": "Tag 50",
+            "n": 3,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 08",
+            "label": "Tag 08",
+            "n": 2,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 15",
+            "label": "Tag 15",
+            "n": 2,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 64",
+            "label": "Tag 64",
+            "n": 2,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 02",
+            "label": "Tag 02",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "more": "1",
+            "label": "more…",
+            "n": "+20"
+          }
+        ],
+        "franchise": [
+          {
+            "v": "Metroid",
+            "label": "Metroid",
+            "n": 2,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Mario",
+            "label": "Mario",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Mega Man",
+            "label": "Mega Man",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Pokemon",
+            "label": "Pokemon",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Sonic",
+            "label": "Sonic",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Street Fighter",
+            "label": "Street Fighter",
+            "n": 1,
+            "on": false,
+            "zero": false
+          }
+        ],
+        "theme": [
+          {
+            "v": "Comedy",
+            "label": "Comedy",
+            "n": 7,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Historical",
+            "label": "Historical",
+            "n": 7,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Action",
+            "label": "Action",
+            "n": 5,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Science fiction",
+            "label": "Science fiction",
+            "n": 5,
+            "on": false,
+            "zero": false
+          }
+        ],
+        "mode": [
+          {
+            "v": "Split screen",
+            "label": "Split screen",
+            "n": 7,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Co-operative",
+            "label": "Co-operative",
+            "n": 6,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Single player",
+            "label": "Single player",
+            "n": 6,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Multiplayer",
+            "label": "Multiplayer",
+            "n": 5,
+            "on": false,
+            "zero": false
+          }
+        ],
+        "perspective": [
+          {
+            "v": "Third person",
+            "label": "Third person",
+            "n": 7,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "First person",
+            "label": "First person",
+            "n": 6,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Side view",
+            "label": "Side view",
+            "n": 6,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Bird's eye view",
+            "label": "Bird's eye view",
+            "n": 5,
+            "on": false,
+            "zero": false
+          }
+        ],
+        "decade": [
+          {
+            "v": "1990s",
+            "label": "1990s",
+            "n": 15,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "2000s",
+            "label": "2000s",
+            "n": 9,
+            "on": false,
+            "zero": false
+          }
+        ],
+        "region": [
+          {
+            "v": "USA",
+            "label": "USA",
+            "n": 14,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Europe",
+            "label": "Europe",
+            "n": 12,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Japan",
+            "label": "Japan",
+            "n": 12,
+            "on": false,
+            "zero": false
+          }
+        ]
+      }
+    },
+    {
+      "state": {
+        "name": "folders only",
+        "ranges": {
+          "folder": true
+        }
+      },
+      "shown": [
+        56,
+        45,
+        1,
+        12,
+        67,
+        34,
+        23
+      ],
+      "facets": {
+        "system": [
+          {
+            "v": "gb",
+            "label": "Game Boy",
+            "n": 3,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "n64",
+            "label": "Nintendo 64",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "nds",
+            "label": "Nintendo DS",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "ps2",
+            "label": "PlayStation 2",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "snes",
+            "label": "Super Nintendo",
+            "n": 1,
+            "on": false,
+            "zero": false
+          }
+        ],
+        "genre": [
+          {
+            "v": "Adventure",
+            "label": "Adventure",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Arcade",
+            "label": "Arcade",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Fighting",
+            "label": "Fighting",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Music",
+            "label": "Music",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Platform",
+            "label": "Platform",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Racing",
+            "label": "Racing",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Simulator",
+            "label": "Simulator",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Sport",
+            "label": "Sport",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Strategy",
+            "label": "Strategy",
+            "n": 1,
+            "on": false,
+            "zero": false
+          }
+        ],
+        "tag": [
+          {
+            "v": "Tag 22",
+            "label": "Tag 22",
+            "n": 2,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 01",
+            "label": "Tag 01",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 04",
+            "label": "Tag 04",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 07",
+            "label": "Tag 07",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 08",
+            "label": "Tag 08",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 10",
+            "label": "Tag 10",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 13",
+            "label": "Tag 13",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 15",
+            "label": "Tag 15",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 16",
+            "label": "Tag 16",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 19",
+            "label": "Tag 19",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "more": "1",
+            "label": "more…",
+            "n": "+4"
+          }
+        ],
+        "franchise": [
+          {
+            "v": "Mega Man",
+            "label": "Mega Man",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Zelda",
+            "label": "Zelda",
+            "n": 1,
+            "on": false,
+            "zero": false
+          }
+        ],
+        "theme": [
+          {
+            "v": "Fantasy",
+            "label": "Fantasy",
+            "n": 2,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Action",
+            "label": "Action",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Comedy",
+            "label": "Comedy",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Historical",
+            "label": "Historical",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Horror",
+            "label": "Horror",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Science fiction",
+            "label": "Science fiction",
+            "n": 1,
+            "on": false,
+            "zero": false
+          }
+        ],
+        "mode": [
+          {
+            "v": "Co-operative",
+            "label": "Co-operative",
+            "n": 2,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Multiplayer",
+            "label": "Multiplayer",
+            "n": 2,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Single player",
+            "label": "Single player",
+            "n": 2,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Split screen",
+            "label": "Split screen",
+            "n": 1,
+            "on": false,
+            "zero": false
+          }
+        ],
+        "perspective": [
+          {
+            "v": "Bird's eye view",
+            "label": "Bird's eye view",
+            "n": 2,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "First person",
+            "label": "First person",
+            "n": 2,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Side view",
+            "label": "Side view",
+            "n": 2,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Third person",
+            "label": "Third person",
+            "n": 1,
+            "on": false,
+            "zero": false
+          }
+        ],
+        "decade": [
+          {
+            "v": "1980s",
+            "label": "1980s",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "1990s",
+            "label": "1990s",
+            "n": 3,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "2000s",
+            "label": "2000s",
+            "n": 3,
+            "on": false,
+            "zero": false
+          }
+        ],
+        "region": [
+          {
+            "v": "USA",
+            "label": "USA",
+            "n": 4,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Europe",
+            "label": "Europe",
+            "n": 2,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Japan",
+            "label": "Japan",
+            "n": 2,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "World",
+            "label": "World",
+            "n": 1,
+            "on": false,
+            "zero": false
+          }
+        ]
+      }
+    },
+    {
+      "state": {
+        "name": "rating floor",
+        "ranges": {
+          "rating": 80
+        }
+      },
+      "shown": [
+        33,
+        56,
+        48,
+        41,
+        44,
+        42,
+        68,
+        3,
+        9,
+        45,
+        6,
+        39,
+        47,
+        62,
+        71,
+        30,
+        36,
+        12,
+        74,
+        53,
+        27,
+        50,
+        15,
+        65,
+        21,
+        24,
+        59,
+        18
+      ],
+      "facets": {
+        "system": [
+          {
+            "v": "gb",
+            "label": "Game Boy",
+            "n": 4,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "n64",
+            "label": "Nintendo 64",
+            "n": 4,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "nes",
+            "label": "Nintendo Entertainment System",
+            "n": 3,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "snes",
+            "label": "Super Nintendo",
+            "n": 3,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "wii",
+            "label": "Wii",
+            "n": 3,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "gba",
+            "label": "Game Boy Advance",
+            "n": 2,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "md",
+            "label": "Mega Drive",
+            "n": 2,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "ps2",
+            "label": "PlayStation 2",
+            "n": 2,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "ps3",
+            "label": "PlayStation 3",
+            "n": 2,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "arcade",
+            "label": "Arcade",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "more": "1",
+            "label": "more…",
+            "n": "+2"
+          }
+        ],
+        "genre": [
+          {
+            "v": "Adventure",
+            "label": "Adventure",
+            "n": 7,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Music",
+            "label": "Music",
+            "n": 4,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Racing",
+            "label": "Racing",
+            "n": 4,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Role-playing (RPG)",
+            "label": "Role-playing (RPG)",
+            "n": 4,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Sport",
+            "label": "Sport",
+            "n": 4,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Arcade",
+            "label": "Arcade",
+            "n": 3,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Puzzle",
+            "label": "Puzzle",
+            "n": 3,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Simulator",
+            "label": "Simulator",
+            "n": 3,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Strategy",
+            "label": "Strategy",
+            "n": 3,
+            "on": false,
+            "zero": false
+          }
+        ],
+        "tag": [
+          {
+            "v": "Tag 08",
+            "label": "Tag 08",
+            "n": 4,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 15",
+            "label": "Tag 15",
+            "n": 4,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 50",
+            "label": "Tag 50",
+            "n": 4,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 01",
+            "label": "Tag 01",
+            "n": 3,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 22",
+            "label": "Tag 22",
+            "n": 3,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 29",
+            "label": "Tag 29",
+            "n": 3,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 36",
+            "label": "Tag 36",
+            "n": 3,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 43",
+            "label": "Tag 43",
+            "n": 3,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 57",
+            "label": "Tag 57",
+            "n": 3,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 64",
+            "label": "Tag 64",
+            "n": 2,
+            "on": false,
+            "zero": false
+          },
+          {
+            "more": "1",
+            "label": "more…",
+            "n": "+24"
+          }
+        ],
+        "franchise": [
+          {
+            "v": "Mega Man",
+            "label": "Mega Man",
+            "n": 2,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Metroid",
+            "label": "Metroid",
+            "n": 2,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Castlevania",
+            "label": "Castlevania",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Dragon Quest",
+            "label": "Dragon Quest",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Final Fantasy",
+            "label": "Final Fantasy",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Mario",
+            "label": "Mario",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Pokemon",
+            "label": "Pokemon",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Sonic",
+            "label": "Sonic",
+            "n": 1,
+            "on": false,
+            "zero": false
+          }
+        ],
+        "theme": [
+          {
+            "v": "Action",
+            "label": "Action",
+            "n": 8,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Historical",
+            "label": "Historical",
+            "n": 8,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Comedy",
+            "label": "Comedy",
+            "n": 6,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Science fiction",
+            "label": "Science fiction",
+            "n": 6,
+            "on": false,
+            "zero": false
+          }
+        ],
+        "mode": [
+          {
+            "v": "Co-operative",
+            "label": "Co-operative",
+            "n": 7,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Multiplayer",
+            "label": "Multiplayer",
+            "n": 7,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Single player",
+            "label": "Single player",
+            "n": 7,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Split screen",
+            "label": "Split screen",
+            "n": 7,
+            "on": false,
+            "zero": false
+          }
+        ],
+        "perspective": [
+          {
+            "v": "Bird's eye view",
+            "label": "Bird's eye view",
+            "n": 7,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "First person",
+            "label": "First person",
+            "n": 7,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Side view",
+            "label": "Side view",
+            "n": 7,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Third person",
+            "label": "Third person",
+            "n": 7,
+            "on": false,
+            "zero": false
+          }
+        ],
+        "decade": [
+          {
+            "v": "1980s",
+            "label": "1980s",
+            "n": 4,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "1990s",
+            "label": "1990s",
+            "n": 11,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "2000s",
+            "label": "2000s",
+            "n": 7,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "2010s",
+            "label": "2010s",
+            "n": 4,
+            "on": false,
+            "zero": false
+          }
+        ],
+        "region": [
+          {
+            "v": "Japan",
+            "label": "Japan",
+            "n": 16,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "USA",
+            "label": "USA",
+            "n": 14,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Europe",
+            "label": "Europe",
+            "n": 12,
+            "on": false,
+            "zero": false
+          }
+        ]
+      }
+    },
+    {
+      "state": {
+        "name": "size window",
+        "ranges": {
+          "sizeMin": 1048576,
+          "sizeMax": 1073741824
+        }
+      },
+      "shown": [
+        51,
+        64,
+        33,
+        56,
+        48,
+        32,
+        41,
+        44,
+        42,
+        9,
+        10,
+        45,
+        46,
+        39,
+        40,
+        57,
+        52,
+        47,
+        62,
+        58,
+        43,
+        38,
+        30,
+        31,
+        11,
+        36,
+        12,
+        26,
+        53,
+        27,
+        7,
+        8,
+        63,
+        54,
+        35,
+        50,
+        34,
+        13,
+        14,
+        15,
+        16,
+        22,
+        21,
+        49,
+        20,
+        19,
+        61,
+        28,
+        29,
+        60,
+        23,
+        24,
+        25,
+        55,
+        59,
+        17,
+        18,
+        37
+      ],
+      "facets": {
+        "system": [
+          {
+            "v": "nes",
+            "label": "Nintendo Entertainment System",
+            "n": 12,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "snes",
+            "label": "Super Nintendo",
+            "n": 8,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "gb",
+            "label": "Game Boy",
+            "n": 7,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "gba",
+            "label": "Game Boy Advance",
+            "n": 4,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "n64",
+            "label": "Nintendo 64",
+            "n": 4,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "nds",
+            "label": "Nintendo DS",
+            "n": 4,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "wii",
+            "label": "Wii",
+            "n": 4,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "md",
+            "label": "Mega Drive",
+            "n": 3,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "ps2",
+            "label": "PlayStation 2",
+            "n": 3,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "sms",
+            "label": "Master System",
+            "n": 3,
+            "on": false,
+            "zero": false
+          },
+          {
+            "more": "1",
+            "label": "more…",
+            "n": "+4"
+          }
+        ],
+        "genre": [
+          {
+            "v": "Adventure",
+            "label": "Adventure",
+            "n": 10,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Racing",
+            "label": "Racing",
+            "n": 9,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Simulator",
+            "label": "Simulator",
+            "n": 9,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Arcade",
+            "label": "Arcade",
+            "n": 5,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Fighting",
+            "label": "Fighting",
+            "n": 5,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Music",
+            "label": "Music",
+            "n": 5,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Platform",
+            "label": "Platform",
+            "n": 5,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Role-playing (RPG)",
+            "label": "Role-playing (RPG)",
+            "n": 5,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Shooter",
+            "label": "Shooter",
+            "n": 5,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Sport",
+            "label": "Sport",
+            "n": 5,
+            "on": false,
+            "zero": false
+          },
+          {
+            "more": "1",
+            "label": "more…",
+            "n": "+2"
+          }
+        ],
+        "tag": [
+          {
+            "v": "Tag 01",
+            "label": "Tag 01",
+            "n": 7,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 08",
+            "label": "Tag 08",
+            "n": 7,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 15",
+            "label": "Tag 15",
+            "n": 7,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 50",
+            "label": "Tag 50",
+            "n": 7,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 57",
+            "label": "Tag 57",
+            "n": 7,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 64",
+            "label": "Tag 64",
+            "n": 7,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Unsorted",
+            "label": "Unsorted",
+            "n": 7,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 22",
+            "label": "Tag 22",
+            "n": 6,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 29",
+            "label": "Tag 29",
+            "n": 6,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Tag 36",
+            "label": "Tag 36",
+            "n": 6,
+            "on": false,
+            "zero": false
+          },
+          {
+            "more": "1",
+            "label": "more…",
+            "n": "+50"
+          }
+        ],
+        "franchise": [
+          {
+            "v": "Mario",
+            "label": "Mario",
+            "n": 5,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Mega Man",
+            "label": "Mega Man",
+            "n": 3,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Metroid",
+            "label": "Metroid",
+            "n": 3,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Dragon Quest",
+            "label": "Dragon Quest",
+            "n": 2,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Final Fantasy",
+            "label": "Final Fantasy",
+            "n": 2,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Pokemon",
+            "label": "Pokemon",
+            "n": 2,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Sonic",
+            "label": "Sonic",
+            "n": 2,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Street Fighter",
+            "label": "Street Fighter",
+            "n": 2,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Zelda",
+            "label": "Zelda",
+            "n": 2,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Castlevania",
+            "label": "Castlevania",
+            "n": 1,
+            "on": false,
+            "zero": false
+          },
+          {
+            "more": "1",
+            "label": "more…",
+            "n": "+2"
+          }
+        ],
+        "theme": [
+          {
+            "v": "Action",
+            "label": "Action",
+            "n": 10,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Fantasy",
+            "label": "Fantasy",
+            "n": 10,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Horror",
+            "label": "Horror",
+            "n": 10,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Science fiction",
+            "label": "Science fiction",
+            "n": 10,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Comedy",
+            "label": "Comedy",
+            "n": 9,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Historical",
+            "label": "Historical",
+            "n": 9,
+            "on": false,
+            "zero": false
+          }
+        ],
+        "mode": [
+          {
+            "v": "Co-operative",
+            "label": "Co-operative",
+            "n": 15,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Multiplayer",
+            "label": "Multiplayer",
+            "n": 15,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Single player",
+            "label": "Single player",
+            "n": 14,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Split screen",
+            "label": "Split screen",
+            "n": 14,
+            "on": false,
+            "zero": false
+          }
+        ],
+        "perspective": [
+          {
+            "v": "Bird's eye view",
+            "label": "Bird's eye view",
+            "n": 15,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "First person",
+            "label": "First person",
+            "n": 15,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Side view",
+            "label": "Side view",
+            "n": 14,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Third person",
+            "label": "Third person",
+            "n": 14,
+            "on": false,
+            "zero": false
+          }
+        ],
+        "decade": [
+          {
+            "v": "1980s",
+            "label": "1980s",
+            "n": 16,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "1990s",
+            "label": "1990s",
+            "n": 20,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "2000s",
+            "label": "2000s",
+            "n": 13,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "2010s",
+            "label": "2010s",
+            "n": 7,
+            "on": false,
+            "zero": false
+          }
+        ],
+        "region": [
+          {
+            "v": "USA",
+            "label": "USA",
+            "n": 28,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Europe",
+            "label": "Europe",
+            "n": 19,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "Japan",
+            "label": "Japan",
+            "n": 19,
+            "on": false,
+            "zero": false
+          },
+          {
+            "v": "World",
+            "label": "World",
+            "n": 10,
+            "on": false,
+            "zero": false
+          }
+        ]
+      }
+    },
+    {
+      "state": {
+        "name": "everything filtered out",
+        "q": "nothing-matches-this"
+      },
+      "shown": [],
+      "facets": {
+        "system": [
+          {
+            "empty": "—"
+          }
+        ],
+        "genre": [
+          {
+            "empty": "—"
+          }
+        ],
+        "tag": [
+          {
+            "empty": "—"
+          }
+        ],
+        "franchise": [
+          {
+            "empty": "—"
+          }
+        ],
+        "theme": [
+          {
+            "empty": "—"
+          }
+        ],
+        "mode": [
+          {
+            "empty": "—"
+          }
+        ],
+        "perspective": [
+          {
+            "empty": "—"
+          }
+        ],
+        "decade": [
+          {
+            "empty": "—"
+          }
+        ],
+        "region": [
+          {
+            "empty": "—"
+          }
+        ]
+      }
+    }
+  ]
+}

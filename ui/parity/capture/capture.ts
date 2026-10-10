@@ -8,6 +8,7 @@
  */
 import { fileURLToPath } from 'node:url'
 import { writeFixture } from '../fixture/fixture.ts'
+import { FACETS } from '../facets/facets.capture.ts'
 import { SEARCH } from '../search/search.capture.ts'
 
 export type Corpus = {
@@ -16,7 +17,7 @@ export type Corpus = {
   readonly capture: () => Promise<unknown>
 }
 
-export const CORPORA: readonly Corpus[] = [SEARCH]
+export const CORPORA: readonly Corpus[] = [SEARCH, FACETS]
 
 export async function captureAll(names: readonly string[]): Promise<string[]> {
   const unknown = names.filter((n) => !CORPORA.some((c) => c.name === n))
