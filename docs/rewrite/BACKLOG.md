@@ -52,7 +52,7 @@ they can only be taken while version 1 still runs.
 | ID | Story | Depends on | Acceptance | Tests |
 |---|---|---|---|---|
 | F0-S1 | Tag version 1 and record the tag in every fixture header | F0-S11 | Every fixture names one tag | `ui/parity/provenance/provenance.test.ts::every_fixture_names_a_tag` |
-| F0-S2 | Search grammar corpus: query string to parsed terms and clauses, over all 14 operator keys and all 6 comparators, quoted phrases and malformed input | F0-S1 | Version 1's `parseQuery` output is reproduced exactly | `ui/parity/search/search.capture.test.ts::grammar_corpus` |
+| F0-S2 | Search grammar corpus: query string to parsed terms and clauses, over all 13 operator keys and all 6 comparators, quoted phrases and malformed input | F0-S1 | Version 1's `parseQuery` output is reproduced exactly | `ui/parity/search/search.capture.test.ts::grammar_corpus` |
 | F0-S3 | Facet corpus: a synthetic library to facet counts, ordering, caps, zero retention and above-the-fold placement | F0-S1 | Counts and order match | `ui/parity/facets/facets.capture.test.ts::counts`, `::ordering`, `::caps`, `::zero_retained` |
 | F0-S4 | Twin corpus: title pairs to exact and loose clusters, including the known false pairs | F0-S1 | Clusters match, and loose pairs are marked loose | `ui/parity/twins/twins.capture.test.ts::exact`, `::loose`, `::known_non_pairs` |
 | F0-S5 | Sort corpus: titles to sort keys, covering accents, leading articles and digit runs | F0-S1 | Keys match, and 2 sorts before 10 | `ui/parity/sort/sort.capture.test.ts::keys` |
@@ -243,7 +243,7 @@ component, feature or function they cover.
 | ID | Story | Depends on | Acceptance | Tests |
 |---|---|---|---|---|
 | F11-S13 | `lib/format` | F0-S6 | The corpus reproduces | `ui/tests/parity/format.test.ts` |
-| F11-S14 | `lib/search`: 14 keys, 6 comparators | F0-S2 | The corpus reproduces | `ui/tests/parity/search.test.ts` |
+| F11-S14 | `lib/search`: 13 keys, 6 comparators | F0-S2 | The corpus reproduces | `ui/tests/parity/search.test.ts` |
 | F11-S15 | `lib/facets`: one-pass fail computation, caps, zero retention, above-the-fold chosen values | F0-S3 | The corpus reproduces | `ui/tests/parity/facets.test.ts` |
 | F11-S16 | `lib/sort` and `lib/scale` | F0-S5 | The corpus reproduces | `ui/tests/parity/sort.test.ts::keys`, `::scale` |
 | F11-S17 | `lib/windowing` as a hook: the ported algorithm, two-row overscan, one definition of the grid gap | F0-S7 | The corpus reproduces | `ui/tests/parity/windowing.test.ts` |

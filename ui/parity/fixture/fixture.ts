@@ -58,6 +58,10 @@ export function decode(value: unknown): unknown {
   return Object.fromEntries(entries.map(([k, v]) => [k, decode(v)]))
 }
 
+/** A value as it reads back from a fixture: plain, in this realm, special numbers kept. */
+export function normalise(value: unknown): unknown {
+  return decode(JSON.parse(JSON.stringify(encode(value))))
+}
 export function makeHeader(corpus: string): Header {
   return {
     tag: V1_TAG,

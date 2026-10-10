@@ -10,6 +10,7 @@
     "dev": "next dev",
     "build": "next build",
     "test:unit": "vitest run --project=unit",
+    "capture": "node --experimental-strip-types --disable-warning=ExperimentalWarning parity/capture/capture.ts",
     "lint": "eslint .",
     "format": "prettier --check .",
     "typecheck": "tsc --noEmit -p ."

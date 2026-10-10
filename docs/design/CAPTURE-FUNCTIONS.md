@@ -116,7 +116,7 @@ comment says so.
 
 | Function | Does | API | Owns | Destination |
 |---|---|---|---|---|
-| `parseQuery` | tokenises on whitespace with double-quoted phrases; recognises 14 operator keys with 6 comparators; numeric keys parse as float, `size` through `parseSize`, the rest as substring | | | `lib/search` and a parity fixture |
+| `parseQuery` | tokenises on whitespace with double-quoted phrases; recognises 13 operator keys with 6 comparators; numeric keys parse as float, `size` through `parseSize`, the rest as substring | | | `lib/search` and a parity fixture |
 | `num` | numeric accessor; `files` defaults to 1 | | | `lib/search` |
 | `matchClause` | applies one clause; `~` is a case-insensitive substring over a per-key pool; `≈` is within 5 per cent | | | `lib/search` |
 | `facetFail` | one pass returning the single facet a game fails, or `many`, or null. Serves both the result list and every facet's counts | | | `lib/facets` |

@@ -152,7 +152,7 @@ committed fixture file and a loader.
 | ID | Story | Acceptance | Tests |
 |---|---|---|---|
 | F0-S1 | Tag version 1 and record the tag in every fixture header | every fixture names one tag | `ui/tests/parity/test_provenance.ts::every_fixture_names_a_tag` |
-| F0-S2 | Search grammar corpus: query string to parsed terms and clauses, over all 14 operator keys and all 6 comparators, quoted phrases, and malformed input | version 1's `parseQuery` output is reproduced exactly | `ui/tests/parity/search.test.ts::grammar_corpus` |
+| F0-S2 | Search grammar corpus: query string to parsed terms and clauses, over all 13 operator keys and all 6 comparators, quoted phrases, and malformed input | version 1's `parseQuery` output is reproduced exactly | `ui/tests/parity/search.test.ts::grammar_corpus` |
 | F0-S3 | Facet corpus: a synthetic library to facet counts, ordering, caps, zero retention and above-the-fold placement | counts and order match | `ui/tests/parity/facets.test.ts::counts`, `::ordering`, `::caps`, `::zero_retained` |
 | F0-S4 | Twin corpus: title pairs to exact and loose clusters, including the known false pairs | clusters match, and loose pairs are marked loose | `ui/tests/parity/twins.test.ts::exact`, `::loose`, `::known_non_pairs` |
 | F0-S5 | Sort corpus: titles to sort keys, covering accents, leading articles and digit runs | keys match, and 2 sorts before 10 | `ui/tests/parity/sort.test.ts::keys` |
@@ -197,7 +197,7 @@ reissued, so the Notion board's F11 rows are re-seeded from this file.
 | ID | Story | Depends on | Tests |
 |---|---|---|---|
 | F11-S13 | `lib/format` pinned by the F0 corpus | F0-S6 | `ui/tests/parity/format.test.ts` |
-| F11-S14 | `lib/search`: the 14 keys and 6 comparators, pinned by the F0 corpus | F0-S2 | `ui/tests/parity/search.test.ts` |
+| F11-S14 | `lib/search`: the 13 keys and 6 comparators, pinned by the F0 corpus | F0-S2 | `ui/tests/parity/search.test.ts` |
 | F11-S15 | `lib/facets`: the one-pass fail computation, caps, zero retention, above-the-fold chosen values | F0-S3 | `ui/tests/parity/facets.test.ts` |
 | F11-S16 | `lib/sort` and `lib/scale`: the sort key and the log size scale | F0-S5 | `ui/tests/parity/sort.test.ts`, `::scale` |
 | F11-S17 | `lib/windowing` as a hook, the ported algorithm with a two-row overscan and one definition of the grid gap | F0-S7 | `ui/tests/parity/windowing.test.ts` |
