@@ -10,7 +10,7 @@ from collections.abc import Sequence
 
 import pytest
 
-from tools.verify import STAGES, Stage, Step, main
+from tools.verify import STAGES, Stage, Step, main, step_env
 
 
 def _always_ok(_step: Step) -> int:
@@ -143,6 +143,13 @@ def test_ui_stage_runs_the_three_layers_in_order() -> None:
         ("vitest", "run", "--project=storybook"),
         ("playwright", "test"),
     ]
+
+
+def test_steps_name_the_gates_python() -> None:
+    """The contrast oracle runs under the same interpreter as the gate."""
+    import sys
+
+    assert step_env()["ROMSYNC_PYTHON"] == sys.executable
 
 
 def _stages_with_no_missing_inputs() -> Sequence[Stage]:

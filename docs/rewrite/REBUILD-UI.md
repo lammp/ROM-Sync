@@ -390,7 +390,7 @@ ui/
         tokens.css            generated, never hand-edited
         tokens.test.ts
         tokens.parity.test.ts
-        __fixtures__/tokens.v1.json
+        __fixtures__/palette.v1.json
       contrast/
         contrast.ts
         contrast.test.ts
@@ -493,7 +493,7 @@ rebuilt function to the fixture belongs to that function's F11 story.
 | F0-S6 | `ui/parity/format/format.capture.test.ts::corpus` | `ui/src/lib/format/__fixtures__/format.v1.json` |
 | F0-S7 | `ui/parity/windowing/windowing.capture.test.ts::bounds` | `ui/src/lib/windowing/__fixtures__/windowing.v1.json` |
 | F0-S8 | `ui/parity/progress/progress.capture.test.ts::corpus` | `ui/src/lib/progress/__fixtures__/progress.v1.json` |
-| F0-S9 | `ui/parity/tokens/tokens.capture.test.ts::as_is_snapshot` | `ui/src/design/tokens/__fixtures__/tokens.v1.json` |
+| F0-S9 | `ui/parity/tokens/tokens.capture.test.ts::as_is_snapshot` | `ui/src/design/tokens/__fixtures__/palette.v1.json` |
 | F0-S10 | `ui/parity/provenance/provenance.test.ts::no_owner_data` | every fixture above |
 | F0-S11 | `ui/structure/toolchain/toolchain.test.ts::unit_project_runs` | none |
 

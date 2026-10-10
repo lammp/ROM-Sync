@@ -1,0 +1,306 @@
+{
+  "header": {
+    "tag": "parity-source-v1",
+    "commit": "eeb055f836f867924dacde413ae2a2660590332d",
+    "source": "ROM-Sync/ui/app.js",
+    "corpus": "tokens",
+    "locale": "en-US"
+  },
+  "cases": {
+    "tokens": {
+      "--bg": "#121317",
+      "--bg2": "#1a1c22",
+      "--bg3": "#23262e",
+      "--line": "#2e323c",
+      "--fg": "#e6e7ea",
+      "--muted": "#8b90a0",
+      "--accent": "#4f8cff",
+      "--ok": "#3ccf7a",
+      "--warn": "#f0b23d",
+      "--bad": "#f2575d",
+      "--chip": "#2b3040",
+      "--tile": "150px"
+    },
+    "pairs": [
+      {
+        "label": "body text on page",
+        "fg": "#e6e7ea",
+        "bg": "#121317",
+        "ratio": 15.01,
+        "target": 4.5,
+        "verdict": "PASS",
+        "correction": ""
+      },
+      {
+        "label": "body text on panel",
+        "fg": "#e6e7ea",
+        "bg": "#1a1c22",
+        "ratio": 13.77,
+        "target": 4.5,
+        "verdict": "PASS",
+        "correction": ""
+      },
+      {
+        "label": "body text on raised",
+        "fg": "#e6e7ea",
+        "bg": "#23262e",
+        "ratio": 12.23,
+        "target": 4.5,
+        "verdict": "PASS",
+        "correction": ""
+      },
+      {
+        "label": "body text on selected row",
+        "fg": "#e6e7ea",
+        "bg": "#2a3a5c",
+        "ratio": 9.14,
+        "target": 4.5,
+        "verdict": "PASS",
+        "correction": ""
+      },
+      {
+        "label": "detail summary",
+        "fg": "#cfd2da",
+        "bg": "#1a1c22",
+        "ratio": 11.26,
+        "target": 4.5,
+        "verdict": "PASS",
+        "correction": ""
+      },
+      {
+        "label": "muted text on page",
+        "fg": "#8b90a0",
+        "bg": "#121317",
+        "ratio": 5.83,
+        "target": 4.5,
+        "verdict": "PASS",
+        "correction": ""
+      },
+      {
+        "label": "muted text on panel",
+        "fg": "#8b90a0",
+        "bg": "#1a1c22",
+        "ratio": 5.35,
+        "target": 4.5,
+        "verdict": "PASS",
+        "correction": ""
+      },
+      {
+        "label": "muted text on raised",
+        "fg": "#8b90a0",
+        "bg": "#23262e",
+        "ratio": 4.75,
+        "target": 4.5,
+        "verdict": "PASS",
+        "correction": ""
+      },
+      {
+        "label": "device state line",
+        "fg": "#9aa3ad",
+        "bg": "#1a1c22",
+        "ratio": 6.66,
+        "target": 4.5,
+        "verdict": "PASS",
+        "correction": ""
+      },
+      {
+        "label": "device figure label",
+        "fg": "#8b939d",
+        "bg": "#1a1c22",
+        "ratio": 5.48,
+        "target": 4.5,
+        "verdict": "PASS",
+        "correction": ""
+      },
+      {
+        "label": "device figure value",
+        "fg": "#e6e9ee",
+        "bg": "#1a1c22",
+        "ratio": 13.99,
+        "target": 4.5,
+        "verdict": "PASS",
+        "correction": ""
+      },
+      {
+        "label": "link and accent text",
+        "fg": "#4f8cff",
+        "bg": "#1a1c22",
+        "ratio": 5.29,
+        "target": 4.5,
+        "verdict": "PASS",
+        "correction": ""
+      },
+      {
+        "label": "ok text",
+        "fg": "#3ccf7a",
+        "bg": "#1a1c22",
+        "ratio": 8.43,
+        "target": 4.5,
+        "verdict": "PASS",
+        "correction": ""
+      },
+      {
+        "label": "warn text",
+        "fg": "#f0b23d",
+        "bg": "#1a1c22",
+        "ratio": 9.03,
+        "target": 4.5,
+        "verdict": "PASS",
+        "correction": ""
+      },
+      {
+        "label": "bad text",
+        "fg": "#f2575d",
+        "bg": "#1a1c22",
+        "ratio": 5.11,
+        "target": 4.5,
+        "verdict": "PASS",
+        "correction": ""
+      },
+      {
+        "label": "ok pill",
+        "fg": "#8ef0b4",
+        "bg": "#1f4d33",
+        "ratio": 7.05,
+        "target": 4.5,
+        "verdict": "PASS",
+        "correction": ""
+      },
+      {
+        "label": "warn pill",
+        "fg": "#ffd98a",
+        "bg": "#4d3d1f",
+        "ratio": 7.76,
+        "target": 4.5,
+        "verdict": "PASS",
+        "correction": ""
+      },
+      {
+        "label": "bad pill",
+        "fg": "#ff9aa0",
+        "bg": "#4d1f24",
+        "ratio": 6.75,
+        "target": 4.5,
+        "verdict": "PASS",
+        "correction": ""
+      },
+      {
+        "label": "toast text",
+        "fg": "#ffffff",
+        "bg": "#2a3a5c",
+        "ratio": 11.3,
+        "target": 4.5,
+        "verdict": "PASS",
+        "correction": ""
+      },
+      {
+        "label": "primary button label",
+        "fg": "#ffffff",
+        "bg": "#4f8cff",
+        "ratio": 3.22,
+        "target": 4.5,
+        "verdict": "FAIL",
+        "correction": "#292929"
+      },
+      {
+        "label": "segmented active label",
+        "fg": "#ffffff",
+        "bg": "#4f8cff",
+        "ratio": 3.22,
+        "target": 4.5,
+        "verdict": "FAIL",
+        "correction": "#292929"
+      },
+      {
+        "label": "system file active row label",
+        "fg": "#ffffff",
+        "bg": "#4f8cff",
+        "ratio": 3.22,
+        "target": 4.5,
+        "verdict": "FAIL",
+        "correction": "#292929"
+      },
+      {
+        "label": "selection tick glyph",
+        "fg": "#006622",
+        "bg": "#3ccf7a",
+        "ratio": 3.56,
+        "target": 4.5,
+        "verdict": "FAIL",
+        "correction": "#00541c"
+      },
+      {
+        "label": "twin duplicate glyph",
+        "fg": "#1a1206",
+        "bg": "#f0b23d",
+        "ratio": 9.83,
+        "target": 4.5,
+        "verdict": "PASS",
+        "correction": ""
+      },
+      {
+        "label": "control border on page",
+        "fg": "#2e323c",
+        "bg": "#121317",
+        "ratio": 1.45,
+        "target": 3,
+        "verdict": "FAIL",
+        "correction": "#5a6175"
+      },
+      {
+        "label": "control border on panel",
+        "fg": "#2e323c",
+        "bg": "#1a1c22",
+        "ratio": 1.33,
+        "target": 3,
+        "verdict": "FAIL",
+        "correction": "#5e677b"
+      },
+      {
+        "label": "control border on raised",
+        "fg": "#2e323c",
+        "bg": "#23262e",
+        "ratio": 1.18,
+        "target": 3,
+        "verdict": "FAIL",
+        "correction": "#666f85"
+      },
+      {
+        "label": "meter track on panel",
+        "fg": "#23262e",
+        "bg": "#1a1c22",
+        "ratio": 1.13,
+        "target": 3,
+        "verdict": "FAIL",
+        "correction": "#5e677c"
+      },
+      {
+        "label": "lamp off on panel",
+        "fg": "#3a3f47",
+        "bg": "#1a1c22",
+        "ratio": 1.61,
+        "target": 3,
+        "verdict": "FAIL",
+        "correction": "#5f6875"
+      },
+      {
+        "label": "lamp on on panel",
+        "fg": "#33d17a",
+        "bg": "#1a1c22",
+        "ratio": 8.55,
+        "target": 3,
+        "verdict": "PASS",
+        "correction": ""
+      },
+      {
+        "label": "lamp trouble on panel",
+        "fg": "#e05252",
+        "bg": "#1a1c22",
+        "ratio": 4.46,
+        "target": 3,
+        "verdict": "PASS",
+        "correction": ""
+      }
+    ]
+  }
+}

@@ -18,6 +18,7 @@ the tree rather than asked for.
 from __future__ import annotations
 
 import argparse
+import os
 import shutil
 import subprocess
 import sys
@@ -239,6 +240,15 @@ STAGES: tuple[Stage, ...] = (
 Runner = Callable[[Step], int]
 
 
+def step_env() -> dict[str, str]:
+    """The environment every step runs with.
+
+    `ROMSYNC_PYTHON` names this interpreter, so an interface test that asks a
+    Python tool for its answer (the contrast oracle) uses the gate's Python.
+    """
+    return {**os.environ, "ROMSYNC_PYTHON": sys.executable}
+
+
 def run_with_subprocess(step: Step) -> int:
     """Run a step for real, from the folder it names.
 
@@ -249,7 +259,7 @@ def run_with_subprocess(step: Step) -> int:
     resolved = shutil.which(argv[0])
     if resolved:
         argv[0] = resolved
-    completed = subprocess.run(argv, cwd=ROOT / step.cwd, check=False)
+    completed = subprocess.run(argv, cwd=ROOT / step.cwd, env=step_env(), check=False)
     return completed.returncode
 
 
