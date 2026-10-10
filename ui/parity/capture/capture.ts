@@ -15,6 +15,7 @@ import { SEARCH } from '../search/search.capture.ts'
 import { SORT } from '../sort/sort.capture.ts'
 import { TOKENS } from '../tokens/tokens.capture.ts'
 import { writeTitles } from '../titles/titles.capture.ts'
+import { writePairs } from '../pairs/pairs.capture.ts'
 import { TWINS } from '../twins/twins.capture.ts'
 import { WINDOWING } from '../windowing/windowing.capture.ts'
 
@@ -36,7 +37,10 @@ export const CORPORA: readonly Corpus[] = [
 ]
 
 /** Corpora that live outside `ui/` and are written in place, not as fixtures. */
-export const WRITERS: Readonly<Record<string, () => Promise<string>>> = { titles: writeTitles }
+export const WRITERS: Readonly<Record<string, () => Promise<string>>> = {
+  titles: writeTitles,
+  pairs: writePairs,
+}
 
 export async function captureAll(names: readonly string[]): Promise<string[]> {
   const written: string[] = []

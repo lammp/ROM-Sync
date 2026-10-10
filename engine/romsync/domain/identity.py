@@ -13,6 +13,8 @@ were captured from version 1 itself.
 from __future__ import annotations
 
 import re
+from collections.abc import Iterable
+from dataclasses import dataclass
 
 ROMAN = {
     "ii": "2",
@@ -64,3 +66,56 @@ def loose_key(title: str) -> str:
     while len(w) > 1 and w[-1] in RELEASE_FORMS:
         w.pop()
     return "".join(w)
+
+
+@dataclass(frozen=True, slots=True)
+class TwinCandidate:
+    """A game as twin clustering sees it.
+
+    `text` is the canonical name when the game has one, otherwise its title:
+    the canonical name links far more cross-system releases than an
+    identifier, because a metadata service issues one identifier per
+    platform release.
+    """
+
+    id: int
+    system: str
+    text: str
+
+
+@dataclass(frozen=True, slots=True)
+class Twin:
+    """Another game that is the same game on another system.
+
+    `loose` means the two meet only once release forms are stripped, so the
+    pairing is offered, never assumed.
+    """
+
+    id: int
+    loose: bool
+
+
+def build_twins(candidates: Iterable[TwinCandidate]) -> dict[int, tuple[Twin, ...]]:
+    """Each game's twins on other systems. Games with none are absent."""
+    games = list(candidates)
+    exact: dict[str, list[TwinCandidate]] = {}
+    loose: dict[str, list[TwinCandidate]] = {}
+    for game in games:
+        for groups, key in ((exact, strict_key(game.text)), (loose, loose_key(game.text))):
+            if key:
+                groups.setdefault(key, []).append(game)
+    exact_of = {member.id: group for group in exact.values() for member in group}
+    twins: dict[int, tuple[Twin, ...]] = {}
+    for group in loose.values():
+        if len(group) < 2:
+            continue
+        for game in group:
+            mine = {other.id for other in exact_of.get(game.id, [])}
+            others = tuple(
+                Twin(other.id, other.id not in mine)
+                for other in group
+                if other.id != game.id and other.system != game.system
+            )
+            if others:
+                twins[game.id] = others
+    return twins
