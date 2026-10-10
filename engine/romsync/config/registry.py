@@ -172,10 +172,10 @@ SETTINGS: tuple[Setting, ...] = (
     Setting(
         "plan.free_space_margin",
         "int",
-        256 * 1024 * 1024,
+        512 * 1024 * 1024,
         "Headroom kept free on a destination after a sync.",
         minimum=0,
-        maximum=16 * 1024 * 1024 * 1024,
+        maximum=8 * 1024 * 1024 * 1024,
         unit=" bytes",
     ),
     Setting(

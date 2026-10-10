@@ -12,6 +12,7 @@ from romsync.domain.errors import (
     ConfigWrongType,
     UnknownConfigKey,
 )
+from romsync.domain.planning import FULL_MARGIN
 
 #: SPEC section 7 names the minimum coverage. Each of these must be declared.
 REQUIRED_KEYS = (
@@ -201,3 +202,10 @@ def test_defaults_are_available_for_a_first_run() -> None:
 
 def test_a_setting_with_no_bounds_skips_the_range_check() -> None:
     assert Setting("x.y", "int", 0, "no bounds declared here at all").validate(10**9) == 10**9
+
+
+def test_free_space_margin_is_version_ones() -> None:
+    """The plan's margin key is declared, with version 1's 512 MB and the design's range."""
+    setting = REGISTRY.get(FULL_MARGIN)
+    assert setting.default == 512 * 1024 * 1024
+    assert (setting.minimum, setting.maximum) == (0, 8 * 1024 * 1024 * 1024)
