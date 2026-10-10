@@ -30,5 +30,12 @@ jobs:
           python-version: "3.12"
       - name: Install the development toolchain
         run: python -m pip install --upgrade pip && python -m pip install -e ".[dev]"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: ui/package-lock.json
+      - name: Install the interface toolchain
+        run: npm ci --prefix ui
       - name: Verify
         run: python tools/verify.py

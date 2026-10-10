@@ -1,0 +1,10 @@
+node_modules
+.next
+out
+storybook-static
+test-results
+playwright-report
+coverage
+package-lock.json
+next-env.d.ts
+src/**/__fixtures__

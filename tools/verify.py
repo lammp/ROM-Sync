@@ -65,12 +65,14 @@ class Step:
 
     `needs` are paths that must exist for the step to have anything to do.
     `tool` is an executable that must be on the path once the step is live.
+    `cwd` is the folder, relative to the repository, the step runs from.
     """
 
     argv: tuple[str, ...]
     needs: tuple[str, ...] = ()
     needs_glob: tuple[str, ...] = ()
     tool: str | None = None
+    cwd: str = "."
 
     def missing_input(self) -> str | None:
         missing = next((p for p in self.needs if not (ROOT / p).exists()), None)
@@ -101,9 +103,10 @@ STAGES: tuple[Stage, ...] = (
         (
             Step((_py(), "-m", "ruff", "format", "--check", *PY_TREES)),
             Step(
-                ("npx", "--no-install", "prettier", "--check", "ui"),
+                ("npx", "--no-install", "prettier", "--check", "."),
                 needs=("ui/package.json",),
                 tool="npx",
+                cwd="ui",
             ),
         ),
     ),
@@ -113,7 +116,10 @@ STAGES: tuple[Stage, ...] = (
         (
             Step((_py(), "-m", "ruff", "check", *PY_TREES)),
             Step(
-                ("npx", "--no-install", "eslint", "ui"), needs=("ui/package.json",), tool="npx"
+                ("npx", "--no-install", "eslint", "."),
+                needs=("ui/package.json",),
+                tool="npx",
+                cwd="ui",
             ),
         ),
     ),
@@ -123,9 +129,10 @@ STAGES: tuple[Stage, ...] = (
         (
             Step((_py(), "-m", "mypy")),
             Step(
-                ("npx", "--no-install", "tsc", "--noEmit", "-p", "ui"),
+                ("npx", "--no-install", "tsc", "--noEmit", "-p", "."),
                 needs=("ui/tsconfig.json",),
                 tool="npx",
+                cwd="ui",
             ),
         ),
     ),
@@ -174,7 +181,22 @@ STAGES: tuple[Stage, ...] = (
         "Every interface test passes",
         (
             Step(
-                ("npx", "--no-install", "vitest", "run"), needs=("ui/package.json",), tool="npx"
+                ("npx", "--no-install", "vitest", "run", "--project=unit"),
+                needs=("ui/vitest.config.mts",),
+                tool="npx",
+                cwd="ui",
+            ),
+            Step(
+                ("npx", "--no-install", "vitest", "run", "--project=storybook"),
+                needs=("ui/.storybook/main.ts",),
+                tool="npx",
+                cwd="ui",
+            ),
+            Step(
+                ("npx", "--no-install", "playwright", "test"),
+                needs=("ui/playwright.config.ts",),
+                tool="npx",
+                cwd="ui",
             ),
         ),
     ),
@@ -218,8 +240,16 @@ Runner = Callable[[Step], int]
 
 
 def run_with_subprocess(step: Step) -> int:
-    """Run a step for real."""
-    completed = subprocess.run(list(step.argv), cwd=ROOT, check=False)
+    """Run a step for real, from the folder it names.
+
+    The executable is resolved through the path first, because on Windows
+    `npx` is `npx.cmd` and a bare name is not found without the shell.
+    """
+    argv = list(step.argv)
+    resolved = shutil.which(argv[0])
+    if resolved:
+        argv[0] = resolved
+    completed = subprocess.run(argv, cwd=ROOT / step.cwd, check=False)
     return completed.returncode
 
 

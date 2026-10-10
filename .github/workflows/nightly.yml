@@ -25,6 +25,11 @@ jobs:
           python-version: "3.12"
       - name: Install the development toolchain, resolved fresh
         run: python -m pip install --upgrade pip && python -m pip install -e ".[dev]" --upgrade
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Install the interface toolchain, resolved fresh
+        run: npm install --no-package-lock --prefix ui
       - name: Verify
         run: python tools/verify.py
       - name: Random test order

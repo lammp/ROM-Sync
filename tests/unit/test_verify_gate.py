@@ -127,6 +127,24 @@ def test_a_missing_tool_fails_rather_than_skips(
     assert "not on the path" in capsys.readouterr().out
 
 
+def test_interface_steps_run_inside_ui() -> None:
+    """The interface toolchain finds its configuration from ui/, so it runs there."""
+    for stage in STAGES:
+        for step in stage.steps:
+            if step.tool == "npx":
+                assert step.cwd == "ui", f"{stage.name}: {step.argv} runs outside ui/"
+
+
+def test_ui_stage_runs_the_three_layers_in_order() -> None:
+    """REBUILD-UI.md section 14.4: unit, then component, then end to end."""
+    ui = next(s for s in STAGES if s.name == "ui")
+    assert [step.argv[2:] for step in ui.steps] == [
+        ("vitest", "run", "--project=unit"),
+        ("vitest", "run", "--project=storybook"),
+        ("playwright", "test"),
+    ]
+
+
 def _stages_with_no_missing_inputs() -> Sequence[Stage]:
     """The real stage list with the `needs` stripped.
 
