@@ -13,6 +13,7 @@ import { FORMAT } from '../format/format.capture.ts'
 import { SEARCH } from '../search/search.capture.ts'
 import { SORT } from '../sort/sort.capture.ts'
 import { TWINS } from '../twins/twins.capture.ts'
+import { WINDOWING } from '../windowing/windowing.capture.ts'
 
 export type Corpus = {
   readonly name: string
@@ -20,7 +21,7 @@ export type Corpus = {
   readonly capture: () => Promise<unknown>
 }
 
-export const CORPORA: readonly Corpus[] = [SEARCH, FACETS, TWINS, SORT, FORMAT]
+export const CORPORA: readonly Corpus[] = [SEARCH, FACETS, TWINS, SORT, FORMAT, WINDOWING]
 
 export async function captureAll(names: readonly string[]): Promise<string[]> {
   const unknown = names.filter((n) => !CORPORA.some((c) => c.name === n))
