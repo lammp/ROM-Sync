@@ -92,10 +92,13 @@ def test_no_illegal_edges() -> None:
 
 
 def test_domain_imports_the_standard_library_only() -> None:
+    """The domain imports the standard library and its own modules, nothing else."""
     domain = ROOT / "engine" / "romsync" / "domain"
     for path in sorted(domain.rglob("*.py")):
         for target, line in _imports(path):
-            assert not target.startswith("romsync."), (
+            if target == "romsync.domain" or target.startswith("romsync.domain."):
+                continue
+            assert not target.startswith("romsync"), (
                 f"{path.name}:{line} imports {target}: the domain is pure"
             )
 
