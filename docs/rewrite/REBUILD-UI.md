@@ -78,7 +78,7 @@ route keyed on runtime data follows the same rule.
 | The build writes a manifest enumerating every emitted file. The engine serves by exact-name lookup against that manifest and joins nothing from a request, which is `SPEC.md` S2. `BACKLOG.md` F10-S6 is amended to read the manifest the export produces. |
 | The desktop shell loads `http://127.0.0.1:{port}/` and navigates client-side thereafter. |
 
-## 4. Layout
+## 4. Layout (superseded by section 14)
 
 ```
 ui/
@@ -133,7 +133,9 @@ That last rule is what stops the 40-literal drift from happening a second time.
 | TanStack Query | 5.x | polling, invalidation and cancellation on navigation, which is `BACKLOG.md` F11-S10 solved structurally rather than by hand |
 | CSS Modules | built in | zero config, and the token layer stays inspectable |
 | openapi-typescript and openapi-fetch | current | D24 |
-| Vitest and Testing Library | current | `TESTING.md` section 6 |
+| Vitest and Testing Library | 5.x | the unit layer, section 14.4 |
+| Storybook | 10.x, with `@storybook/nextjs-vite`, `@storybook/addon-vitest` and `@storybook/addon-a11y` | the component layer, section 14.4 |
+| Playwright | current | the end-to-end layer, and the browser for the component layer |
 
 Not Tailwind. A utility framework dissolves the token layer into class names
 and makes the design system a second source of truth, which D25 forbids.
@@ -264,7 +266,7 @@ stands unchanged.
 | TypeScript, strict mode, React on Next.js with the App Router, built by `next build` with `output: 'export'` to a static bundle the engine serves by manifest lookup. |
 | No Node.js process exists at runtime. The export is produced at build time and frozen into the release artefact. |
 | No route takes a runtime identifier as a path segment. |
-| Components are organised as atoms, molecules, organisms, templates and pages, with placement decided by the two mechanical questions in `CAPTURE-COMPONENTS.md` section 1 and enforced by `ui/tests/layering.test.ts`. |
+| Components are organised as atoms, molecules, organisms, templates and pages, with placement decided by the two mechanical questions in `CAPTURE-COMPONENTS.md` section 1 and enforced by `ui/structure/layering/layering.test.ts`. |
 | Every design token is declared once in `ui/src/design/tokens.ts`. No colour literal exists anywhere else, enforced by a test. |
 | The published design system is generated from that same token source. |
 | The API client is generated from the OpenAPI document. No hand-written fetch wrapper. |
@@ -353,3 +355,178 @@ the artefact works on a machine that is not this one, and the first release is
 then tagged `v0.1.0`. No `v0.0.1-prerelease` is cut. An installer that only
 works on its author's PC is not an installer, and publishing one invites a bug
 report that is really a configuration report.
+
+## 14. Structure and test layers, decided
+
+Supersedes the layout in section 4 and the test paths in section 7 and in
+[BACKLOG.md](BACKLOG.md) F11, which follow the map in 14.6.
+
+### 14.1 Layout
+
+```
+ui/
+  src/
+    app/                      routes only: a page imports one template and features
+      layout.tsx  page.tsx
+      devices/page.tsx  system-files/page.tsx  settings/page.tsx  recover/page.tsx
+    features/                 assembled components: compose components, bind store and queries
+      library/
+        LibraryView/
+          LibraryView.tsx
+          LibraryView.stories.tsx
+          LibraryView.test.tsx
+      devices/  system-files/  settings/  recover/
+    components/
+      atoms/
+        Button/
+          Button.tsx
+          Button.module.css
+          Button.stories.tsx
+          Button.test.tsx
+      molecules/  organisms/  templates/
+    design/
+      tokens/
+        tokens.ts             the single source of every token
+        tokens.css            generated, never hand-edited
+        tokens.test.ts
+        tokens.parity.test.ts
+        __fixtures__/tokens.v1.json
+      contrast/
+        contrast.ts
+        contrast.test.ts
+    lib/
+      search/
+        search.ts
+        search.test.ts
+        search.parity.test.ts
+        __fixtures__/grammar.v1.json
+      facets/  twins/  sort/  scale/  format/  progress/  windowing/
+      parity/
+        provenance.test.ts
+      api/                    generated client, never hand-edited
+    store/
+      store.ts  store.test.ts
+      slices/<slice>/<slice>.ts  <slice>.test.ts
+    queries/
+      <group>/<group>.ts  <group>.test.ts
+  structure/
+    toolchain/toolchain.test.ts
+    layering/layering.test.ts
+    companions/companions.test.ts
+  parity/                     the version 1 capture: v1/, provenance/, one folder per corpus
+    v1/v1.ts  v1/v1.test.ts
+    search/search.capture.ts  search/search.capture.test.ts
+  e2e/
+    <flow>/<flow>.spec.ts
+  .storybook/
+    main.ts  preview.ts  vitest.setup.ts
+  vitest.config.mts           two projects: unit and storybook
+  playwright.config.ts
+  next.config.ts
+```
+
+### 14.2 Grouping
+
+| Requirement |
+|---|
+| Every component, feature and function has its own folder. Its source, styles, stories, tests and fixtures sit in that folder and nowhere else. |
+| Every component and feature folder holds `<Name>.tsx`, `<Name>.stories.tsx` and `<Name>.test.tsx`. |
+| Every function folder under `lib/`, `design/`, `store/` and `queries/` holds `<name>.ts` and `<name>.test.ts`. |
+| A function with a version 1 corpus also holds `<name>.parity.test.ts` and `__fixtures__/<corpus>.v1.json`. |
+| A `.test.tsx` reuses its component's stories through `composeStories`. It never rebuilds their props. |
+| No barrel `index.ts` exists. An import names the file it needs. |
+| End-to-end specs are grouped by user flow under `ui/e2e/`. |
+| `ui/structure/companions/companions.test.ts` fails on any folder missing a companion. A folder becomes a function folder when it holds a source module; a folder holding only `__fixtures__/` waits for its function. |
+
+### 14.3 Separation of duties
+
+| Layer | Holds | May import |
+|---|---|---|
+| `components/atoms` | presentational components: props in, callbacks out | React, `design/`, pure functions in `lib/` |
+| `components/molecules` | presentational compositions of atoms | atoms, and what atoms may import |
+| `components/organisms` | presentational compositions of molecules and atoms | molecules, atoms, and what they may import |
+| `components/templates` | page skeletons: slots only | atoms, React |
+| `features/` | assembled components: compose components and bind them to data | components, `store/`, `queries/`, `lib/` |
+| `app/` | routes | templates, features |
+
+| Requirement |
+|---|
+| Only `features/` reads or writes the store or calls a query. |
+| No component under `components/` imports `store/`, `queries/`, `lib/api/` or `features/`. |
+| No feature imports another feature. |
+| Any module outside `store/` holding mutable module-level state fails the build. |
+| Any colour literal outside `design/tokens/tokens.ts` fails the build. |
+| `ui/structure/layering/layering.test.ts` enforces this table and fails on each of six planted violations. |
+
+### 14.4 Test layers
+
+| # | Layer | Tools | Files | Runs in |
+|---|---|---|---|---|
+| 1 | Unit | Vitest 5, Testing Library, jsdom | `*.test.ts`, `*.test.tsx`, `*.parity.test.ts` | Vitest project `unit` |
+| 2 | Component | Storybook 10 with `@storybook/nextjs-vite`, `@storybook/addon-vitest`, `@storybook/addon-a11y` | `*.stories.tsx`: every story renders, its play function's assertions hold, and its accessibility check passes | Vitest project `storybook`, browser mode, Chromium |
+| 3 | End-to-end | Playwright | `e2e/<flow>/<flow>.spec.ts` | the `next build` static export served locally, the engine faked over HTTP |
+
+Gate stage 9 runs the three layers in that order and fails on the first failure.
+
+### 14.5 F0 lands on this structure
+
+F0 needs the `unit` project before F11 exists. F0-S11 builds the `ui` package
+with Next.js, strict TypeScript and the `unit` project, and no application
+code. F0-S1 depends on F0-S11. F11-S1 completes the package with Storybook,
+Playwright and the static export.
+
+F0 captures version 1's output; it does not build the functions that must
+reproduce it. Each corpus has a capture folder under `ui/parity/` holding the
+capture module and its test, which re-runs version 1 from the tag
+`parity-source-v1` and proves the committed fixture equals version 1's output.
+The fixture itself sits with the function that must reproduce it, in that
+function's `__fixtures__/` folder. The `<name>.parity.test.ts` that holds the
+rebuilt function to the fixture belongs to that function's F11 story.
+
+| Story | Capture test | Fixture |
+|---|---|---|
+| F0-S1 | `ui/parity/provenance/provenance.test.ts::every_fixture_names_a_tag` | every fixture below |
+| F0-S2 | `ui/parity/search/search.capture.test.ts::grammar_corpus` | `ui/src/lib/search/__fixtures__/grammar.v1.json` |
+| F0-S3 | `ui/parity/facets/facets.capture.test.ts::counts`, `::ordering`, `::caps`, `::zero_retained` | `ui/src/lib/facets/__fixtures__/facets.v1.json` |
+| F0-S4 | `ui/parity/twins/twins.capture.test.ts::exact`, `::loose`, `::known_non_pairs` | `ui/src/lib/twins/__fixtures__/twins.v1.json` |
+| F0-S5 | `ui/parity/sort/sort.capture.test.ts::keys` | `ui/src/lib/sort/__fixtures__/sort.v1.json` |
+| F0-S6 | `ui/parity/format/format.capture.test.ts::corpus` | `ui/src/lib/format/__fixtures__/format.v1.json` |
+| F0-S7 | `ui/parity/windowing/windowing.capture.test.ts::bounds` | `ui/src/lib/windowing/__fixtures__/windowing.v1.json` |
+| F0-S8 | `ui/parity/progress/progress.capture.test.ts::corpus` | `ui/src/lib/progress/__fixtures__/progress.v1.json` |
+| F0-S9 | `ui/parity/tokens/tokens.capture.test.ts::as_is_snapshot` | `ui/src/design/tokens/__fixtures__/tokens.v1.json` |
+| F0-S10 | `ui/parity/provenance/provenance.test.ts::no_owner_data` | every fixture above |
+| F0-S11 | `ui/structure/toolchain/toolchain.test.ts::unit_project_runs` | none |
+
+Version 1 is loaded once, by `ui/parity/v1/v1.ts`, from the tag and never from
+the working tree. The grid measurement in Chromium belongs to F11-S26:
+`ui/src/components/organisms/VirtualGameGrid/VirtualGameGrid.stories.tsx::MeasuredRowHeight`.
+
+### 14.6 Test path map for F11
+
+| Path named in F11 | Path that holds the test |
+|---|---|
+| `ui/tests/{atoms,molecules,organisms,templates}/<x>` | the companion `.test.tsx` and `.stories.tsx` in that component's folder |
+| `ui/tests/parity/<x>` | `ui/src/lib/<x>/<x>.parity.test.ts` |
+| `ui/tests/design/<x>` | `ui/src/design/<x>/<x>.test.ts` |
+| `ui/tests/pages/<x>` | the companion tests of the feature behind that page, and `ui/e2e/<x>/<x>.spec.ts` |
+| `ui/tests/a11y/<x>` for one component | that component's play function, with the accessibility check on every story |
+| `ui/tests/a11y/<x>` across pages | `ui/e2e/a11y/<x>.spec.ts` |
+| `ui/tests/store.test.ts`, `ui/tests/queries/<x>`, `ui/tests/api/<x>` | the companion test in `store/`, `queries/<x>/` or `lib/api/` |
+| `ui/tests/build.test.ts`, `ui/tests/layering.test.ts` | `ui/structure/toolchain/`, `ui/structure/layering/` |
+
+### 14.7 Counts
+
+168 stories: section 12's 167 plus F0-S11.
+
+### 14.8 Build cadence
+
+| Requirement |
+|---|
+| A function is built with its unit tests. `vitest run --project=unit <its folder>` passes before the next function is started. |
+| A component is built with its stories and its unit test. `vitest run --project=storybook <its folder>` and `vitest run --project=unit <its folder>` both pass before the next component is started. |
+| A feature is built after every component it composes passes. Its stories and its unit test pass before the next feature is started. |
+| The assembled application is tested with Playwright, against the built static export with the engine faked over HTTP. |
+| Each Playwright spec names one function the application performs for its user, drives the application as that user does, and asserts the outcome the user sees. |
+| A Playwright assertion reads what a user reads: roles, accessible names and visible text. It never reads component internals, the store, or a test identifier standing in for a role. |
+| Every function in `docs/design/CAPTURE-FUNCTIONS.md` section 3 whose destination is in the interface has at least one Playwright spec asserting its outcome. |
+| A failure at any step stops the build at that step. The next function, component or feature is not started until it passes. |

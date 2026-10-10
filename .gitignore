@@ -194,18 +194,18 @@
 !/pyproject.toml
 
 !/engine/
-/engine/*
+/engine/**
 !/engine/**/
 !/engine/**/*.py
 
 !/api/
-/api/*
+/api/**
 !/api/**/
 !/api/**/*.py
 !/api/openapi.json
 
 !/desktop/
-/desktop/*
+/desktop/**
 !/desktop/**/
 !/desktop/**/*.py
 
@@ -214,7 +214,7 @@
 !/tools/*.py
 
 !/tests/
-/tests/*
+/tests/**
 !/tests/**/
 !/tests/**/*.py
 !/tests/**/.gitkeep
@@ -225,6 +225,32 @@
 !/.github/workflows/
 /.github/workflows/*
 !/.github/workflows/*.yml
+
+# The interface. Source, configuration and fixtures only. Dependencies, build
+# output, Storybook output and test results stay out.
+!/ui/
+/ui/**
+!/ui/**/
+!/ui/package.json
+!/ui/package-lock.json
+!/ui/tsconfig.json
+!/ui/eslint.config.mjs
+!/ui/.prettierrc.json
+!/ui/.prettierignore
+!/ui/**/*.ts
+!/ui/**/*.tsx
+!/ui/**/*.mts
+!/ui/**/*.css
+!/ui/src/**/__fixtures__/*.json
+/ui/node_modules/
+/ui/.next/
+/ui/out/
+/ui/storybook-static/
+/ui/test-results/
+/ui/playwright-report/
+/ui/coverage/
+/ui/next-env.d.ts
+/ui/**/*.tsbuildinfo
 
 # Never, whatever the rules above say.
 .venv/

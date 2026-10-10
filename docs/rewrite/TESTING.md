@@ -33,7 +33,7 @@ python tools/verify.py
 | 6 | `contract` | `pytest tests/contract` against `dest_fake` and `dest_volume` | any failure |
 | 7 | `golden` | `pytest tests/golden` | any mismatch against a committed golden |
 | 8 | `e2e_fake` | `pytest tests/e2e_fake` | any failure |
-| 9 | `ui` | `vitest run` over `ui/tests` | any failure |
+| 9 | `ui` | Vitest project `unit`, Vitest project `storybook` in Chromium, then Playwright over the built static export, in that order | any failure |
 | 10 | `coverage` | the coverage gates in section 7 | any gate below its floor |
 | 11 | `openapi` | `tools/openapi_check.py`: regenerate the document and diff it against the committed copy | any undeclared drift |
 | 12 | `publication` | `_tools/repo-lint.py --strict` and the secret scan over the working tree | any finding |
@@ -86,8 +86,7 @@ tests/
     device_tree.yaml       the fixture device inventory
     igdb/                  recorded metadata responses
     v1.db                  a version 1 database, synthetic
-ui/
-  tests/                   vitest, jsdom, the generated client mocked
+ui/                       tests sit beside the code they cover: REBUILD-UI.md section 14
 ```
 
 | Requirement |
@@ -110,7 +109,7 @@ marker. A test that needs an exception is a test in the wrong tree.
 | Randomness | Seeded. The seed is printed on failure. Any unseeded use fails the determinism self-test. |
 | Network | A socket guard replaces `socket.socket` and raises `NetworkInTest` naming the test. There is no allow-list. Every HTTP interaction in the suite goes through a fake or a recorded response. |
 | Subprocess | A guard replaces `subprocess.Popen` and `subprocess.run` and raises unless the test declares the executable it expects. ADB and MTP command construction is tested by asserting on the argument vector, never by running a binary. |
-| Filesystem | `tmp_path` only. A guard fails any test that writes outside it, or that reads an absolute path not under it, with the two documented exceptions: the repository's own `tests/fixtures` tree, read-only, and `sys.prefix`. |
+| Filesystem | `tmp_path` only. A guard fails any test that writes outside it. A read may come only from the repository, the interpreter (`sys.prefix`), the import path or a temporary directory; any other path, a real home directory included, is refused. |
 | Data directory | Set to a temp directory per test. A test that can see the developer's real data directory is a test that will pass on one machine. |
 | Environment | A fixed, minimal environment. The Windows home, application-data and temporary-directory variables are all redirected inside `tmp_path`, so no test can resolve a real user path. |
 | Ordering | `pytest-randomly` with a fixed seed in the gate, and a nightly run with a random seed. Order dependence is a defect, found by the nightly and fixed, not worked around by ordering. |
@@ -247,8 +246,11 @@ the real browser. Those are section 8.
 
 ### Interface
 
-`ui/tests`, vitest over jsdom, the generated client mocked at the fetch
-boundary.
+Three layers, specified in [REBUILD-UI.md](REBUILD-UI.md) section 14: unit
+tests under jsdom, component tests built from stories and run in Chromium,
+and Playwright over the built static export. The generated client is mocked
+at the fetch boundary in the first two; the third fakes the engine over HTTP.
+The order in which they run during a build is REBUILD-UI.md section 14.8.
 
 | Requirement |
 |---|

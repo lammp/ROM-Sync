@@ -45,22 +45,23 @@ first component exists.
 
 ## F0 Parity capture from version 1
 
-Runs first. With D2 retired by [REBUILD-UI.md](REBUILD-UI.md), these fixtures
+Runs first. Test and fixture locations: REBUILD-UI.md section 14.5. With D2 retired by [REBUILD-UI.md](REBUILD-UI.md), these fixtures
 are the only thing holding the rebuilt interface to version 1's behaviour, and
 they can only be taken while version 1 still runs.
 
 | ID | Story | Depends on | Acceptance | Tests |
 |---|---|---|---|---|
-| F0-S1 | Tag version 1 and record the tag in every fixture header | none | Every fixture names one tag | `ui/tests/parity/provenance.test.ts::every_fixture_names_a_tag` |
-| F0-S2 | Search grammar corpus: query string to parsed terms and clauses, over all 14 operator keys and all 6 comparators, quoted phrases and malformed input | F0-S1 | Version 1's `parseQuery` output is reproduced exactly | `ui/tests/parity/search.test.ts::grammar_corpus` |
-| F0-S3 | Facet corpus: a synthetic library to facet counts, ordering, caps, zero retention and above-the-fold placement | F0-S1 | Counts and order match | `ui/tests/parity/facets.test.ts::counts`, `::ordering`, `::caps`, `::zero_retained` |
-| F0-S4 | Twin corpus: title pairs to exact and loose clusters, including the known false pairs | F0-S1 | Clusters match, and loose pairs are marked loose | `ui/tests/parity/twins.test.ts::exact`, `::loose`, `::known_non_pairs` |
-| F0-S5 | Sort corpus: titles to sort keys, covering accents, leading articles and digit runs | F0-S1 | Keys match, and 2 sorts before 10 | `ui/tests/parity/sort.test.ts::keys` |
-| F0-S6 | Format corpus: bytes to strings, size strings to bytes, seconds to ETA, including negatives and nulls | F0-S1 | Output matches character for character | `ui/tests/parity/format.test.ts::corpus` |
-| F0-S7 | Grid layout corpus: viewport width and tile size to column count, measured row height and window bounds | F0-S1 | The same window is computed | `ui/tests/parity/windowing.test.ts::bounds` |
-| F0-S8 | Progress corpus: run samples to percentage, rate and ETA, including the run-banking transition and the 99 per cent cap | F0-S1 | Identical arithmetic | `ui/tests/parity/progress.test.ts::corpus` |
-| F0-S9 | Token and contrast snapshot: the as-is table from `docs/design/CAPTURE-TOKENS.md`, committed, so the correction set reads as a diff | F0-S1 | The snapshot reproduces the 31 measured pairs, and `_tools/contrast.py --strict` is the oracle | `ui/tests/parity/tokens.test.ts::as_is_snapshot` |
-| F0-S10 | Every corpus is synthetic or built from published game titles. No path, filename, hash, device identifier or catalogue row from the owner's library appears in any fixture | F0-S2 | The publication lint passes over `ui/tests/fixtures` | `_tools/repo-lint.py --strict`, `ui/tests/parity/provenance.test.ts::no_owner_data` |
+| F0-S1 | Tag version 1 and record the tag in every fixture header | F0-S11 | Every fixture names one tag | `ui/parity/provenance/provenance.test.ts::every_fixture_names_a_tag` |
+| F0-S2 | Search grammar corpus: query string to parsed terms and clauses, over all 14 operator keys and all 6 comparators, quoted phrases and malformed input | F0-S1 | Version 1's `parseQuery` output is reproduced exactly | `ui/parity/search/search.capture.test.ts::grammar_corpus` |
+| F0-S3 | Facet corpus: a synthetic library to facet counts, ordering, caps, zero retention and above-the-fold placement | F0-S1 | Counts and order match | `ui/parity/facets/facets.capture.test.ts::counts`, `::ordering`, `::caps`, `::zero_retained` |
+| F0-S4 | Twin corpus: title pairs to exact and loose clusters, including the known false pairs | F0-S1 | Clusters match, and loose pairs are marked loose | `ui/parity/twins/twins.capture.test.ts::exact`, `::loose`, `::known_non_pairs` |
+| F0-S5 | Sort corpus: titles to sort keys, covering accents, leading articles and digit runs | F0-S1 | Keys match, and 2 sorts before 10 | `ui/parity/sort/sort.capture.test.ts::keys` |
+| F0-S6 | Format corpus: bytes to strings, size strings to bytes, seconds to ETA, including negatives and nulls | F0-S1 | Output matches character for character | `ui/parity/format/format.capture.test.ts::corpus` |
+| F0-S7 | Grid layout corpus: viewport width and tile size to column count, measured row height and window bounds | F0-S1 | The same window is computed | `ui/parity/windowing/windowing.capture.test.ts::bounds` |
+| F0-S8 | Progress corpus: run samples to percentage, rate and ETA, including the run-banking transition and the 99 per cent cap | F0-S1 | Identical arithmetic | `ui/parity/progress/progress.capture.test.ts::corpus` |
+| F0-S9 | Token and contrast snapshot: the as-is table from `docs/design/CAPTURE-TOKENS.md`, committed, so the correction set reads as a diff | F0-S1 | The snapshot reproduces the 31 measured pairs, and `_tools/contrast.py --strict` is the oracle | `ui/parity/tokens/tokens.capture.test.ts::as_is_snapshot` |
+| F0-S10 | Every corpus is synthetic or built from published game titles. No path, filename, hash, device identifier or catalogue row from the owner's library appears in any fixture | F0-S2 | The publication lint passes over every `__fixtures__` folder under `ui/src` | `_tools/repo-lint.py --strict`, `ui/parity/provenance/provenance.test.ts::no_owner_data` |
+| F0-S11 | The `ui` package: Next.js, strict TypeScript and the Vitest `unit` project, with no application code | none | `vitest run --project=unit` runs and passes | `ui/structure/toolchain/toolchain.test.ts::unit_project_runs` |
 
 ## F1 Foundations and the verification gate
 
@@ -211,16 +212,18 @@ they can only be taken while version 1 still runs.
 
 Five bands. Band E is not a phase: each of its tests fails the gate from the
 moment the first component exists until the whole interface satisfies it.
-Specified in [REBUILD-UI.md](REBUILD-UI.md).
+Specified in [REBUILD-UI.md](REBUILD-UI.md). Every `ui/tests/...` path below
+resolves through the map in REBUILD-UI.md section 14.6: tests sit beside the
+component, feature or function they cover.
 
 ### Band A, foundations
 
 | ID | Story | Depends on | Acceptance | Tests |
 |---|---|---|---|---|
-| F11-S1 | Next.js project, App Router, strict TypeScript, static export, pinned versions, exported into the engine's static directory | F10-S2 | `next build` emits a static bundle and no runtime Node process exists | `ui/tests/build.test.ts::exports_static`, `::no_node_at_runtime` |
+| F11-S1 | Next.js project, App Router, strict TypeScript, static export, pinned versions, exported into the engine's static directory | F10-S2, F0-S11 | `next build` emits a static bundle, no runtime Node process exists, and the unit, component and end-to-end layers each run | `ui/structure/toolchain/toolchain.test.ts::exports_static`, `::no_node_at_runtime`, `::three_layers_run` |
 | F11-S2 | `tokens.ts` as the single source, generating `tokens.css` and types, carrying the corrected values from `CAPTURE-TOKENS.md` section 6 | F0-S9 | No colour literal exists outside `tokens.ts` | `ui/tests/design/tokens.test.ts::generated_matches_source` |
 | F11-S3 | Contrast test over the generated token set, text at 4.5 and non-text at 3.0, computed rather than asserted | F11-S2 | Every pair passes, focus ring included | `ui/tests/design/contrast.test.ts::aa_all_pairs`, `::focus_ring_on_every_surface` |
-| F11-S4 | Layering test: atoms cannot import molecules, organisms, the store, the queries or the client; templates import atoms only; the colour-literal rule | F11-S1 | Six planted violations each fail | `ui/tests/layering.test.ts::no_illegal_edges`, `::detects_planted_violations` |
+| F11-S4 | Layering and companion tests: the import rules in REBUILD-UI.md section 14.3, the colour-literal rule, and every component, feature and function folder holding its companions | F11-S1 | Six planted violations each fail, and a folder missing a companion fails | `ui/structure/layering/layering.test.ts::no_illegal_edges`, `::detects_planted_violations`; `ui/structure/companions/companions.test.ts::every_folder_complete` |
 | F11-S5 | Generated API client, checked against the committed OpenAPI document | F10-S2 | The committed client matches the document | `ui/tests/api/client.test.ts::generated_matches_openapi` |
 | F11-S6 | One Zustand store with six slices | F11-S1 | No module outside the store holds mutable module state | `ui/tests/store.test.ts::single_container`, `::no_module_state` |
 | F11-S7 | Query layer and the job-polling hook, cancelled on navigation | F11-S5 | A poller stops on navigation and no test touches the network | `ui/tests/queries/job.test.ts::cancels_on_navigation`, `::no_network_in_tests` |
@@ -327,6 +330,6 @@ Specified in [REBUILD-UI.md](REBUILD-UI.md).
 | | |
 |---|---|
 | Features | 16 |
-| Stories | 167 |
+| Stories | 168 |
 | Security requirements from SPEC section 12, each covered by at least one story | 9 |
 | Stories whose acceptance needs a real device or a clean machine, and therefore sit outside the gate | F6-S5, F6-S6, F13-S1, F13-S2, F13-S6; each is marked for manual verification, and [TESTING.md](TESTING.md) section 8 states what the gate does not prove |
