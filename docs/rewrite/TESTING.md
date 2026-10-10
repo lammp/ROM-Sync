@@ -75,7 +75,7 @@ tests/
     test_dest_contract.py  parameterised over every destination adapter
   golden/
     test_title_identity.py test_twins.py test_plan.py test_matcher.py
-    data/                  the committed golden files
+    data/                  the committed goldens, as Python data modules
   e2e_fake/
     test_first_run.py      the whole engine, every adapter faked
   fixtures/

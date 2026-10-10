@@ -8,7 +8,8 @@ with that stage's number, so a failure is identifiable from the exit code
 alone.
 
 There is deliberately no flag that relaxes a stage. `--stage` runs one for a
-human mid-edit and is not the gate; `--list` prints the stages. A step whose
+human mid-edit and is not the gate; `--list` prints the stages;
+`--regenerate-goldens` rewrites the goldens from version 1 and runs no stage. A step whose
 inputs do not exist yet reports that it skipped and names what is missing, and
 un-skips the day those inputs appear, which `tests/unit/test_verify_gate.py`
 asserts. That is the only form of skipping there is, and it is computed from
@@ -263,15 +264,35 @@ def run_with_subprocess(step: Step) -> int:
     return completed.returncode
 
 
+def regenerate_goldens() -> list[Path]:
+    """Rewrite the goldens from version 1. Never a gate stage."""
+    if str(ROOT) not in sys.path:
+        sys.path.insert(0, str(ROOT))
+    from tools import goldens
+
+    return goldens.regenerate()
+
+
 def main(
     argv: Sequence[str] | None = None,
     runner: Runner = run_with_subprocess,
     stages: Sequence[Stage] = STAGES,
+    regenerate: Callable[[], list[Path]] = regenerate_goldens,
 ) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--stage", help="run one stage, for a human mid-edit")
     parser.add_argument("--list", action="store_true", help="print the stages")
+    parser.add_argument(
+        "--regenerate-goldens",
+        action="store_true",
+        help="rewrite the goldens from version 1; not the gate",
+    )
     args = parser.parse_args(argv)
+
+    if args.regenerate_goldens:
+        for path in regenerate():
+            print(f"wrote {path.relative_to(ROOT)}")
+        return 0
 
     if args.list:
         for number, stage in enumerate(stages, start=1):

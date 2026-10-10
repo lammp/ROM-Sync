@@ -87,6 +87,22 @@ def test_one_stage_can_be_run_alone() -> None:
     assert main(["--stage", "lint"], runner=_always_ok, stages=stages) == 0
 
 
+def test_regenerating_goldens_runs_no_stage(capsys: pytest.CaptureFixture[str]) -> None:
+    """Regenerating is never the gate: it writes the goldens and stops."""
+    from tools.verify import ROOT
+
+    ran: list[Step] = []
+    written = [ROOT / "tests" / "golden" / "data" / "plan.py"]
+
+    def runner(step: Step) -> int:
+        ran.append(step)
+        return 0
+
+    assert main(["--regenerate-goldens"], runner=runner, regenerate=lambda: written) == 0
+    assert ran == []
+    assert "plan.py" in capsys.readouterr().out
+
+
 def test_there_is_no_flag_that_relaxes_a_stage() -> None:
     """The gate's own promise: no --skip, no --fast, no --no-verify."""
     import inspect

@@ -37,6 +37,8 @@ select = ["E", "F", "W", "I", "UP", "B", "SIM", "RUF"]
 # Corpora are tables: one row per line, however long the title.
 # They also hold the characters they test, ambiguous quotation marks included.
 "tests/fixtures/*.py" = ["E501", "RUF001"]
+# Goldens are generated tables, one fact per line.
+"tests/golden/data/*.py" = ["E501"]
 
 [tool.ruff.lint.isort]
 known-first-party = ["romsync", "romsync_api", "romsync_desktop", "tools", "tests"]
