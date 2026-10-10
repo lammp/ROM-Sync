@@ -315,54 +315,53 @@ repository, versioned, and a release that skips a row says which row and why.
 
 ## 10. The autonomous run
 
-The gate exists so that a story can be implemented without supervision and the
-result can be trusted. This is how that run is bounded.
+The gate is the harness. A story is built by looping on its tests until the
+gate passes deterministically; the run then commits the story and continues
+with the next one without waiting for instruction.
 
 ### Per story
 
 1. Read the story row in [BACKLOG.md](BACKLOG.md): identifier, dependencies,
    acceptance, named tests.
-2. Refuse to start if any dependency story is not closed. The dependency graph
-   is not advisory.
-3. Create a branch named for the story identifier.
-4. Write the named tests first, and run the gate. The new tests must fail, and
-   they must fail for the stated reason, not on an import error. A test that
-   passes before the implementation is a test of nothing, and the run stops
-   there.
-5. Implement the smallest change that makes them pass.
-6. Run the full gate. Not the new tests, the gate.
-7. Open one pull request, titled with the story identifier, describing what
-   changed, naming any golden diff and its reason, and listing any manual
-   verification the story's row requires.
-8. Stop. A green gate closes the story's code; a human closes the story.
+2. Start only when every dependency story is closed.
+3. Write the named tests first, and run them. Each new test fails, and fails
+   for the stated reason, not on an import error. A test that passes before
+   the implementation is rewritten until it fails for its reason.
+4. Implement the smallest change that makes them pass, following the build
+   cadence in [REBUILD-UI.md](REBUILD-UI.md) section 14.8 for interface work.
+5. Run the full gate. On a failure, fix the cause and run the full gate again.
+   Repeat until it passes.
+6. Run the story's tests three more times under random order and random
+   seeds. A result that differs between runs is a defect, fixed before the
+   story closes.
+7. Commit the story to `v2`, titled with the story identifier, naming any
+   golden diff and its reason, any test changed and the drift that required
+   it, and any manual verification the story's row requires.
+8. Continue with the next story in dependency order.
 
-### Stop conditions
+### Changing a test
 
-The run halts and reports, rather than continuing or working around, when any
-of these holds:
+| Requirement |
+|---|
+| A test is changed only when it no longer states the intent of the specification because of an earlier change: a moved path, a renamed module, a decision recorded since it was written. The commit names the test and the change it follows. |
+| A test is never changed to make an implementation pass. |
+| A test whose assertion was wrong about version 1 or the specification from the start is corrected, and the commit states what it wrongly asserted. |
 
-| # | Condition |
-|---|---|
-| 1 | The gate is red after the implementation, twice, for the same stage. |
-| 2 | The gate was already red before any change was made. The tree is not a base to build on. |
-| 3 | A named test passed before the implementation existed. |
-| 4 | Closing the story would need a change to [SPEC.md](SPEC.md). The specification is amended by a human, in its own pull request, and only then is the story reattempted. |
-| 5 | Closing the story would need a coverage floor lowered, a pragma added without a reason, a determinism control disabled, a stage skipped, or `--no-verify` used. |
-| 6 | Closing the story would need a golden regenerated for a reason the run cannot state in one sentence. |
-| 7 | The story's acceptance needs a real device, or any other row of section 8. |
-| 8 | Two stories would have to be implemented together. Either the dependency graph is wrong, which is a specification change, or the split is wrong, which is a backlog change. Both are human decisions. |
-| 9 | The change would touch a file outside the story's stated scope, other than the test files it names. |
-| 10 | A security requirement from SPEC section 12 would be weakened, in any degree, for any reason. |
+### Decisions
 
-Conditions 4, 8 and 10 are the ones that matter. An autonomous run that is
-allowed to amend the specification to make a story pass is not building this
-application; it is building whichever application is easiest to finish.
+| Requirement |
+|---|
+| A defect found while building is fixed and the run continues. |
+| A correction to the specification that restores its own stated intent, such as a miscount or a stale path, is made in the story's commit and recorded there. |
+| A change to what the application does for its user, a deviation from version 1's behaviour, or a weakening of any requirement in SPEC section 12 is a decision for Matt. It is recorded as PENDING ACTION in the run's report, and the run continues with stories it does not block. |
+| A story whose acceptance needs a real device, or any other row of section 8, is built to the gate and marked for manual verification. |
 
 ### What a story may not do
 
 | Requirement |
 |---|
-| Never relax the gate to land work. The gate's definition changes only in a pull request whose stated purpose is to change the gate. |
+| Never relax the gate to land work: no floor lowered, no stage skipped, no determinism control disabled, no pragma without a reason, no `--no-verify`. The gate's definition changes only in a commit whose stated purpose is to change the gate. |
+| Never regenerate a golden without a one-sentence reason in the commit. |
 | Never commit a fixture derived from real library, device or credential data. |
 | Never write to any path outside the repository and `tmp_path`. |
 | Never hard-delete. Removals in the development tree follow the same rule as the application's: they move to the Recycle Bin. |

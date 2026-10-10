@@ -304,6 +304,7 @@ Parity is the constraint, so every departure is listed here or it is a defect.
 | The settings page is rebuilt, not ported | already specified separately in `SETTINGS.md` |
 | Capacity thresholds arrive from the engine | `SPEC.md` section 7 |
 | Job results stop being rendered as `JSON.stringify` | `SPEC.md` section 8 |
+| A chosen facet value is always drawn, even when it ranks past the sixty-value cap | version 1 drops it from the list, so it can neither be seen nor cleared there; pinned as found by the facets corpus, case "a tag past the cap" |
 
 ## 11. Recover is routed in
 
