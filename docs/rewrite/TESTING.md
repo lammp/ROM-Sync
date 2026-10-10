@@ -79,13 +79,14 @@ tests/
   e2e_fake/
     test_first_run.py      the whole engine, every adapter faked
   fixtures/
-    titles.tsv             the title corpus
-    scoring.tsv            the matcher corpus
-    escapes.txt            the path escape corpus
-    store_tree.yaml        the fixture store
-    device_tree.yaml       the fixture device inventory
-    igdb/                  recorded metadata responses
-    v1.db                  a version 1 database, synthetic
+    titles.py              the title corpus
+    twins.py               the twin pairs and non-pairs
+    scoring.py             the matcher corpus
+    escapes.py             the path escape corpus
+    store_tree.py          the fixture store
+    device_tree.py         the fixture device inventory
+    igdb/                  recorded metadata responses, as modules
+    v1_db.py               builds a synthetic version 1 database at test time
 ui/                       tests sit beside the code they cover: REBUILD-UI.md section 14
 ```
 
@@ -154,19 +155,20 @@ whoever writes the first test.
 
 | Corpus | File | Content | Minimum |
 |---|---|---|---|
-| Titles | `fixtures/titles.tsv` | raw title, expected strict key, expected loose key, a comment naming the property it pins | 400 rows, covering roman numerals, leetspeak, ampersands, apostrophes, region tags, revision tags, disc tags, edition words, articles, subtitle colons, and non-Latin script |
-| Twins | derived from the title corpus | known cross-system pairs, and known false pairs that must not cluster | 60 pairs and 40 non-pairs, the non-pairs including sequels, remakes and same-series different-game |
-| Matcher | `fixtures/scoring.tsv` | candidate title, platform, year, expected score band, expected accept or reject at the pinned thresholds | 200 rows, including the deliberate near-misses that the 0.55 threshold was chosen to exclude |
-| Escapes | `fixtures/escapes.txt` | one path per line, every one of which must raise `PathEscape` | the corpus in SPEC section 3, plus a separator inside a name, a drive-qualified absolute, a UNC path, a trailing dot, a reserved device name, a symlink out of the root, an overlong name, and a mixed-separator form |
-| Store tree | `fixtures/store_tree.yaml` | systems, game files, folder games, multi-disc sets, a `bios` folder, an unmanaged folder, an unreadable system file, a zero-byte file, a name at the path length limit | every branch the scanner has |
-| Device tree | `fixtures/device_tree.yaml` | a matching inventory, plus an emulator state folder, a folder that is not a store system, and a partially transferred `.part` file | every branch the planner has |
-| Version 1 database | `fixtures/v1.db` | synthetic, built by a script in `tools/`, with an unversioned schema | the import tool's full input surface |
+| Titles | `fixtures/titles.py` | raw title, expected strict key, expected loose key, a comment naming the property it pins | 400 rows, covering roman numerals, leetspeak, ampersands, apostrophes, region tags, revision tags, disc tags, edition words, articles, subtitle colons, and non-Latin script |
+| Twins | `fixtures/twins.py`, titles drawn from the title corpus's properties | known cross-system pairs, and known false pairs that must not cluster | 60 pairs and 40 non-pairs, the non-pairs including sequels, remakes and same-series different-game |
+| Matcher | `fixtures/scoring.py` | candidate title, platform, year, expected score band, expected accept or reject at the pinned thresholds | 200 rows, including the deliberate near-misses that the 0.55 threshold was chosen to exclude |
+| Escapes | `fixtures/escapes.py` | one path per line, every one of which must raise `PathEscape` | the corpus in SPEC section 3, plus a separator inside a name, a drive-qualified absolute, a UNC path, a trailing dot, a reserved device name, a symlink out of the root, an overlong name, and a mixed-separator form |
+| Store tree | `fixtures/store_tree.py` | systems, game files, folder games, multi-disc sets, a `bios` folder, an unmanaged folder, an unreadable system file, a zero-byte file, a name at the path length limit | every branch the scanner has |
+| Device tree | `fixtures/device_tree.py` | a matching inventory, plus an emulator state folder, a folder that is not a store system, and a partially transferred `.part` file | every branch the planner has |
+| Version 1 database | `fixtures/v1_db.py` | synthetic, built at test time into the test's temporary directory, with an unversioned schema; no database file is committed | the import tool's full input surface |
 
 | Requirement |
 |---|
 | Every title in every corpus is a real, published game title, which is public fact and not library data. No row is taken from, or derived from, the author's catalogue, and no corpus contains a path, a filename from a real store, or a hash of a real file. |
 | A corpus row carries the property it pins. A row nobody can explain is deleted, not kept for coverage. |
 | A fixture tree is built by code from a declarative file. No binary tree is committed, and no test depends on a tree that a human assembled by hand. |
+| Corpora and fixture trees are Python data modules under `tests/fixtures/`. The publication rules return only source to `tests/`, and the publication lint refuses `.tsv`, `.csv` and database files outright. |
 | Fixture media is generated: a file of a stated size filled with a seeded pattern. No real ROM, image, BIOS, firmware or key file exists anywhere in the repository, including under `tests/`. `_tools/repo-lint.py` asserts this, and stage 12 runs it. |
 
 ## 6. The test kinds, and what each is for
