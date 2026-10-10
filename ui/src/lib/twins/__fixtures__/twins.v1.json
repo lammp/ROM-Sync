@@ -1,0 +1,796 @@
+{
+  "header": {
+    "tag": "parity-source-v1",
+    "commit": "eeb055f836f867924dacde413ae2a2660590332d",
+    "source": "ROM-Sync/ui/app.js",
+    "corpus": "twins",
+    "locale": "en-AU"
+  },
+  "cases": [
+    {
+      "id": 1,
+      "title": "The Legend of Zelda: Majora's Mask",
+      "igdb": null,
+      "system": "n64",
+      "exact": "legendofzeldamajorasmask",
+      "loose": "legendofzeldamajorasmask",
+      "twins": [
+        {
+          "id": 2,
+          "loose": true
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "title": "The Legend of Zelda: Majora's Mask 3D",
+      "igdb": null,
+      "system": "n3ds",
+      "exact": "legendofzeldamajorasmask3d",
+      "loose": "legendofzeldamajorasmask",
+      "twins": [
+        {
+          "id": 1,
+          "loose": true
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "title": "Donkey Kong Country Returns",
+      "igdb": null,
+      "system": "wii",
+      "exact": "donkeykongcountryreturns",
+      "loose": "donkeykongcountryreturns",
+      "twins": [
+        {
+          "id": 4,
+          "loose": true
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "title": "Donkey Kong Country Returns 3D",
+      "igdb": null,
+      "system": "n3ds",
+      "exact": "donkeykongcountryreturns3d",
+      "loose": "donkeykongcountryreturns",
+      "twins": [
+        {
+          "id": 3,
+          "loose": true
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "title": "Earthworm Jim",
+      "igdb": null,
+      "system": "snes",
+      "exact": "earthwormjim",
+      "loose": "earthwormjim",
+      "twins": [
+        {
+          "id": 6,
+          "loose": true
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "title": "Earthworm Jim 3D",
+      "igdb": null,
+      "system": "n64",
+      "exact": "earthwormjim3d",
+      "loose": "earthwormjim",
+      "twins": [
+        {
+          "id": 5,
+          "loose": true
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "title": "Okami",
+      "igdb": null,
+      "system": "ps2",
+      "exact": "okami",
+      "loose": "okami",
+      "twins": [
+        {
+          "id": 8,
+          "loose": true
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "title": "Okami HD",
+      "igdb": null,
+      "system": "ps3",
+      "exact": "okamihd",
+      "loose": "okami",
+      "twins": [
+        {
+          "id": 7,
+          "loose": true
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "title": "Dragon Quest XI",
+      "igdb": null,
+      "system": "ps3",
+      "exact": "dragonquestxi",
+      "loose": "dragonquestxi",
+      "twins": []
+    },
+    {
+      "id": 10,
+      "title": "Dragon Quest XI S Definitive Edition",
+      "igdb": null,
+      "system": "ps2",
+      "exact": "dragonquestxisdefinitiveedition",
+      "loose": "dragonquestxis",
+      "twins": []
+    },
+    {
+      "id": 11,
+      "title": "Mega Man 2",
+      "igdb": null,
+      "system": "nes",
+      "exact": "megaman2",
+      "loose": "megaman2",
+      "twins": [
+        {
+          "id": 12,
+          "loose": false
+        }
+      ]
+    },
+    {
+      "id": 12,
+      "title": "Mega Man II",
+      "igdb": null,
+      "system": "gb",
+      "exact": "megaman2",
+      "loose": "megaman2",
+      "twins": [
+        {
+          "id": 11,
+          "loose": false
+        }
+      ]
+    },
+    {
+      "id": 13,
+      "title": "Punch-Out!!",
+      "igdb": null,
+      "system": "nes",
+      "exact": "punchoutii",
+      "loose": "punchoutii",
+      "twins": [
+        {
+          "id": 14,
+          "loose": false
+        }
+      ]
+    },
+    {
+      "id": 14,
+      "title": "Punch-Out!!",
+      "igdb": null,
+      "system": "wii",
+      "exact": "punchoutii",
+      "loose": "punchoutii",
+      "twins": [
+        {
+          "id": 13,
+          "loose": false
+        }
+      ]
+    },
+    {
+      "id": 15,
+      "title": "Ratchet & Clank",
+      "igdb": null,
+      "system": "ps2",
+      "exact": "ratchetandclank",
+      "loose": "ratchetandclank",
+      "twins": [
+        {
+          "id": 16,
+          "loose": false
+        }
+      ]
+    },
+    {
+      "id": 16,
+      "title": "Ratchet and Clank",
+      "igdb": null,
+      "system": "psp",
+      "exact": "ratchetandclank",
+      "loose": "ratchetandclank",
+      "twins": [
+        {
+          "id": 15,
+          "loose": false
+        }
+      ]
+    },
+    {
+      "id": 17,
+      "title": "Yoshi's Island",
+      "igdb": null,
+      "system": "snes",
+      "exact": "yoshisisland",
+      "loose": "yoshisisland",
+      "twins": [
+        {
+          "id": 18,
+          "loose": false
+        }
+      ]
+    },
+    {
+      "id": 18,
+      "title": "Yoshis Island",
+      "igdb": null,
+      "system": "gba",
+      "exact": "yoshisisland",
+      "loose": "yoshisisland",
+      "twins": [
+        {
+          "id": 17,
+          "loose": false
+        }
+      ]
+    },
+    {
+      "id": 19,
+      "title": "Street Fighter II: The World Warrior",
+      "igdb": "Street Fighter II: The World Warrior",
+      "system": "arcade",
+      "exact": "streetfighter2worldwarrior",
+      "loose": "streetfighter2worldwarrior",
+      "twins": [
+        {
+          "id": 20,
+          "loose": false
+        }
+      ]
+    },
+    {
+      "id": 20,
+      "title": "Street Fighter II",
+      "igdb": "Street Fighter II: The World Warrior",
+      "system": "snes",
+      "exact": "streetfighter2worldwarrior",
+      "loose": "streetfighter2worldwarrior",
+      "twins": [
+        {
+          "id": 19,
+          "loose": false
+        }
+      ]
+    },
+    {
+      "id": 21,
+      "title": "Sonic the Hedgehog",
+      "igdb": null,
+      "system": "md",
+      "exact": "sonichedgehog",
+      "loose": "sonichedgehog",
+      "twins": [
+        {
+          "id": 22,
+          "loose": false
+        }
+      ]
+    },
+    {
+      "id": 22,
+      "title": "Sonic 8-bit",
+      "igdb": "Sonic the Hedgehog",
+      "system": "sms",
+      "exact": "sonichedgehog",
+      "loose": "sonichedgehog",
+      "twins": [
+        {
+          "id": 21,
+          "loose": false
+        }
+      ]
+    },
+    {
+      "id": 23,
+      "title": "Tetris",
+      "igdb": null,
+      "system": "gb",
+      "exact": "tetris",
+      "loose": "tetris",
+      "twins": [
+        {
+          "id": 25,
+          "loose": false
+        }
+      ]
+    },
+    {
+      "id": 24,
+      "title": "Tetris",
+      "igdb": null,
+      "system": "gb",
+      "exact": "tetris",
+      "loose": "tetris",
+      "twins": [
+        {
+          "id": 25,
+          "loose": false
+        }
+      ]
+    },
+    {
+      "id": 25,
+      "title": "Tetris",
+      "igdb": null,
+      "system": "nes",
+      "exact": "tetris",
+      "loose": "tetris",
+      "twins": [
+        {
+          "id": 23,
+          "loose": false
+        },
+        {
+          "id": 24,
+          "loose": false
+        }
+      ]
+    },
+    {
+      "id": 26,
+      "title": "Metroid",
+      "igdb": null,
+      "system": "nes",
+      "exact": "metroid",
+      "loose": "metroid",
+      "twins": []
+    },
+    {
+      "id": 27,
+      "title": "Metroid II: Return of Samus",
+      "igdb": null,
+      "system": "gb",
+      "exact": "metroid2returnofsamus",
+      "loose": "metroid2returnofsamus",
+      "twins": []
+    },
+    {
+      "id": 28,
+      "title": "Super Mario Bros.",
+      "igdb": null,
+      "system": "nes",
+      "exact": "supermariobros",
+      "loose": "supermariobros",
+      "twins": []
+    },
+    {
+      "id": 29,
+      "title": "Super Mario Bros. 3",
+      "igdb": null,
+      "system": "nes",
+      "exact": "supermariobros3",
+      "loose": "supermariobros3",
+      "twins": []
+    },
+    {
+      "id": 30,
+      "title": "Mario Kart 64",
+      "igdb": null,
+      "system": "n64",
+      "exact": "mariokart64",
+      "loose": "mariokart64",
+      "twins": []
+    },
+    {
+      "id": 31,
+      "title": "Mario Kart DS",
+      "igdb": null,
+      "system": "nds",
+      "exact": "mariokartds",
+      "loose": "mariokartds",
+      "twins": []
+    },
+    {
+      "id": 32,
+      "title": "A Boy and His Blob",
+      "igdb": null,
+      "system": "nes",
+      "exact": "boyandhisblob",
+      "loose": "boyandhisblob",
+      "twins": []
+    },
+    {
+      "id": 33,
+      "title": "An American Tail",
+      "igdb": null,
+      "system": "snes",
+      "exact": "americantail",
+      "loose": "americantail",
+      "twins": []
+    },
+    {
+      "id": 34,
+      "title": "Pokémon Red",
+      "igdb": null,
+      "system": "gb",
+      "exact": "pokmonred",
+      "loose": "pokmonred",
+      "twins": []
+    },
+    {
+      "id": 35,
+      "title": "Pokemon Blue",
+      "igdb": null,
+      "system": "gb",
+      "exact": "pokemonblue",
+      "loose": "pokemonblue",
+      "twins": []
+    },
+    {
+      "id": 36,
+      "title": "Mega Man 10",
+      "igdb": null,
+      "system": "wii",
+      "exact": "megaman10",
+      "loose": "megaman10",
+      "twins": []
+    },
+    {
+      "id": 37,
+      "title": "Zelda II: The Adventure of Link",
+      "igdb": null,
+      "system": "nes",
+      "exact": "zelda2adventureoflink",
+      "loose": "zelda2adventureoflink",
+      "twins": []
+    },
+    {
+      "id": 38,
+      "title": "The Legend of Zelda",
+      "igdb": null,
+      "system": "nes",
+      "exact": "legendofzelda",
+      "loose": "legendofzelda",
+      "twins": []
+    },
+    {
+      "id": 39,
+      "title": "Final Fantasy",
+      "igdb": null,
+      "system": "nes",
+      "exact": "finalfantasy",
+      "loose": "finalfantasy",
+      "twins": []
+    },
+    {
+      "id": 40,
+      "title": "Final Fantasy VI",
+      "igdb": null,
+      "system": "snes",
+      "exact": "finalfantasy6",
+      "loose": "finalfantasy6",
+      "twins": []
+    },
+    {
+      "id": 41,
+      "title": "Castlevania",
+      "igdb": null,
+      "system": "nes",
+      "exact": "castlevania",
+      "loose": "castlevania",
+      "twins": []
+    },
+    {
+      "id": 42,
+      "title": "Contra",
+      "igdb": null,
+      "system": "nes",
+      "exact": "contra",
+      "loose": "contra",
+      "twins": []
+    },
+    {
+      "id": 43,
+      "title": "Kirby Super Star",
+      "igdb": null,
+      "system": "snes",
+      "exact": "kirbysuperstar",
+      "loose": "kirbysuperstar",
+      "twins": []
+    },
+    {
+      "id": 44,
+      "title": "Chrono Trigger",
+      "igdb": null,
+      "system": "snes",
+      "exact": "chronotrigger",
+      "loose": "chronotrigger",
+      "twins": []
+    },
+    {
+      "id": 45,
+      "title": "EarthBound",
+      "igdb": null,
+      "system": "snes",
+      "exact": "earthbound",
+      "loose": "earthbound",
+      "twins": []
+    },
+    {
+      "id": 46,
+      "title": "F-Zero",
+      "igdb": null,
+      "system": "snes",
+      "exact": "fzero",
+      "loose": "fzero",
+      "twins": []
+    },
+    {
+      "id": 47,
+      "title": "GoldenEye 007",
+      "igdb": null,
+      "system": "n64",
+      "exact": "goldeneye007",
+      "loose": "goldeneye007",
+      "twins": []
+    },
+    {
+      "id": 48,
+      "title": "Banjo-Kazooie",
+      "igdb": null,
+      "system": "n64",
+      "exact": "banjokazooie",
+      "loose": "banjokazooie",
+      "twins": []
+    },
+    {
+      "id": 49,
+      "title": "Star Fox 64",
+      "igdb": null,
+      "system": "n64",
+      "exact": "starfox64",
+      "loose": "starfox64",
+      "twins": []
+    },
+    {
+      "id": 50,
+      "title": "Pokemon Gold",
+      "igdb": null,
+      "system": "gb",
+      "exact": "pokemongold",
+      "loose": "pokemongold",
+      "twins": []
+    },
+    {
+      "id": 51,
+      "title": "Advance Wars",
+      "igdb": null,
+      "system": "gba",
+      "exact": "advancewars",
+      "loose": "advancewars",
+      "twins": []
+    },
+    {
+      "id": 52,
+      "title": "Golden Sun",
+      "igdb": null,
+      "system": "gba",
+      "exact": "goldensun",
+      "loose": "goldensun",
+      "twins": []
+    },
+    {
+      "id": 53,
+      "title": "Metroid Fusion",
+      "igdb": null,
+      "system": "gba",
+      "exact": "metroidfusion",
+      "loose": "metroidfusion",
+      "twins": []
+    },
+    {
+      "id": 54,
+      "title": "Phoenix Wright: Ace Attorney",
+      "igdb": null,
+      "system": "nds",
+      "exact": "phoenixwrightaceattorney",
+      "loose": "phoenixwrightaceattorney",
+      "twins": []
+    },
+    {
+      "id": 55,
+      "title": "The World Ends with You",
+      "igdb": null,
+      "system": "nds",
+      "exact": "worldendswithyou",
+      "loose": "worldendswithyou",
+      "twins": []
+    },
+    {
+      "id": 56,
+      "title": "Animal Crossing: Wild World",
+      "igdb": null,
+      "system": "nds",
+      "exact": "animalcrossingwildworld",
+      "loose": "animalcrossingwildworld",
+      "twins": []
+    },
+    {
+      "id": 57,
+      "title": "Fire Emblem: Awakening",
+      "igdb": null,
+      "system": "n3ds",
+      "exact": "fireemblemawakening",
+      "loose": "fireemblemawakening",
+      "twins": []
+    },
+    {
+      "id": 58,
+      "title": "Kid Icarus: Uprising",
+      "igdb": null,
+      "system": "n3ds",
+      "exact": "kidicarusuprising",
+      "loose": "kidicarusuprising",
+      "twins": []
+    },
+    {
+      "id": 59,
+      "title": "Xenoblade Chronicles",
+      "igdb": null,
+      "system": "wii",
+      "exact": "xenobladechronicles",
+      "loose": "xenobladechronicles",
+      "twins": []
+    },
+    {
+      "id": 60,
+      "title": "Super Mario Galaxy",
+      "igdb": null,
+      "system": "wii",
+      "exact": "supermariogalaxy",
+      "loose": "supermariogalaxy",
+      "twins": []
+    },
+    {
+      "id": 61,
+      "title": "Streets of Rage 2",
+      "igdb": null,
+      "system": "md",
+      "exact": "streetsofrage2",
+      "loose": "streetsofrage2",
+      "twins": []
+    },
+    {
+      "id": 62,
+      "title": "Gunstar Heroes",
+      "igdb": null,
+      "system": "md",
+      "exact": "gunstarheroes",
+      "loose": "gunstarheroes",
+      "twins": []
+    },
+    {
+      "id": 63,
+      "title": "Phantasy Star",
+      "igdb": null,
+      "system": "sms",
+      "exact": "phantasystar",
+      "loose": "phantasystar",
+      "twins": []
+    },
+    {
+      "id": 64,
+      "title": "Alex Kidd in Miracle World",
+      "igdb": null,
+      "system": "sms",
+      "exact": "alexkiddinmiracleworld",
+      "loose": "alexkiddinmiracleworld",
+      "twins": []
+    },
+    {
+      "id": 65,
+      "title": "Shadow of the Colossus",
+      "igdb": null,
+      "system": "ps2",
+      "exact": "shadowofcolossus",
+      "loose": "shadowofcolossus",
+      "twins": []
+    },
+    {
+      "id": 66,
+      "title": "Katamari Damacy",
+      "igdb": null,
+      "system": "ps2",
+      "exact": "katamaridamacy",
+      "loose": "katamaridamacy",
+      "twins": []
+    },
+    {
+      "id": 67,
+      "title": "Persona 4",
+      "igdb": null,
+      "system": "ps2",
+      "exact": "persona4",
+      "loose": "persona4",
+      "twins": []
+    },
+    {
+      "id": 68,
+      "title": "Demon's Souls",
+      "igdb": null,
+      "system": "ps3",
+      "exact": "demonssouls",
+      "loose": "demonssouls",
+      "twins": []
+    },
+    {
+      "id": 69,
+      "title": "Journey",
+      "igdb": null,
+      "system": "ps3",
+      "exact": "journey",
+      "loose": "journey",
+      "twins": []
+    },
+    {
+      "id": 70,
+      "title": "Patapon",
+      "igdb": null,
+      "system": "psp",
+      "exact": "patapon",
+      "loose": "patapon",
+      "twins": []
+    },
+    {
+      "id": 71,
+      "title": "Lumines",
+      "igdb": null,
+      "system": "psp",
+      "exact": "lumines",
+      "loose": "lumines",
+      "twins": []
+    },
+    {
+      "id": 72,
+      "title": "Galaga",
+      "igdb": null,
+      "system": "arcade",
+      "exact": "galaga",
+      "loose": "galaga",
+      "twins": []
+    },
+    {
+      "id": 73,
+      "title": "Ms. Pac-Man",
+      "igdb": null,
+      "system": "arcade",
+      "exact": "mspacman",
+      "loose": "mspacman",
+      "twins": []
+    },
+    {
+      "id": 74,
+      "title": "Metal Slug",
+      "igdb": null,
+      "system": "arcade",
+      "exact": "metalslug",
+      "loose": "metalslug",
+      "twins": []
+    }
+  ]
+}
