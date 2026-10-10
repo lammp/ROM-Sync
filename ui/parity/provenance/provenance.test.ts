@@ -14,6 +14,22 @@ describe('provenance', () => {
     }
   })
 
+  test('every_corpus_is_captured', () => {
+    const corpora = findFixtures()
+      .map((path) => readFixture(path).header.corpus)
+      .sort()
+    expect(corpora).toEqual([
+      'facets',
+      'format',
+      'progress',
+      'search',
+      'sort',
+      'tokens',
+      'twins',
+      'windowing',
+    ])
+  })
+
   test('no_owner_data', () => {
     for (const path of findFixtures()) {
       const { cases } = readFixture(path)
