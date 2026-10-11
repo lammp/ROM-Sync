@@ -526,6 +526,15 @@ class SqliteTags:
         )
         _commit(self._c)
 
+    def add_if_absent(self, game_id: int, tag: TagRecord) -> bool:
+        cur = self._c.execute(
+            "INSERT OR IGNORE INTO tags(game_id, tag, kind, state, source)"
+            " VALUES(?, ?, ?, ?, ?)",
+            (game_id, tag.tag, tag.kind, tag.state, tag.source),
+        )
+        _commit(self._c)
+        return cur.rowcount > 0
+
     def remove(self, game_id: int, tag: str, kind: str) -> None:
         self._c.execute(
             "DELETE FROM tags WHERE game_id = ? AND tag = ? AND kind = ?", (game_id, tag, kind)

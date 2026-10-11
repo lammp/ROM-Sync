@@ -34,6 +34,7 @@ V1_PACKAGE = "ROM-Sync/romsync"
 PLAN_GOLDEN = ROOT / "tests" / "golden" / "data" / "plan.py"
 TITLES_GOLDEN = ROOT / "tests" / "golden" / "data" / "file_titles.py"
 MATCHES_GOLDEN = ROOT / "tests" / "golden" / "data" / "matches.py"
+THUMBS_GOLDEN = ROOT / "tests" / "golden" / "data" / "thumbs.py"
 
 ACTIONS = ("send", "update", "remove")
 
@@ -137,6 +138,23 @@ with open(inputs, encoding="utf-8") as f:
 for c in cases:
     best, score = scrape.match(Fake(c["responses"]), c["title"], c["platform"])
     print(json.dumps([c["name"], best["id"] if best else None, score]))
+"""
+
+
+#: Runs version 1's box-art index over the box-art corpus: one line per case,
+#: the names offered, the listing name found and its level.
+_THUMBS_DRIVER = r"""
+import json, sys
+source, inputs = sys.argv[1], sys.argv[2]
+sys.path.insert(0, source)
+from romsync import thumbs
+
+with open(inputs, encoding="utf-8") as f:
+    data = json.load(f)
+index = thumbs.Index(data["listing"])
+for wanted in data["wanted"]:
+    hit, level = index.find([w for w in wanted if w])
+    print(json.dumps([wanted, hit, level]))
 """
 
 
@@ -261,6 +279,32 @@ def v1_matches(work: Path) -> list[str]:
     return lines
 
 
+def v1_thumbs(work: Path) -> list[str]:
+    """Version 1's box-art pick for every case in the box-art corpus."""
+    from tests.fixtures.thumb_cases import LISTING, WANTED
+
+    source = _v1_source(work)
+    driver = work / "thumbs_driver" / "thumbs_driver.py"
+    driver.parent.mkdir()
+    driver.write_text(_THUMBS_DRIVER, encoding="utf-8")
+    inputs = work / "thumbs.json"
+    inputs.write_text(
+        json.dumps({"listing": list(LISTING), "wanted": [list(w) for w in WANTED]}),
+        encoding="utf-8",
+    )
+    completed = subprocess.run(
+        (sys.executable, "-I", str(driver), str(source), str(inputs)),
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    lines = []
+    for raw in completed.stdout.splitlines():
+        wanted, hit, level = json.loads(raw)
+        lines.append(f"{' | '.join(wanted)}\t{hit or '-'}\t{level or '-'}")
+    return lines
+
+
 def render_module(
     lines: Sequence[str],
     commit: str,
@@ -290,6 +334,8 @@ def regenerate() -> list[Path]:
         titles = v1_titles(Path(tmp))
     with tempfile.TemporaryDirectory() as tmp:
         matches = v1_matches(Path(tmp))
+    with tempfile.TemporaryDirectory() as tmp:
+        thumbs = v1_thumbs(Path(tmp))
     PLAN_GOLDEN.write_text(render_module(plan_lines(plan), commit), encoding="utf-8")
     TITLES_GOLDEN.write_text(
         render_module(titles, commit, "the file-name golden: version 1's titles and regions"),
@@ -299,4 +345,8 @@ def regenerate() -> list[Path]:
         render_module(matches, commit, "the matcher golden: version 1's picks and scores"),
         encoding="utf-8",
     )
-    return [PLAN_GOLDEN, TITLES_GOLDEN, MATCHES_GOLDEN]
+    THUMBS_GOLDEN.write_text(
+        render_module(thumbs, commit, "the box-art golden: version 1's listing picks"),
+        encoding="utf-8",
+    )
+    return [PLAN_GOLDEN, TITLES_GOLDEN, MATCHES_GOLDEN, THUMBS_GOLDEN]
