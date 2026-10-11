@@ -224,9 +224,9 @@ SETTINGS: tuple[Setting, ...] = (
         "igdb.requests_per_second",
         "float",
         4.0,
-        "Shared request budget across every concurrent pass.",
-        minimum=0.1,
-        maximum=20.0,
+        "Shared request budget across every concurrent pass. IGDB allows four.",
+        minimum=1.0,
+        maximum=4.0,
         unit="/s",
     ),
     Setting(
@@ -236,6 +236,14 @@ SETTINGS: tuple[Setting, ...] = (
         "Score at or above which a candidate is accepted as a match.",
         minimum=0.0,
         maximum=1.0,
+    ),
+    Setting(
+        "match.abort_after_errors",
+        "int",
+        25,
+        "A matching pass stops after this many failures in a row.",
+        minimum=1,
+        maximum=1000,
     ),
     Setting(
         "match.auto_libretro_covers",

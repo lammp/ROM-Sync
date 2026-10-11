@@ -128,6 +128,20 @@ class SqliteGames:
         (n,) = self._c.execute("SELECT COUNT(*) FROM games").fetchone()
         return int(n)
 
+    def in_states(
+        self, states: Sequence[str], systems: Sequence[SystemKey] = ()
+    ) -> tuple[GameUnit, ...]:
+        """Games whose metadata state is one of `states`, by system then title."""
+        wanted = set(states)
+        systems_wanted = {str(s) for s in systems}
+        rows = self._c.execute("SELECT * FROM games ORDER BY system, title, id").fetchall()
+        return tuple(
+            self._unit(r)
+            for r in rows
+            if r["scrape_state"] in wanted
+            and (not systems_wanted or r["system"] in systems_wanted)
+        )
+
     def meta(self, game_id: int) -> GameMeta | None:
         row = self._c.execute(
             "SELECT scrape_state, confidence, igdb_id, igdb_name, summary, release_date, "

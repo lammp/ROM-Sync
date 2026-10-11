@@ -24,7 +24,7 @@ class RecordedMetadata:
     slugs: dict[str, Candidate] = field(default_factory=dict)
     known_platforms: tuple[Platform, ...] = ()
     calls: list[tuple[str, object]] = field(default_factory=list)
-    #: Raised on the next calls, one per call, before answering.
+    #: Raised by the next searches, one per search, before answering.
     failures: list[Exception] = field(default_factory=list)
 
     def _maybe_fail(self) -> None:
@@ -33,7 +33,6 @@ class RecordedMetadata:
 
     def platforms(self) -> tuple[Platform, ...]:
         self.calls.append(("platforms", None))
-        self._maybe_fail()
         return self.known_platforms
 
     def search(self, text: str, platform_id: int | None) -> tuple[Candidate, ...]:
@@ -43,12 +42,10 @@ class RecordedMetadata:
 
     def game(self, igdb_id: int) -> Candidate | None:
         self.calls.append(("game", igdb_id))
-        self._maybe_fail()
         return self.games.get(igdb_id)
 
     def game_by_slug(self, slug: str) -> Candidate | None:
         self.calls.append(("slug", slug))
-        self._maybe_fail()
         return self.slugs.get(slug)
 
 

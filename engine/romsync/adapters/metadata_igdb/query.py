@@ -2,7 +2,8 @@
 
 IGDB's query language has no documented escape inside a quoted string, so a
 title is made safe by removal rather than escaping: a double quote, a
-backslash and any control character are dropped. What is left can only be
+backslash and any control character are dropped (`matching.searchable`, the
+one definition the matcher scores against too). What is left can only be
 text inside the query's one quoted string; it cannot close the string, so it
 cannot add a clause.
 """
@@ -11,6 +12,8 @@ from __future__ import annotations
 
 import re
 
+from romsync.domain.matching import searchable
+
 FIELDS = (
     "name,summary,storyline,first_release_date,total_rating,total_rating_count,"
     "rating,rating_count,genres.name,themes.name,cover.image_id,platforms,"
@@ -18,12 +21,11 @@ FIELDS = (
 )
 LIMIT = 10
 
-_UNSAFE = re.compile(r'["\\\x00-\x1f\x7f]')
 _SLUG = re.compile(r"[^a-z0-9-]+")
 
 
 def safe_text(title: str) -> str:
-    return _UNSAFE.sub("", title).strip()
+    return searchable(title)
 
 
 def search(text: str, platform_id: int | None) -> str:

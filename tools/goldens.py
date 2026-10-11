@@ -33,6 +33,7 @@ TAG = "parity-source-v1"
 V1_PACKAGE = "ROM-Sync/romsync"
 PLAN_GOLDEN = ROOT / "tests" / "golden" / "data" / "plan.py"
 TITLES_GOLDEN = ROOT / "tests" / "golden" / "data" / "file_titles.py"
+MATCHES_GOLDEN = ROOT / "tests" / "golden" / "data" / "matches.py"
 
 ACTIONS = ("send", "update", "remove")
 
@@ -105,6 +106,37 @@ with open(inputs, encoding="utf-8") as f:
 for system, name in rows:
     title = scanner.clean_title(name, system)
     print(json.dumps([system, name, title, scanner.region_of(name)]))
+"""
+
+
+#: Runs version 1's matcher over the matcher corpus with a client that answers
+#: each search from the case: one line per case, name, picked id and score.
+_MATCH_DRIVER = r"""
+import json, re, sys
+source, inputs = sys.argv[1], sys.argv[2]
+sys.path.insert(0, source)
+from romsync import scrape
+
+SEARCH = re.compile(
+    r'^search "(.*)"; fields [^;]*; (?:where platforms = \((\d+)\); )?limit 10;$'
+)
+
+
+class Fake:
+    def __init__(self, responses):
+        self.responses = responses
+
+    def query(self, endpoint, body):
+        m = SEARCH.match(body)
+        assert endpoint == "games" and m, body
+        return self.responses.get(m.group(1) + "\t" + (m.group(2) or "*"), [])
+
+
+with open(inputs, encoding="utf-8") as f:
+    cases = json.load(f)
+for c in cases:
+    best, score = scrape.match(Fake(c["responses"]), c["title"], c["platform"])
+    print(json.dumps([c["name"], best["id"] if best else None, score]))
 """
 
 
@@ -206,6 +238,29 @@ def v1_titles(work: Path) -> list[str]:
     return lines
 
 
+def v1_matches(work: Path) -> list[str]:
+    """Version 1's pick and score for every case in the matcher corpus."""
+    from tests.fixtures.match_cases import CASES
+
+    source = _v1_source(work)
+    driver = work / "match_driver" / "match_driver.py"
+    driver.parent.mkdir()
+    driver.write_text(_MATCH_DRIVER, encoding="utf-8")
+    inputs = work / "cases.json"
+    inputs.write_text(json.dumps(CASES), encoding="utf-8")
+    completed = subprocess.run(
+        (sys.executable, "-I", str(driver), str(source), str(inputs)),
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    lines = []
+    for raw in completed.stdout.splitlines():
+        name, picked, score = json.loads(raw)
+        lines.append(f"{name}\t{picked if picked is not None else '-'}\t{score}")
+    return lines
+
+
 def render_module(
     lines: Sequence[str],
     commit: str,
@@ -233,9 +288,15 @@ def regenerate() -> list[Path]:
         plan = v1_plan(Path(tmp))
     with tempfile.TemporaryDirectory() as tmp:
         titles = v1_titles(Path(tmp))
+    with tempfile.TemporaryDirectory() as tmp:
+        matches = v1_matches(Path(tmp))
     PLAN_GOLDEN.write_text(render_module(plan_lines(plan), commit), encoding="utf-8")
     TITLES_GOLDEN.write_text(
         render_module(titles, commit, "the file-name golden: version 1's titles and regions"),
         encoding="utf-8",
     )
-    return [PLAN_GOLDEN, TITLES_GOLDEN]
+    MATCHES_GOLDEN.write_text(
+        render_module(matches, commit, "the matcher golden: version 1's picks and scores"),
+        encoding="utf-8",
+    )
+    return [PLAN_GOLDEN, TITLES_GOLDEN, MATCHES_GOLDEN]
