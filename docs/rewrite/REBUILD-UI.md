@@ -312,6 +312,8 @@ Parity is the constraint, so every departure is listed here or it is a defect.
 | A new profile's ROMs folder is shown, not edited | the destination decides its own roots (F10-S23); a typed folder could not be held to them |
 | Each system's selection has a third mode, "left alone" | v2's selection has an unmanaged mode that sync neither sends to nor removes from; version 1 could not return a system to it |
 | Removing a stray file under the staging folder asks first | it deletes from the device something that belongs to no system's set, which the store may not hold; version 1 removed it on the click |
+| Recover acts per item, not per run: each file only the device holds has Recover, which pulls it and places it in one job; there is no list of items a run pulled | v2's sync never pulls (F10-S20 recovers on demand), so there are no pulled-per-run items to place; the rules section 11 sets still hold: never overwrite, report a clash, rescan after |
+| Folders are not recovered | the engine refuses them (F10-S20); the row says so instead of offering an action that fails |
 
 ## 11. Recover is routed in
 
