@@ -7,7 +7,6 @@ from fastapi.routing import APIRoute
 from fastapi.testclient import TestClient
 from pydantic import BaseModel
 
-from romsync.compose import build
 from romsync.domain.errors import GuardRefused, UnknownDevice
 from romsync_api.app import PREFIX, ROUTERS, create_app
 from romsync_api.models import Model
@@ -54,7 +53,7 @@ class Body(Model):
 
 
 def _with_failures() -> TestClient:
-    app = create_app(build())
+    app = create_app(None)
     router = APIRouter()
 
     @router.get("/boom/guard", response_model=Body)
@@ -101,3 +100,21 @@ def test_version(client: TestClient) -> None:
     got = client.get(f"{PREFIX}/version")
     assert got.status_code == 200
     assert got.json() == {"application": "ROM-Sync", "version": "2.0.0.dev0", "api": "v1"}
+
+
+def test_an_app_built_to_describe_itself_has_no_engine() -> None:
+    from fastapi import Depends
+
+    from romsync.compose import Engine
+    from romsync_api.deps import engine as engine_of
+
+    app = create_app(None)
+    router = APIRouter()
+
+    @router.get("/needs-engine", response_model=Body)
+    def needs(engine: Engine = Depends(engine_of)) -> Body:  # noqa: B008
+        return Body(count=1)
+
+    app.include_router(router, prefix=PREFIX)
+    got = TestClient(app).get(f"{PREFIX}/needs-engine")
+    assert got.json()["error"]["code"] == "request.no_engine"

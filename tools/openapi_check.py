@@ -27,10 +27,10 @@ def current() -> dict[str, object]:
     for folder in (ROOT / "api", ROOT / "engine"):
         if str(folder) not in sys.path:
             sys.path.insert(0, str(folder))
-    from romsync.compose import build
     from romsync_api.app import create_app
 
-    return create_app(build()).openapi()
+    # the document describes routes and models; it needs no engine behind them
+    return create_app(None).openapi()
 
 
 def render(document: dict[str, object]) -> str:

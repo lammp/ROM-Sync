@@ -28,7 +28,9 @@ ERROR_RESPONSES: dict[int | str, dict[str, object]] = {
 ROUTERS: tuple[APIRouter, ...] = (meta.router,)
 
 
-def create_app(engine: Engine) -> FastAPI:
+def create_app(engine: Engine | None) -> FastAPI:
+    """The application over `engine`. `None` builds one that can describe itself
+    (the OpenAPI document) but answers every engine route with an error."""
     app = FastAPI(
         title="ROM-Sync",
         version=__version__,

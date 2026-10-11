@@ -1,16 +1,19 @@
 from __future__ import annotations
 
+from pathlib import Path
+
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from romsync.compose import build
 from romsync_api.app import create_app
+from tests.helpers.fakes import FrozenClock
 
 
 @pytest.fixture
-def app() -> FastAPI:
-    return create_app(build())
+def app(tmp_path: Path) -> FastAPI:
+    return create_app(build(tmp_path / "data", clock=FrozenClock()))
 
 
 @pytest.fixture
