@@ -1,0 +1,21 @@
+.syncing {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.muted {
+  color: var(--muted);
+}
+
+.disabled {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.reason {
+  color: var(--muted);
+  font-size: var(--text-base-sm);
+}
