@@ -305,6 +305,9 @@ Parity is the constraint, so every departure is listed here or it is a defect.
 | Capacity thresholds arrive from the engine | `SPEC.md` section 7 |
 | Job results stop being rendered as `JSON.stringify` | `SPEC.md` section 8 |
 | A chosen facet value is always drawn, even when it ranks past the sixty-value cap | version 1 drops it from the list, so it can neither be seen nor cleared there; pinned as found by the facets corpus, case "a tag past the cap" |
+| A click outside a dialog no longer closes it; Escape and the dialog's Cancel do | a pointer-only dismissal has no control of its own, which SPEC section 10 forbids |
+| Text on an active system-file row is full white, not 80 per cent white | at 80 per cent it measures 3.46:1 on `--accent-solid`, below 4.5 |
+| Facet values at zero and systems with no games on the device are muted text, not faded to 35 and 60 per cent | faded, they fell below readable contrast; the count of 0 and "no games" say the same in words |
 
 ## 11. Recover is routed in
 

@@ -1,0 +1,25 @@
+.backdrop {
+  position: fixed;
+  inset: 0;
+  background: var(--scrim-2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 20;
+}
+
+.box {
+  background: var(--bg2);
+  border: 1px solid var(--divider);
+  border-radius: var(--radius-12);
+  padding: 20px;
+  min-width: min(420px, 100vw - 32px);
+  max-width: min(760px, 100vw - 32px);
+  max-height: 85vh;
+  overflow: auto;
+}
+
+.title {
+  margin: 0 0 12px;
+  font-size: var(--text-xl);
+}
