@@ -31,6 +31,7 @@ from romsync.adapters.metadata_igdb.client import (
 )
 from romsync.adapters.metadata_igdb.throttle import Throttle
 from romsync.adapters.shell_win.windows import WindowsShell
+from romsync.adapters.store_fs.scanner import FsStore
 from romsync.adapters.system.clock import RandomIds, SystemClock
 from romsync.app.connection_check import ConnectionCheck
 from romsync.app.devices import Devices, Probe
@@ -43,7 +44,7 @@ from romsync.app.shell import Shell
 from romsync.app.sync import Sync
 from romsync.config.registry import REGISTRY, Registry
 from romsync.domain.paths import StoreRoot
-from romsync.jobs.registry import Jobs, Runner, threaded
+from romsync.jobs.registry import Context, JobRecord, Jobs, Runner, Work, threaded
 from romsync.jobs.sync_job import Syncs
 from romsync.ports.clock import ClockPort, IdPort
 from romsync.ports.dest import Dest
@@ -138,6 +139,10 @@ def build(
 
     write_marker = bool(settings.value("device.write_marker_after_sync"))
 
+    def open_store() -> FsStore | None:
+        root = str(settings.value("store.root") or "")
+        return FsStore(Path(root)) if root else None
+
     def roots() -> dict[str, str]:
         return {
             "store": str(settings.value("store.root") or ""),
@@ -154,7 +159,7 @@ def build(
     return Engine(
         registry=REGISTRY,
         settings=settings,
-        library=Library(stores.games, stores.tags),
+        library=Library(stores.games, stores.tags, open_store, clock),
         connection=ConnectionCheck(metadata_client, saved_credentials),
         devices=devices,
         selections=Selections(stores.selections, stores.games, stores.devices),
@@ -167,3 +172,28 @@ def build(
         shell=Shell(shell or WindowsShell(), roots),
         data=data,
     )
+
+
+def launch(engine: Engine) -> JobRecord | None:
+    """What starting the application does once the engine is built: a rescan of
+    the store, as a job, when store.rescan_on_launch is set and a store is chosen."""
+    if not engine.settings.value("store.rescan_on_launch") or not engine.settings.value(
+        "store.root"
+    ):
+        return None
+    return engine.jobs.submit("scan", None, scan_job(engine.library))
+
+
+def scan_job(library: Library) -> Work:
+    def work(ctx: Context) -> dict[str, int]:
+        result = library.scan(ctx)
+        return {
+            "added": result.added,
+            "updated": result.updated,
+            "removed": result.removed,
+            "unchanged": result.unchanged,
+            "systems": result.systems,
+            "unreadable": len(result.unreadable),
+        }
+
+    return work

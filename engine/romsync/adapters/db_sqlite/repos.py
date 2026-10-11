@@ -111,6 +111,37 @@ class SqliteGames:
         _commit(self._c)
         return game_id
 
+    def update(self, unit: GameUnit, seen_at: str) -> None:
+        if unit.id is None:
+            raise ValueError("a game is updated by its id")
+        self._c.execute(
+            "UPDATE games SET kind = ?, title = ?, region = ?, size = ?, mtime = ?, "
+            "file_count = ?, seen_at = ? WHERE id = ?",
+            (
+                str(unit.kind),
+                unit.title,
+                unit.region,
+                unit.size,
+                unit.mtime,
+                max(1, len(unit.members)),
+                seen_at,
+                unit.id,
+            ),
+        )
+        self._c.execute("DELETE FROM game_files WHERE game_id = ?", (unit.id,))
+        self._c.executemany(
+            "INSERT INTO game_files(game_id, rel_path, size, mtime) VALUES(?, ?, ?, ?)",
+            [
+                (unit.id, f"{_rel(unit.system, unit.name)}{SEP}{m.name}", m.size, m.mtime)
+                for m in unit.members
+            ],
+        )
+        _commit(self._c)
+
+    def remove(self, game_ids: Sequence[int]) -> None:
+        self._c.executemany("DELETE FROM games WHERE id = ?", [(i,) for i in game_ids])
+        _commit(self._c)
+
     def get(self, game_id: int) -> GameUnit | None:
         row = self._c.execute("SELECT * FROM games WHERE id = ?", (game_id,)).fetchone()
         return None if row is None else self._unit(row)

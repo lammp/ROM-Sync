@@ -1,20 +1,28 @@
-"""The library, read (F10-S7).
+"""The library: read (F10-S7), and brought up to date with the store (F10-S16).
 
 What the interface lists and shows: every game with what the metadata pass
 learned about it and its tags, one game in full, and each system with its
-counts. Reads only; the scan that changes the library is a job (F10-S16).
+counts. A scan reads the store and applies the domain's reconcile: additions,
+updates and removals, where a system whose file could not be read keeps its
+games and a scan that read no system changes nothing.
 """
 
 from __future__ import annotations
 
 from collections import Counter
-from collections.abc import Mapping, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
 from datetime import UTC, datetime
 
-from romsync.domain.errors import GameNotFound
-from romsync.domain.models import GameUnit
+from romsync.domain.errors import ConfigMissing, GameNotFound
+from romsync.domain.library import reconcile
+from romsync.domain.models import GameUnit, SystemKey
+from romsync.ports.clock import ClockPort
 from romsync.ports.repo import GameMeta, GameRepo, SystemInfo, TagRecord, TagRepo
+from romsync.ports.sink import ProgressEvent, ProgressSink
+from romsync.ports.store import StorePort
+
+StoreOpener = Callable[[], StorePort | None]
 
 
 @dataclass(frozen=True, slots=True)
@@ -43,10 +51,58 @@ class SystemView:
     bytes: int
 
 
+@dataclass(frozen=True, slots=True)
+class ScanResult:
+    added: int
+    updated: int
+    removed: int
+    unchanged: int
+    systems: int
+    unreadable: tuple[str, ...]
+
+
 class Library:
-    def __init__(self, games: GameRepo, tags: TagRepo) -> None:
+    def __init__(
+        self,
+        games: GameRepo,
+        tags: TagRepo,
+        store: StoreOpener | None = None,
+        clock: ClockPort | None = None,
+    ) -> None:
         self._games = games
         self._tags = tags
+        self._store = store
+        self._clock = clock
+
+    def scan(self, sink: ProgressSink) -> ScanResult:
+        """Bring the library to what the store holds now."""
+        store = self._store() if self._store is not None else None
+        if store is None or self._clock is None:
+            raise ConfigMissing("choose the store folder first", field="store.root")
+        sink.emit(ProgressEvent("scan", 0, None, None))
+        found = store.scan()
+        changes = reconcile(self._games.all(), found.units, found.visited, store.folders())
+        at = self._clock.now().isoformat(timespec="seconds")
+        for folder in found.systems:
+            self._games.put_system(
+                SystemInfo(SystemKey(str(folder.key)), folder.label, folder.exts)
+            )
+        total = len(changes.add) + len(changes.update)
+        for i, unit in enumerate(changes.add):
+            self._games.add(unit, at)
+            sink.emit(ProgressEvent("scan", i + 1, total, unit.name))
+        for i, unit in enumerate(changes.update, start=len(changes.add)):
+            self._games.update(unit, at)
+            sink.emit(ProgressEvent("scan", i + 1, total, unit.name))
+        self._games.remove(changes.remove)
+        return ScanResult(
+            len(changes.add),
+            len(changes.update),
+            len(changes.remove),
+            changes.unchanged,
+            len(found.systems),
+            tuple(found.unreadable),
+        )
 
     def games(self) -> tuple[GameView, ...]:
         metas = self._games.metas()

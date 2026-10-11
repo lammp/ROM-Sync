@@ -25,6 +25,7 @@ from romsync_api.routes import (
     library,
     maintenance,
     meta,
+    scan,
     session,
     shell,
     sync,
@@ -49,6 +50,7 @@ ROUTERS: tuple[APIRouter, ...] = (
     jobs.router,
     maintenance.router,
     shell.router,
+    scan.router,
 )
 
 

@@ -207,6 +207,11 @@ they can only be taken while version 1 still runs.
 | F10-S13 | Job endpoints: list, get, cancel | F9-S1 | Snapshot semantics preserved | `tests/unit/api/test_job_routes.py` |
 | F10-S14 | Maintenance endpoints: compact, clear cache, prune covers, prune runs, all as jobs with a dry run where destructive | F9-S1 | A destructive maintenance action dry-runs first | `tests/unit/api/test_maintenance_routes.py::test_dry_run_first` |
 | F10-S15 | Shell endpoints: reveal, pick folder, open external, each root-checked and loopback-only | F10-S4 | A path outside the roots is refused | `tests/unit/api/test_shell_routes.py::test_root_check`, `::test_scheme_allowlist` |
+| F10-S16 (added) | Store scan as a job: systems, additions, updates and removals; a rescan on launch when set | F4-S4, F9-S1 | A scan job changes the library as the store does, and an unreadable system loses nothing | `tests/unit/api/test_scan_routes.py::test_scan_job`, `::test_rescan_on_launch` |
+| F10-S17 (added) | Match and cover passes as jobs, and re-match of one game | F5-S9, F5-S11, F9-S1 | A pass runs as a job and reports its counts | `tests/unit/api/test_match_routes.py::test_match_job`, `::test_rematch` |
+| F10-S18 (added) | Tag decisions stand; the franchise pass as a job | F5-S10, F9-S1 | A decided tag survives the next pass | `tests/unit/api/test_tag_routes.py::test_decision_stands` |
+| F10-S19 (added) | System files: store side, device survey, readiness as state, stage and unstage as jobs | F8-S6, F9-S1 | Readiness is read without touching a device; staging is a job on the device's reference | `tests/unit/api/test_sysfiles_routes.py::test_readiness_read_only`, `::test_stage_job` |
+| F10-S20 (added) | Recover: what only the device holds, pulled and placed in the store without overwriting | F7-S11, F9-S1 | Placing never overwrites | `tests/unit/api/test_recover_routes.py::test_place_never_overwrites` |
 
 ## F11 Interface rebuild as atomic components
 
@@ -330,6 +335,6 @@ component, feature or function they cover.
 | | |
 |---|---|
 | Features | 16 |
-| Stories | 168 |
+| Stories | 173 |
 | Security requirements from SPEC section 12, each covered by at least one story | 9 |
 | Stories whose acceptance needs a real device or a clean machine, and therefore sit outside the gate | F6-S5, F6-S6, F13-S1, F13-S2, F13-S6; each is marked for manual verification, and [TESTING.md](TESTING.md) section 8 states what the gate does not prove |
