@@ -1,8 +1,16 @@
 import { describe, expect, it } from 'vitest'
 import { createStore } from 'zustand/vanilla'
-import { ZERO, bankedTotal, syncSlice } from './sync'
+import { FRESH } from '../../../lib/progress/progress'
+import { syncSlice } from './sync'
 
-const START = { free: 1000, onDevice: 12, at: '2026-10-11T00:00:00Z' }
+const MB = 1 << 20
+const START = { bytesTotal: 60 * MB, removesTotal: 0, onDevice: 12, free: null }
+const run = (id: string, bytes: number) => ({
+  run: id,
+  bytes_done: bytes,
+  bytes_removed: 0,
+  status: { state: 'running', sent: 1 },
+})
 
 describe('sync slice', () => {
   it('begins a run from a fixed start and finishes it', () => {
@@ -12,25 +20,27 @@ describe('sync slice', () => {
       job: 'job-1',
       device: 'dev',
       start: START,
-      banked: {},
+      tracker: FRESH,
+      reading: null,
     })
     store.getState().sync.finish()
     expect(store.getState().sync.running).toBeNull()
   })
 
-  it('banks each run once by its id and totals them', () => {
+  it('keeps the tracker between polls, so runs are banked across them', () => {
     const store = createStore(syncSlice)
     store.getState().sync.begin('job-1', 'dev', START)
-    store.getState().sync.bank('r1', { bytes: 10, removed: 1, copied: 2 })
-    store.getState().sync.bank('r2', { bytes: 5, removed: 0, copied: 1 })
-    store.getState().sync.bank('r2', { bytes: 7, removed: 0, copied: 1 })
-    expect(bankedTotal(store.getState().sync.running)).toEqual({ bytes: 17, removed: 1, copied: 3 })
+    store.getState().sync.poll(run('r1', 30 * MB), 0)
+    store.getState().sync.poll(run('r2', 10 * MB), 1000)
+    const running = store.getState().sync.running
+    expect(running?.tracker.prev.bytes).toBe(30 * MB)
+    expect(running?.reading?.totals.bytes).toBe(40 * MB)
+    expect(running?.reading?.pct).toBe(66)
   })
 
-  it('banks nothing when no run is in flight', () => {
+  it('reads nothing when no sync is in flight', () => {
     const store = createStore(syncSlice)
-    store.getState().sync.bank('r1', { bytes: 10, removed: 1, copied: 2 })
+    store.getState().sync.poll(run('r1', 1), 0)
     expect(store.getState().sync.running).toBeNull()
-    expect(bankedTotal(null)).toEqual(ZERO)
   })
 })

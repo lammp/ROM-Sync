@@ -1,60 +1,52 @@
 /**
- * The sync in flight: which job, for which device, and what the device held
- * when it began, so progress and the live on-device count are measured from
- * a fixed start. Finished runs are banked by run id, as version 1's `SYNC`
- * did, so a job of several runs reports one total.
+ * The sync in flight: which job, for which device, what the device held and
+ * the plan would move when it began, and the progress tracker each poll
+ * advances (lib/progress). The arithmetic is lib/progress's; the store only
+ * keeps its state between polls, so leaving a page loses nothing.
  */
 import type { StateCreator } from 'zustand'
-
-export type Totals = { readonly bytes: number; readonly removed: number; readonly copied: number }
-export type Start = { readonly free: number; readonly onDevice: number; readonly at: string }
+import {
+  FRESH,
+  advance,
+  type Reading,
+  type Sample,
+  type Start,
+  type Tracker,
+} from '../../../lib/progress/progress'
 
 export type Running = {
   readonly job: string
   readonly device: string
   readonly start: Start
-  readonly banked: Readonly<Record<string, Totals>>
+  readonly tracker: Tracker
+  /** What the last poll read; null until the first. */
+  readonly reading: Reading | null
 }
 
 export type SyncSlice = {
   readonly sync: {
     readonly running: Running | null
     begin(job: string, device: string, start: Start): void
-    bank(run: string, totals: Totals): void
+    /** Advances the tracker by one poll of the job's current run. */
+    poll(sample: Sample, now: number): void
     finish(): void
   }
-}
-
-export const ZERO: Totals = { bytes: 0, removed: 0, copied: 0 }
-
-/** Every banked run's totals added together. */
-export function bankedTotal(running: Running | null): Totals {
-  return Object.values(running?.banked ?? {}).reduce(
-    (a, b) => ({
-      bytes: a.bytes + b.bytes,
-      removed: a.removed + b.removed,
-      copied: a.copied + b.copied,
-    }),
-    ZERO,
-  )
 }
 
 export const syncSlice: StateCreator<SyncSlice> = (set) => ({
   sync: {
     running: null,
     begin: (job, device, start) =>
-      set((s) => ({ sync: { ...s.sync, running: { job, device, start, banked: {} } } })),
-    bank: (run, totals) =>
-      set((s) =>
-        s.sync.running === null
-          ? s
-          : {
-              sync: {
-                ...s.sync,
-                running: { ...s.sync.running, banked: { ...s.sync.running.banked, [run]: totals } },
-              },
-            },
-      ),
+      set((s) => ({
+        sync: { ...s.sync, running: { job, device, start, tracker: FRESH, reading: null } },
+      })),
+    poll: (sample, now) =>
+      set((s) => {
+        const running = s.sync.running
+        if (running === null) return s
+        const { tracker, reading } = advance(running.tracker, running.start, sample, now)
+        return { sync: { ...s.sync, running: { ...running, tracker, reading } } }
+      }),
     finish: () => set((s) => ({ sync: { ...s.sync, running: null } })),
   },
 })

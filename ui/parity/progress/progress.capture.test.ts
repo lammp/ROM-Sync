@@ -30,7 +30,9 @@ describe('progress capture', () => {
   })
 
   test('a_new_run_banks_the_last', () => {
-    expect(polls('a second run banks the first')[2]?.prev.bytes).toBe(30 * (1 << 20))
+    const banks = polls('a second run banks the first').map((p) => p.prev.bytes)
+    expect(banks[0]).toBe(0)
+    expect(banks[2]).toBe(30 * (1 << 20))
   })
 
   test('names_are_escaped', () => {

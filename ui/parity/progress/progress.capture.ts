@@ -259,7 +259,8 @@ export async function captureProgress(): Promise<ProgressCase[]> {
         await v1.evaluate<Promise<void>>('pollSync()')
         polls.push(
           v1.evaluate(
-            '({ last: SYNC.last, prev: SYNC.prev, curRun: SYNC.curRun, tFirst: SYNC.tFirst })',
+            // SYNC.prev is added to in place, so each poll keeps a copy of it.
+            '({ last: SYNC.last, prev: { ...SYNC.prev }, curRun: SYNC.curRun, tFirst: SYNC.tFirst })',
           ),
         )
       }

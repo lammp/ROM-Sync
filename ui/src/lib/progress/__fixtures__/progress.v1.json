@@ -4,7 +4,7 @@
     "commit": "eeb055f836f867924dacde413ae2a2660590332d",
     "source": "ROM-Sync/ui/app.js",
     "corpus": "progress",
-    "locale": "en-AU"
+    "locale": "en-US"
   },
   "cases": [
     {
@@ -470,10 +470,10 @@
             "tip": "0 B of 60.0 MB moved · sent 0 · removed 0 · failed 0"
           },
           "prev": {
-            "bytes": 31457280,
-            "sent": 3,
-            "removed": 2,
-            "freed": 8388608
+            "bytes": 0,
+            "sent": 0,
+            "removed": 0,
+            "freed": 0
           },
           "curRun": "r1",
           "tFirst": 0
@@ -486,10 +486,10 @@
             "tip": "30.0 MB of 60.0 MB moved · sent 3 · removed 2 · failed 0"
           },
           "prev": {
-            "bytes": 31457280,
-            "sent": 3,
-            "removed": 2,
-            "freed": 8388608
+            "bytes": 0,
+            "sent": 0,
+            "removed": 0,
+            "freed": 0
           },
           "curRun": "r1",
           "tFirst": 3000
