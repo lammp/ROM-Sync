@@ -104,6 +104,18 @@ class DestinationRootMissing(RomSyncError):
     code = "dest.root_missing"
 
 
+class BadDeviceRef(RomSyncError):
+    """Text that is not the canonical reference of any device."""
+
+    code = "dest.bad_reference"
+
+
+class UnknownDevice(RomSyncError):
+    """A well-formed reference to a device that is not attached."""
+
+    code = "dest.unknown_device"
+
+
 class DestinationItemMissing(RomSyncError):
     """An item asked for by name is not on the destination."""
 
