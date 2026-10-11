@@ -7,6 +7,8 @@ export type TextInputProps = {
   readonly onChange: (value: string) => void
   /** Shown under the field and announced with it. */
   readonly error?: string
+  /** A line under the field that says what it takes; announced with it. */
+  readonly help?: string
   readonly placeholder?: string
   /** The label is still announced, only not drawn. */
   readonly hideLabel?: boolean
@@ -20,6 +22,7 @@ export function TextInput({
   value,
   onChange,
   error,
+  help,
   placeholder,
   hideLabel = false,
   disabled,
@@ -27,6 +30,8 @@ export function TextInput({
 }: TextInputProps) {
   const id = useId()
   const errorId = `${id}-error`
+  const helpId = `${id}-help`
+  const describedBy = [help && helpId, error && errorId].filter(Boolean).join(' ') || undefined
   return (
     <span className={styles.field}>
       <label htmlFor={id} className={hideLabel ? styles.hidden : styles.label}>
@@ -41,9 +46,14 @@ export function TextInput({
         disabled={disabled}
         inputMode={inputMode}
         aria-invalid={error ? true : undefined}
-        aria-describedby={error ? errorId : undefined}
+        aria-describedby={describedBy}
         onChange={(e) => onChange(e.target.value)}
       />
+      {help && (
+        <span id={helpId} className={styles.help}>
+          {help}
+        </span>
+      )}
       {error && (
         <span id={errorId} className={styles.error}>
           {error}

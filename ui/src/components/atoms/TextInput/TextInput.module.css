@@ -33,3 +33,8 @@
   font-size: var(--text-base-sm);
   color: var(--bad);
 }
+
+.help {
+  color: var(--muted);
+  font-size: var(--text-base-sm);
+}

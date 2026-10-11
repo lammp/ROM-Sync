@@ -3,7 +3,16 @@ import type { ReactNode } from 'react'
 import { describe, expect, it } from 'vitest'
 import { fakeFetch, freshWorld } from '../../../e2e/fake/world'
 import { EngineProvider, createEngine } from '../engine/engine'
-import { catalogue, coverUrl, useGame, useLibrary, useRematch, useSystems } from './library'
+import {
+  catalogue,
+  coverUrl,
+  useAfterLibraryJob,
+  useGame,
+  useLibrary,
+  useLibraryJob,
+  useRematch,
+  useSystems,
+} from './library'
 
 function harness() {
   const world = freshWorld()
@@ -58,5 +67,32 @@ describe('library queries', () => {
     const { result } = renderHook(() => useSystems(), { wrapper })
     await waitFor(() => expect(result.current.data).toHaveLength(4))
     expect(result.current.data?.[0]).toMatchObject({ key: 'snes', games: 10 })
+  })
+
+  it('starts the library’s jobs, and reads the library, systems and jobs again after', async () => {
+    const { wrapper, engine } = harness()
+    const { result } = renderHook(
+      () => ({
+        scan: useLibraryJob('/api/v1/library/scan'),
+        match: useLibraryJob('/api/v1/library/match'),
+        after: useAfterLibraryJob(),
+      }),
+      { wrapper },
+    )
+    await act(async () => {
+      expect((await result.current.scan.mutateAsync()).kind).toBe('scan')
+      expect((await result.current.match.mutateAsync()).result).toEqual({
+        matched: 0,
+        not_found: 8,
+      })
+    })
+    for (const k of [['library'], ['systems'], ['jobs']])
+      engine.client.setQueryData(k, { stale: true })
+    result.current.after()
+    expect(
+      [['library'], ['systems'], ['jobs']].map(
+        (k) => engine.client.getQueryState(k)?.isInvalidated,
+      ),
+    ).toEqual([true, true, true])
   })
 })

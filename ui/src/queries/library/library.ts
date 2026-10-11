@@ -3,12 +3,14 @@
  * and sort, each cover as the address the engine serves it at (F10-S21).
  */
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useCallback } from 'react'
 import type { components } from '../../lib/api/api'
 import { prepare, type Game } from '../../lib/game/game'
 import { unwrap, useEngine } from '../engine/engine'
 
 export type Summary = components['schemas']['GameSummary']
-export type ListedGame = Game & { readonly coverUrl: string | null }
+/** A game as listed: prepared, with its cover's address and its match state (pending, matched, not found). */
+export type ListedGame = Game & { readonly coverUrl: string | null; readonly state: string }
 export type Catalogue = {
   readonly games: readonly ListedGame[]
   readonly systems: Readonly<Record<string, string>>
@@ -27,7 +29,11 @@ export function catalogue(
 ): Catalogue {
   const labels = Object.fromEntries(systems.map((s) => [s.key, s.label]))
   return {
-    games: games.map((g) => ({ ...prepare(g, labels), coverUrl: coverUrl(g.cover) })),
+    games: games.map((g) => ({
+      ...prepare(g, labels),
+      coverUrl: coverUrl(g.cover),
+      state: g.state,
+    })),
     systems: labels,
   }
 }
@@ -84,4 +90,28 @@ export function useRematch(id: number) {
       ),
     onSettled: () => client.invalidateQueries({ queryKey: ['game', id] }),
   })
+}
+
+/** The library's own jobs, each started with nothing but its name. */
+type LibraryJob =
+  | '/api/v1/library/scan'
+  | '/api/v1/library/match'
+  | '/api/v1/library/covers'
+  | '/api/v1/library/franchises'
+
+/** Starts one of the library's jobs: scan the store, match, fill covers, propose franchise tags. */
+export function useLibraryJob(path: LibraryJob) {
+  const { api } = useEngine()
+  return useMutation({
+    mutationFn: async () => unwrap(await api.POST(path, {})),
+  })
+}
+
+/** After a library job ends: the library, its systems and the job list are read again. */
+export function useAfterLibraryJob() {
+  const client = useQueryClient()
+  return useCallback(() => {
+    for (const queryKey of [LIBRARY_KEY, ['systems'], ['jobs']])
+      void client.invalidateQueries({ queryKey })
+  }, [client])
 }

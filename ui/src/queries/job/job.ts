@@ -45,3 +45,14 @@ export function useCancelJob() {
     onSuccess: (job) => client.setQueryData(jobKey(job.id), job),
   })
 }
+
+/** Every job the engine holds, asked again at the poll interval while any runs. */
+export function useJobs() {
+  const { api, pollMs } = useEngine()
+  return useQuery({
+    queryKey: ['jobs'],
+    queryFn: async ({ signal }) => unwrap(await api.GET('/api/v1/jobs', { signal })).jobs,
+    refetchInterval: (query) =>
+      (query.state.data ?? []).some((j) => !TERMINAL.has(j.state)) ? pollMs : false,
+  })
+}

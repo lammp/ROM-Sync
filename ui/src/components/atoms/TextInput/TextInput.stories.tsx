@@ -30,3 +30,7 @@ export const Invalid: Story = {
 }
 
 export const HiddenLabel: Story = { args: { hideLabel: true, label: 'New tag', value: '' } }
+
+export const WithHelp: Story = {
+  args: { help: 'The library every device is synced from.', error: 'That folder does not exist.' },
+}

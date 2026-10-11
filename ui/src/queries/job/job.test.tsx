@@ -3,7 +3,8 @@ import type { ReactNode } from 'react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { GUARDED, NetworkInTest } from '../../../structure/guard/network'
 import { EngineProvider, createEngine } from '../engine/engine'
-import { finished, useCancelJob, useJob, type Job } from './job'
+import { fakeFetch, freshWorld } from '../../../e2e/fake/world'
+import { finished, useCancelJob, useJob, useJobs, type Job } from './job'
 
 const job = (state: string): Job => ({
   id: 'j1',
@@ -114,5 +115,34 @@ describe('job', () => {
     const { result } = renderHook(() => useJob('j1'), { wrapper })
     await waitFor(() => expect(result.current.isSuccess).toBe(true))
     expect(calls.map((c) => c.url)).toEqual(['/api/v1/jobs/j1'])
+  })
+
+  it('lists every job, newest first, and asks again only while one runs', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true })
+    const world = freshWorld()
+    world.jobs.push({ ...job('done'), id: 'a' }, { ...job('running'), id: 'b' })
+    const fetch = fakeFetch(world)
+    let asked = 0
+    const engine = createEngine({
+      fetch: ((r: Request) => {
+        if (new URL(r.url).pathname === '/api/v1/jobs') asked++
+        return fetch(r)
+      }) as typeof globalThis.fetch,
+      baseUrl: 'http://e',
+      retry: 0,
+      pollMs: 1000,
+    })
+    const wrapper = ({ children }: { children: ReactNode }) => (
+      <EngineProvider engine={engine}>{children}</EngineProvider>
+    )
+    const { result } = renderHook(() => useJobs(), { wrapper })
+    await waitFor(() => expect(result.current.data?.map((j) => j.id)).toEqual(['b', 'a']))
+    const running = world.jobs.find((j) => j.id === 'b')
+    if (running) running.state = 'done'
+    await act(() => vi.advanceTimersByTimeAsync(1000))
+    await waitFor(() => expect(result.current.data?.[0]?.state).toBe('done'))
+    const seen = asked
+    await act(() => vi.advanceTimersByTimeAsync(5000))
+    expect(asked).toBe(seen)
   })
 })

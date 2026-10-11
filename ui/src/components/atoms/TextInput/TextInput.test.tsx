@@ -3,7 +3,7 @@ import { fireEvent, render, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 import * as stories from './TextInput.stories'
 
-const { Default, Invalid, HiddenLabel } = composeStories(stories)
+const { Default, Invalid, HiddenLabel, WithHelp } = composeStories(stories)
 
 describe('TextInput', () => {
   it('is named by its label', () => {
@@ -30,5 +30,14 @@ describe('TextInput', () => {
   it('keeps a hidden label announced', () => {
     render(<HiddenLabel />)
     expect(screen.getByLabelText('New tag')).toBeTruthy()
+  })
+
+  it('ties a help line to the field, beside any error', () => {
+    render(<WithHelp />)
+    const ids = screen.getByRole('textbox').getAttribute('aria-describedby')?.split(' ') ?? []
+    expect(ids.map((id) => document.getElementById(id)?.textContent)).toEqual([
+      'The library every device is synced from.',
+      'That folder does not exist.',
+    ])
   })
 })

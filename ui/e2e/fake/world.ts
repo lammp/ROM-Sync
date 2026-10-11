@@ -37,7 +37,10 @@ export type World = {
   systems: { key: string; label: string; extensions: string[] }[]
   games: Game[]
   tags: Record<number, Tag[]>
-  settings: Json[]
+  /** Settings stored by key; anything absent is the registry's default. */
+  stored: Record<string, unknown>
+  /** The stored client secret, which no answer ever carries. */
+  secret: string | null
   profiles: Json[]
   attached: Json[]
   blocked: { kind: string; description: string; reason: string }[]
@@ -54,6 +57,8 @@ export type World = {
     string,
     { surveyed: string | null; staged: Record<string, boolean>; others: Json[] }
   >
+  /** Maintenance actions run, whose dry runs now find nothing. */
+  maintained: string[]
   nextRun: number
 }
 
@@ -110,22 +115,449 @@ function games(): Game[] {
   })
 }
 
-function setting(key: string, kind: string, value: unknown, description: string): Json {
-  return {
-    key,
-    kind,
-    value,
-    default: value,
-    description,
+/** The engine's settings registry as GET /settings describes it (engine/romsync/config/registry.py). */
+const REGISTRY: readonly Json[] = [
+  {
+    key: 'store.root',
+    kind: 'path',
+    default: '',
+    description: 'The front-end ROMs folder the library is read from.',
     choices: [],
     minimum: null,
     maximum: null,
     unit: '',
     restart: false,
     secret: false,
-    secret_state: null,
-    stored: false,
+  },
+  {
+    key: 'store.rescan_on_launch',
+    kind: 'bool',
+    default: false,
+    description: 'Rescan the store every time the application starts.',
+    choices: [],
+    minimum: null,
+    maximum: null,
+    unit: '',
+    restart: false,
+    secret: false,
+  },
+  {
+    key: 'data.directory',
+    kind: 'path',
+    default: '',
+    description:
+      'Where the database, covers and logs live. Chosen at first run, outside the install folder, so replacing the application cannot touch it.',
+    choices: [],
+    minimum: null,
+    maximum: null,
+    unit: '',
+    restart: true,
+    secret: false,
+  },
+  {
+    key: 'adb.enabled',
+    kind: 'bool',
+    default: true,
+    description: 'Offer devices over the Android debug bridge.',
+    choices: [],
+    minimum: null,
+    maximum: null,
+    unit: '',
+    restart: false,
+    secret: false,
+  },
+  {
+    key: 'adb.path',
+    kind: 'path',
+    default: '',
+    description:
+      'The debug bridge executable. Empty means look on the PATH; absent disables the transport and is stated in Settings, not an error.',
+    choices: [],
+    minimum: null,
+    maximum: null,
+    unit: '',
+    restart: false,
+    secret: false,
+  },
+  {
+    key: 'mtp.enabled',
+    kind: 'bool',
+    default: true,
+    description: 'Offer devices over the media transfer protocol.',
+    choices: [],
+    minimum: null,
+    maximum: null,
+    unit: '',
+    restart: false,
+    secret: false,
+  },
+  {
+    key: 'mtp.arrival_floor',
+    kind: 'int',
+    default: 600,
+    description:
+      'Seconds a copy to a media-transfer device may sit without growing before it counts as stalled, however small the file. Used for every copy, staged or bulk.',
+    choices: [],
+    minimum: 60,
+    maximum: 7200,
+    unit: ' s',
+    restart: false,
+    secret: false,
+  },
+  {
+    key: 'mtp.arrival_rate',
+    kind: 'int',
+    default: 2097152,
+    description:
+      'The slowest rate a copy to a media-transfer device is allowed: a larger file is given its size divided by this, in seconds, if that exceeds the floor.',
+    choices: [],
+    minimum: 65536,
+    maximum: 1073741824,
+    unit: ' B/s',
+    restart: false,
+    secret: false,
+  },
+  {
+    key: 'device.probe_interval',
+    kind: 'int',
+    default: 15,
+    description: 'Seconds between probes while a device page is open.',
+    choices: [],
+    minimum: 5,
+    maximum: 300,
+    unit: ' s',
+    restart: false,
+    secret: false,
+  },
+  {
+    key: 'device.staging_template',
+    kind: 'str',
+    default: 'ROM-Sync/{system}',
+    description: "Where a system's files are staged on a device. Must contain {system}.",
+    choices: [],
+    minimum: null,
+    maximum: null,
+    unit: '',
+    restart: false,
+    secret: false,
+  },
+  {
+    key: 'device.write_marker_after_sync',
+    kind: 'bool',
+    default: true,
+    description: 'Rewrite the identity marker on the device after a successful sync.',
+    choices: [],
+    minimum: null,
+    maximum: null,
+    unit: '',
+    restart: false,
+    secret: false,
+  },
+  {
+    key: 'sysfiles.hash_limit',
+    kind: 'int',
+    default: 67108864,
+    description: 'Files larger than this are compared by size, not by hash.',
+    choices: [],
+    minimum: 1048576,
+    maximum: 4294967296,
+    unit: ' bytes',
+    restart: false,
+    secret: false,
+  },
+  {
+    key: 'firmware.folder',
+    kind: 'path',
+    default: '',
+    description: 'Where firmware and key files are read from. Nothing is ever fetched.',
+    choices: [],
+    minimum: null,
+    maximum: null,
+    unit: '',
+    restart: false,
+    secret: false,
+  },
+  {
+    key: 'plan.free_space_margin',
+    kind: 'int',
+    default: 536870912,
+    description: 'Headroom kept free on a destination after a sync.',
+    choices: [],
+    minimum: 0,
+    maximum: 8589934592,
+    unit: ' bytes',
+    restart: false,
+    secret: false,
+  },
+  {
+    key: 'capacity.warn_fraction',
+    kind: 'float',
+    default: 0.8,
+    description: 'Fill fraction at which the capacity meter turns to caution.',
+    choices: [],
+    minimum: 0.1,
+    maximum: 1.0,
+    unit: '',
+    restart: false,
+    secret: false,
+  },
+  {
+    key: 'capacity.alarm_fraction',
+    kind: 'float',
+    default: 0.9,
+    description: 'Fill fraction at which it turns to alarm.',
+    choices: [],
+    minimum: 0.1,
+    maximum: 1.0,
+    unit: '',
+    restart: false,
+    secret: false,
+  },
+  {
+    key: 'sync.confirm_remove_threshold',
+    kind: 'int',
+    default: 25,
+    description: 'A plan removing more than this many items asks twice.',
+    choices: [],
+    minimum: 0,
+    maximum: 100000,
+    unit: '',
+    restart: false,
+    secret: false,
+  },
+  {
+    key: 'sync.verify_percentage',
+    kind: 'int',
+    default: 100,
+    description: 'How much of a transfer is content-verified where the transport allows it.',
+    choices: [],
+    minimum: 0,
+    maximum: 100,
+    unit: ' %',
+    restart: false,
+    secret: false,
+  },
+  {
+    key: 'igdb.client_id',
+    kind: 'str',
+    default: '',
+    description: 'The metadata service client identifier.',
+    choices: [],
+    minimum: null,
+    maximum: null,
+    unit: '',
+    restart: false,
+    secret: false,
+  },
+  {
+    key: 'igdb.client_secret',
+    kind: 'str',
+    default: '',
+    description: 'The metadata service client secret. Never returned by the API.',
+    choices: [],
+    minimum: null,
+    maximum: null,
+    unit: '',
+    restart: false,
+    secret: true,
+  },
+  {
+    key: 'igdb.requests_per_second',
+    kind: 'float',
+    default: 4.0,
+    description: 'Shared request budget across every concurrent pass. IGDB allows four.',
+    choices: [],
+    minimum: 1.0,
+    maximum: 4.0,
+    unit: '/s',
+    restart: false,
+    secret: false,
+  },
+  {
+    key: 'match.accept_threshold',
+    kind: 'float',
+    default: 0.55,
+    description: 'Score at or above which a candidate is accepted as a match.',
+    choices: [],
+    minimum: 0.0,
+    maximum: 1.0,
+    unit: '',
+    restart: false,
+    secret: false,
+  },
+  {
+    key: 'match.abort_after_errors',
+    kind: 'int',
+    default: 25,
+    description: 'A matching pass stops after this many failures in a row.',
+    choices: [],
+    minimum: 1,
+    maximum: 1000,
+    unit: '',
+    restart: false,
+    secret: false,
+  },
+  {
+    key: 'match.auto_libretro_covers',
+    kind: 'bool',
+    default: true,
+    description: 'Fill a missing cover from the community thumbnail set. Never replaces one.',
+    choices: [],
+    minimum: null,
+    maximum: null,
+    unit: '',
+    restart: false,
+    secret: false,
+  },
+  {
+    key: 'match.auto_enrich',
+    kind: 'bool',
+    default: false,
+    description: 'Fetch screenshots and tags for a matched game without being asked.',
+    choices: [],
+    minimum: null,
+    maximum: null,
+    unit: '',
+    restart: false,
+    secret: false,
+  },
+  {
+    key: 'server.preferred_port',
+    kind: 'int',
+    default: 8765,
+    description: 'The loopback port to try first. Zero means ask the operating system.',
+    choices: [],
+    minimum: 0,
+    maximum: 65535,
+    unit: '',
+    restart: true,
+    secret: false,
+  },
+  {
+    key: 'server.bind_host',
+    kind: 'str',
+    default: '127.0.0.1',
+    description: 'Binding anywhere but loopback disables the shell endpoints and logs why.',
+    choices: ['127.0.0.1', '0.0.0.0'],
+    minimum: null,
+    maximum: null,
+    unit: '',
+    restart: true,
+    secret: false,
+  },
+  {
+    key: 'log.level',
+    kind: 'str',
+    default: 'info',
+    description: 'How much the application writes to its log.',
+    choices: ['debug', 'info', 'warning', 'error'],
+    minimum: null,
+    maximum: null,
+    unit: '',
+    restart: false,
+    secret: false,
+  },
+  {
+    key: 'jobs.history_length',
+    kind: 'int',
+    default: 200,
+    description: 'Terminal jobs kept before the oldest are evicted.',
+    choices: [],
+    minimum: 10,
+    maximum: 10000,
+    unit: '',
+    restart: false,
+    secret: false,
+  },
+  {
+    key: 'runs.retention',
+    kind: 'int',
+    default: 50,
+    description: 'Run folders kept on disk before the oldest are pruned.',
+    choices: [],
+    minimum: 1,
+    maximum: 1000,
+    unit: '',
+    restart: false,
+    secret: false,
+  },
+  {
+    key: 'db.busy_timeout',
+    kind: 'int',
+    default: 5000,
+    description: 'How long a writer waits for the database lock.',
+    choices: [],
+    minimum: 100,
+    maximum: 60000,
+    unit: ' ms',
+    restart: false,
+    secret: false,
+  },
+]
+
+/** Every setting as GET /settings answers: the stored value over the default; a secret never. */
+function describe(w: World): Json[] {
+  return REGISTRY.map((r) => {
+    const key = String(r.key)
+    const stored = key in w.stored
+    if (r.secret)
+      return {
+        ...r,
+        default: null,
+        value: null,
+        stored: w.secret !== null,
+        secret_state: {
+          present: w.secret !== null,
+          length: w.secret?.length ?? 0,
+          saved_at: w.secret ? '2026-10-08T04:11:00+00:00' : null,
+          source: w.secret ? 'typed' : null,
+        },
+      }
+    return { ...r, value: stored ? w.stored[key] : r.default, stored, secret_state: null }
+  })
+}
+
+/** POST /settings: every key checked before any is stored, as the engine does; null deletes. */
+function writeSettings(w: World, values: Record<string, unknown>): Answer {
+  for (const [key, value] of Object.entries(values)) {
+    const r = REGISTRY.find((x) => x.key === key)
+    if (!r) return error(422, 'config.unknown_key', `no setting ${key}`, key)
+    if (value === null || r.secret) continue
+    const kind = String(r.kind)
+    const n = typeof value === 'number' ? value : NaN
+    if (
+      kind === 'bool'
+        ? typeof value !== 'boolean'
+        : kind === 'int' || kind === 'float'
+          ? Number.isNaN(n) || (kind === 'int' && !Number.isInteger(n))
+          : typeof value !== 'string'
+    )
+      return error(422, 'config.wrong_type', `${key} takes a ${kind}`, key)
+    if (
+      (r.minimum !== null && n < Number(r.minimum)) ||
+      (r.maximum !== null && n > Number(r.maximum))
+    )
+      return error(
+        422,
+        'config.out_of_range',
+        `${key} must be between ${String(r.minimum)} and ${String(r.maximum)}`,
+        key,
+      )
+    if ((r.choices as string[]).length && !(r.choices as string[]).includes(String(value)))
+      return error(
+        422,
+        'config.out_of_range',
+        `${key} must be one of ${(r.choices as string[]).join(', ')}`,
+        key,
+      )
   }
+  for (const [key, value] of Object.entries(values)) {
+    const r = REGISTRY.find((x) => x.key === key)
+    if (r?.secret) w.secret = value === null || value === '' ? null : String(value)
+    else if (value === null) delete w.stored[key]
+    else w.stored[key] = value
+  }
+  return { status: 200, body: { settings: describe(w) } }
 }
 
 export const THOR_REF = 'YWRiAHNlcmlhbC0x'
@@ -144,27 +576,8 @@ export function freshWorld(): World {
         { tag: 'Space opera', kind: 'theme', state: 'proposed', source: 'rules' },
       ],
     },
-    settings: [
-      setting(
-        'store.root',
-        'path',
-        'D:\\Games\\ROMs',
-        'The store: the library every device is synced from.',
-      ),
-      setting(
-        'capacity.warn_fraction',
-        'float',
-        0.8,
-        'Fill fraction at which the capacity meter turns to caution.',
-      ),
-      setting('capacity.alarm_fraction', 'float', 0.9, 'Fill fraction at which it turns to alarm.'),
-      setting(
-        'plan.free_space_margin',
-        'int',
-        512 * MB,
-        'Headroom kept free on a destination after a sync.',
-      ),
-    ],
+    stored: { 'store.root': 'D:\\Games\\ROMs' },
+    secret: null,
     profiles: [
       {
         id: 'dev-1',
@@ -234,6 +647,7 @@ export function freshWorld(): World {
     nextJob: 1,
     syncs: {},
     sysfiles: {},
+    maintained: [],
     nextRun: 1,
   }
 }
@@ -616,7 +1030,93 @@ const ROUTES: Route[] = [
     return { status: 200, body: { game_id: Number(id), tags: w.tags[Number(id)] } }
   }),
   route('POST', '/api/v1/games/{id}/rematch', (w, [id]) => job(w, 'rematch', `game:${id}`)),
-  route('GET', '/api/v1/settings', (w) => ({ status: 200, body: { settings: w.settings } })),
+  route('GET', '/api/v1/settings', (w) => ({ status: 200, body: { settings: describe(w) } })),
+  route('POST', '/api/v1/settings', (w, _p, b) =>
+    writeSettings(w, (b.values ?? {}) as Record<string, unknown>),
+  ),
+  route('POST', '/api/v1/igdb/test', (w, _p, b) => {
+    const id = b.client_id ?? w.stored['igdb.client_id'] ?? ''
+    const secret = b.client_secret ?? w.secret
+    if (!id || !secret)
+      return {
+        status: 200,
+        body: {
+          ok: false,
+          failed_at: 'missing',
+          stages: [
+            {
+              name: 'missing',
+              outcome: 'failed',
+              code: 'metadata.credentials_missing',
+              message: 'Add a client ID and secret first',
+            },
+          ],
+        },
+      }
+    if (String(secret).length < 20)
+      return {
+        status: 200,
+        body: {
+          ok: false,
+          failed_at: 'token',
+          stages: [
+            {
+              name: 'token',
+              outcome: 'failed',
+              code: 'metadata.rejected',
+              message: 'Twitch rejected the credentials',
+            },
+          ],
+        },
+      }
+    return {
+      status: 200,
+      body: {
+        ok: true,
+        failed_at: null,
+        stages: [
+          { name: 'token', outcome: 'ok', code: null, message: null },
+          { name: 'api', outcome: 'ok', code: null, message: null },
+        ],
+      },
+    }
+  }),
+  route('GET', '/api/v1/jobs', (w) => ({ status: 200, body: { jobs: [...w.jobs].reverse() } })),
+  route('POST', '/api/v1/jobs/{id}/cancel', (w, [id]) => {
+    const j = w.jobs.find((x) => x.id === id)
+    if (!j) return error(404, 'job.not_found', `no job ${id}`)
+    if (j.state === 'running' || j.state === 'queued') j.state = 'cancelled'
+    return { status: 200, body: j }
+  }),
+  route('POST', '/api/v1/library/scan', (w) =>
+    job(w, 'scan', null, { added: 0, updated: 0, removed: 0 }),
+  ),
+  route('POST', '/api/v1/library/match', (w) => {
+    const pending = w.games.filter((g) => g.state === 'pending')
+    for (const g of pending) g.state = 'not_found'
+    return job(w, 'match', null, { matched: 0, not_found: pending.length })
+  }),
+  route('POST', '/api/v1/library/covers', (w) => job(w, 'covers', null, { filled: 0 })),
+  route('POST', '/api/v1/library/franchises', (w) => job(w, 'franchise', null, { proposed: 2 })),
+  route('GET', '/api/v1/maintenance/{action}', (w, [action]) => {
+    const counts: Record<string, [number, number]> = {
+      compact: [1, 2 * MB],
+      'clear-cache': [0, 0],
+      'prune-covers': [3, 600_000],
+      'prune-runs': [0, 0],
+    }
+    const c = counts[String(action)]
+    if (!c) return error(422, 'request.invalid', `no maintenance action ${action}`, 'action')
+    const done = w.maintained.includes(String(action))
+    return {
+      status: 200,
+      body: { action, count: done ? 0 : c[0], bytes: done ? 0 : c[1], names: [] },
+    }
+  }),
+  route('POST', '/api/v1/maintenance/{action}', (w, [action], b) => {
+    w.maintained.push(String(action))
+    return job(w, 'maintenance', null, { removed: Number(b.expected ?? 0) })
+  }),
   route('GET', '/api/v1/devices', (w) => ({
     status: 200,
     body: {
