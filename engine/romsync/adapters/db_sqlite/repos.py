@@ -622,10 +622,12 @@ class SqliteSysfiles:
 
     def survey(self, device_id: str) -> tuple[SurveyEntry, ...]:
         return tuple(
-            SurveyEntry(r["path"], r["name"], r["kind"], r["size"])
+            SurveyEntry(r["path"], r["name"], r["kind"], r["size"], r["hash"])
             for r in self._c.execute(
-                "SELECT path, name, kind, size FROM device_sysfiles WHERE device_id = ? "
-                "ORDER BY path, name",
+                "SELECT s.path, s.name, s.kind, s.size, h.hash FROM device_sysfiles s "
+                "LEFT JOIN device_sysfile_hashes h ON h.device_id = s.device_id "
+                "AND h.path = s.path AND h.name = s.name AND h.size = s.size "
+                "WHERE s.device_id = ? ORDER BY s.path, s.name",
                 (device_id,),
             )
         )
@@ -638,10 +640,20 @@ class SqliteSysfiles:
 
     def replace_survey(self, device_id: str, entries: Sequence[SurveyEntry], at: str) -> None:
         self._c.execute("DELETE FROM device_sysfiles WHERE device_id = ?", (device_id,))
+        self._c.execute("DELETE FROM device_sysfile_hashes WHERE device_id = ?", (device_id,))
         self._c.executemany(
             "INSERT INTO device_sysfiles(device_id, path, name, kind, size, seen_at) "
             "VALUES(?, ?, ?, ?, ?, ?)",
             [(device_id, e.path, e.name, e.kind, e.size, at) for e in entries],
+        )
+        self._c.executemany(
+            "INSERT INTO device_sysfile_hashes(device_id, path, name, size, hash) "
+            "VALUES(?, ?, ?, ?, ?)",
+            [
+                (device_id, e.path, e.name, e.size, e.hash)
+                for e in entries
+                if e.hash is not None and e.size is not None
+            ],
         )
         _commit(self._c)
 

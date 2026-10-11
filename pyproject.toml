@@ -43,6 +43,8 @@ select = ["E", "F", "W", "I", "UP", "B", "SIM", "RUF"]
 "engine/romsync/app/franchise_rules.py" = ["E501"]
 # PowerShell and C# embedded as constants, kept as their own languages are written.
 "engine/romsync/adapters/dest_mtp/scripts.py" = ["E501"]
+# The system-files registry is a table, one requirement per line.
+"engine/romsync/app/sysfiles_registry.py" = ["E501"]
 
 [tool.ruff.lint.isort]
 known-first-party = ["romsync", "romsync_api", "romsync_desktop", "tools", "tests"]

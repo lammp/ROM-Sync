@@ -218,6 +218,8 @@ class SurveyEntry:
     name: str
     kind: str
     size: int | None = None
+    #: md5 of a staged file, where one was taken; never of a file the size limit skipped.
+    hash: str | None = None
 
 
 class SysfileRepo(Protocol):
