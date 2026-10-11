@@ -132,6 +132,26 @@ SETTINGS: tuple[Setting, ...] = (
     ),
     Setting("mtp.enabled", "bool", True, "Offer devices over the media transfer protocol."),
     Setting(
+        "mtp.arrival_floor",
+        "int",
+        600,
+        "Seconds a copy to a media-transfer device may sit without growing before it "
+        "counts as stalled, however small the file. Used for every copy, staged or bulk.",
+        minimum=60,
+        maximum=7200,
+        unit=" s",
+    ),
+    Setting(
+        "mtp.arrival_rate",
+        "int",
+        2 * 1024 * 1024,
+        "The slowest rate a copy to a media-transfer device is allowed: a larger file "
+        "is given its size divided by this, in seconds, if that exceeds the floor.",
+        minimum=64 * 1024,
+        maximum=1024 * 1024 * 1024,
+        unit=" B/s",
+    ),
+    Setting(
         "device.probe_interval",
         "int",
         15,
