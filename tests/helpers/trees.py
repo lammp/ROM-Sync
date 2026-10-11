@@ -6,6 +6,9 @@ version 1. This turns them into what the rebuild's domain takes.
 
 from __future__ import annotations
 
+import os
+from pathlib import Path
+
 from romsync.domain.models import (
     DeviceItem,
     GameUnit,
@@ -75,3 +78,25 @@ def item(
 
 def inventory() -> tuple[DeviceItem, ...]:
     return tuple(item(*r) for r in device_tree.INVENTORY)
+
+
+def write_store(root: Path) -> Path:
+    """The fixture store, on disk under `root`, with its sizes and times.
+
+    Files are made at their size without writing their bytes. A system file
+    the fixture marks unreadable is made a folder of that name, which nothing
+    can open as a file whoever runs the test.
+    """
+    for row in store_tree.TREE:
+        path = root.joinpath(*row.path.split("\\"))
+        path.parent.mkdir(parents=True, exist_ok=True)
+        if path.name == "systeminfo.txt":
+            if not row.readable:
+                path.mkdir()
+                continue
+            path.write_text(store_tree.systeminfo(path.parent.name), encoding="utf-8")
+        else:
+            with open(path, "wb") as f:
+                f.truncate(row.size)
+        os.utime(path, (row.mtime, row.mtime))
+    return root
