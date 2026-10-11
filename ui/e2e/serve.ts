@@ -1,10 +1,11 @@
 // Serves the static export by manifest lookup, as the engine does, and answers
 // /api/v1 from the fake engine's world. `POST /__reset` starts a fresh world,
-// so each spec begins from the same data.
+// so each spec begins from the same data; `POST /__seed/<name>` adds a named
+// state on top of it.
 import { readFileSync } from 'node:fs'
 import { createServer } from 'node:http'
 import { join } from 'node:path'
-import { answer, freshWorld } from './fake/world.ts'
+import { answer, freshWorld, seed } from './fake/world.ts'
 
 const ROOT = 'out'
 const port = Number(process.argv[2] ?? 4310)
@@ -17,6 +18,12 @@ let world = freshWorld()
 
 createServer((req, res) => {
   const url = new URL(req.url ?? '/', 'http://127.0.0.1')
+  if (req.method === 'POST' && url.pathname.startsWith('/__seed/')) {
+    seed(world, url.pathname.slice('/__seed/'.length))
+    res.writeHead(204)
+    res.end()
+    return
+  }
   if (req.method === 'POST' && url.pathname === '/__reset') {
     world = freshWorld()
     res.writeHead(204)

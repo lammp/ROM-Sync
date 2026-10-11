@@ -5,6 +5,7 @@ import { SearchInput } from '../../../components/atoms/SearchInput/SearchInput'
 import { AppHeader } from '../../../components/organisms/AppHeader/AppHeader'
 import { DevicePicker } from '../../../components/organisms/DevicePicker/DevicePicker'
 import { useAttached, useProfiles } from '../../../queries/devices/devices'
+import { useRecoverLists } from '../../../queries/recover/recover'
 import { appStore, useAppStore } from '../../../store/store'
 
 const VIEWS = [
@@ -12,6 +13,9 @@ const VIEWS = [
   { href: '/devices', label: 'Devices' },
   { href: '/system-files', label: 'System files' },
 ] as const
+
+/** Shown only while a device plugged in holds something the store does not (REBUILD-UI section 11). */
+const RECOVER = { href: '/recover', label: 'Recover' } as const
 
 /** A route's path without the trailing slash the static export adds. */
 export function routeOf(pathname: string | null): string {
@@ -26,10 +30,14 @@ export function HeaderBar() {
   const query = useAppStore((s) => s.filters.query)
   const device = useAppStore((s) => s.selection.device)
   const profiles = useProfiles().data ?? []
-  const online = new Set((useAttached().data?.devices ?? []).map((d) => d.ref))
+  const attached = useAttached().data?.devices ?? []
+  const online = new Set(attached.map((d) => d.ref))
+  const lists = useRecoverLists(attached.filter((d) => d.profile !== null).map((d) => d.ref))
+  const recover = lists.some((l) => (l.data?.length ?? 0) > 0)
+  const views = recover || route === RECOVER.href ? [...VIEWS, RECOVER] : VIEWS
   return (
     <AppHeader
-      nav={VIEWS.map((v) => ({ ...v, current: route === v.href }))}
+      nav={views.map((v) => ({ ...v, current: route === v.href }))}
       search={
         <SearchInput
           value={query}

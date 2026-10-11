@@ -59,6 +59,8 @@ export type World = {
   >
   /** Maintenance actions run, whose dry runs now find nothing. */
   maintained: string[]
+  /** Files in the store's folders the library has not read yet, by system and name. */
+  unread: { system: string; name: string; size: number }[]
   nextRun: number
 }
 
@@ -648,6 +650,7 @@ export function freshWorld(): World {
     syncs: {},
     sysfiles: {},
     maintained: [],
+    unread: [],
     nextRun: 1,
   }
 }
@@ -816,6 +819,43 @@ function startSync(w: World, ref: string, confirm: unknown): Answer {
   ;(w.runs[id] ??= []).unshift(run)
   w.syncs[ref] = { job, run, step: 0, plan: body, id }
   return { status: 200, body: job }
+}
+
+/**
+ * Named states a spec or story starts from. "recover": Thor holds three items
+ * the library lacks (one in a managed system, one in a system it leaves
+ * alone, one in a folder the store has no system for) and a fourth whose
+ * name the store's folder already has, unread.
+ */
+export function seed(w: World, scenario: string): void {
+  if (scenario !== 'recover') throw new Error(`no scenario ${scenario}`)
+  w.inventory['dev-1']?.push(
+    { system: 'snes', name: 'Hidden Gem (USA).sfc', kind: 'file', size: 2 * MB },
+    { system: 'snes', name: 'Clash (USA).sfc', kind: 'file', size: MB },
+    { system: 'n64', name: 'Translation Patch', kind: 'folder', size: null },
+    { system: 'nes', name: 'Homebrew.nes', kind: 'file', size: 40_960 },
+  )
+  w.unread.push({ system: 'snes', name: 'Clash (USA).sfc', size: MB })
+}
+
+function recoverList(w: World, ref: string): Answer {
+  const p = w.profiles.find((x) => x.ref === ref)
+  if (!p) return error(404, 'profile.not_found', 'this device has no profile yet', 'device')
+  const library = new Set(w.games.map((g) => `${g.system}\\${g.name}`))
+  const items = (w.inventory[String(p.id)] ?? []).filter(
+    (i) => i.kind !== 'sysfile' && i.system !== 'bios' && !library.has(`${i.system}\\${i.name}`),
+  )
+  return { status: 200, body: { items } }
+}
+
+function failedJob(w: World, kind: string, target: string, code: string, message: string): Answer {
+  const view = job(w, kind, target)
+  const body = view.body as Json
+  body.state = 'failed'
+  body.result = null
+  body.error_code = code
+  body.error_message = message
+  return view
 }
 
 /** One status read: half way on the first, finished on the second, as the engine would report it. */
@@ -1088,9 +1128,72 @@ const ROUTES: Route[] = [
     if (j.state === 'running' || j.state === 'queued') j.state = 'cancelled'
     return { status: 200, body: j }
   }),
-  route('POST', '/api/v1/library/scan', (w) =>
-    job(w, 'scan', null, { added: 0, updated: 0, removed: 0 }),
-  ),
+  route('POST', '/api/v1/library/scan', (w) => {
+    const added = w.unread.filter(
+      (u) => !w.games.some((g) => g.system === u.system && g.name === u.name),
+    )
+    for (const u of added) {
+      const title = u.name.replace(/ \(.*$|\.[^.]+$/g, '')
+      w.games.push({
+        id: w.games.length + 1,
+        system: u.system,
+        name: u.name,
+        title,
+        region: null,
+        kind: 'file',
+        size: u.size,
+        mtime: 1_760_000_000,
+        files: 1,
+        state: 'pending',
+        matched: false,
+        confidence: null,
+        igdb_id: null,
+        igdb_name: null,
+        year: null,
+        genres: [],
+        rating: null,
+        votes: null,
+        cover: null,
+        tags: {},
+      })
+    }
+    w.unread = []
+    return job(w, 'scan', null, { added: added.length, updated: 0, removed: 0 })
+  }),
+  route('GET', '/api/v1/devices/{ref}/recover', (w, [ref]) => recoverList(w, String(ref))),
+  route('POST', '/api/v1/devices/{ref}/recover', (w, [ref], b) => {
+    const listed = recoverList(w, String(ref))
+    if (listed.status !== 200) return listed
+    const item = ((listed.body as Json).items as Json[]).find(
+      (i) => i.system === b.system && i.name === b.name,
+    )
+    if (!item)
+      return failedJob(
+        w,
+        'recover',
+        String(ref),
+        'dest.transfer_failed',
+        `${String(b.system)}/${String(b.name)} is not something only the device holds`,
+      )
+    if (item.kind === 'folder')
+      return failedJob(
+        w,
+        'recover',
+        String(ref),
+        'dest.transfer_failed',
+        `${String(b.system)}/${String(b.name)} is a folder; only single files are recovered`,
+      )
+    if (w.unread.some((u) => u.system === b.system && u.name === b.name))
+      return failedJob(
+        w,
+        'recover',
+        String(ref),
+        'store.would_overwrite',
+        `the store already has ${String(b.system)}/${String(b.name)}; nothing was replaced`,
+      )
+    w.unread.push({ system: String(b.system), name: String(b.name), size: Number(item.size ?? 0) })
+    return job(w, 'recover', String(ref), { placed: 1, bytes: Number(item.size ?? 0) })
+  }),
   route('POST', '/api/v1/library/match', (w) => {
     const pending = w.games.filter((g) => g.state === 'pending')
     for (const g of pending) g.state = 'not_found'
