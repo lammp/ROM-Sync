@@ -216,6 +216,7 @@ they can only be taken while version 1 still runs.
 | F10-S22 (added) | A device's inventory and its run history, read by profile | F6-S9, F7-S1 | Both answer for a profile and refuse an unknown one; history is newest first | `tests/unit/api/test_history_routes.py::test_history_newest_first` |
 | F10-S23 (added) | A device the probe finds but cannot read is listed with its transport, description and reason; an attached device says where a new profile would keep its ROMs | F6-S9, F10-S10 | `GET /devices` lists blocked devices beside readable ones, and forgets one once it goes | `tests/unit/app/test_devices.py::test_a_blocked_device_says_what_it_is_and_why`, `tests/unit/api/test_device_routes.py::test_a_device_that_cannot_be_read_is_listed_with_its_reason` |
 | F10-S24 (added) | A device's games are read into its inventory as a read-only job; a profile is renamed; its marker is written again as the profile stands | F6-S9, F9-S1, F10-S10 | A scan writes nothing to the device and forgets what has left it; a rename writes nothing to the device; scan and marker refuse a device with no profile before any job starts | `tests/unit/app/test_devices.py::test_a_scan_reads_the_games_into_the_inventory_and_writes_nothing`, `tests/unit/api/test_device_routes.py::test_scan_rename_and_marker` |
+| F10-S25 (added) | A running sync's progress carries the run's totals: bytes sent and removed so far, and how many of each have finished | F7-S1, F9-S8 | Bytes sent never go backwards and end at the run's total; a copy in hand counts as it goes | `tests/unit/app/test_sync.py::test_progress_carries_the_run_totals` |
 
 ## F11 Interface rebuild as atomic components
 
@@ -340,6 +341,6 @@ component, feature or function they cover.
 | | |
 |---|---|
 | Features | 16 |
-| Stories | 178 |
+| Stories | 179 |
 | Security requirements from SPEC section 12, each covered by at least one story | 9 |
 | Stories whose acceptance needs a real device or a clean machine, and therefore sit outside the gate | F6-S5, F6-S6, F13-S1, F13-S2, F13-S6; each is marked for manual verification, and [TESTING.md](TESTING.md) section 8 states what the gate does not prove |

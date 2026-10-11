@@ -82,24 +82,69 @@ def _row(op: Op) -> dict[str, object]:
 
 
 class _RunSink:
-    """Passes progress on, and keeps the run folder's status current."""
+    """Passes progress on, with the run's totals so far, and keeps the run
+    folder's status current.
+
+    The destination reports items by their place in the list it was handed and,
+    while one copies, the bytes of that item alone. This adds what the
+    interface's progress needs and cannot rebuild (F10-S25, added): bytes sent
+    and bytes removed across the run, and how many of each have finished.
+    """
 
     def __init__(
         self,
         inner: ProgressSink,
         folders: RunFolders,
         run_id: int,
+        ops: Sequence[TransferOp],
         total: int,
         clock: ClockPort,
     ) -> None:
         self.inner = inner
         self.folders = folders
         self.run_id = run_id
+        self.ops = tuple(ops)
         self.total = total
         self.clock = clock
+        self.finished = 0
+        self.in_hand = 0
+        self.sent_bytes = 0
+        self.removed_bytes = 0
+        self.sent = 0
+        self.removed = 0
+
+    def _bank(self, upto: int) -> None:
+        """Every item before `upto` has finished: count it once."""
+        while self.finished < min(upto, len(self.ops)):
+            op = self.ops[self.finished]
+            if op.action is Action.REMOVE:
+                self.removed += 1
+                self.removed_bytes += op.size
+            else:
+                self.sent += 1
+                self.sent_bytes += self.in_hand
+            self.finished += 1
+            self.in_hand = 0
+
+    def totals(self) -> dict[str, int]:
+        return {
+            "bytes_done": self.sent_bytes + self.in_hand,
+            "bytes_removed": self.removed_bytes,
+            "sent": self.sent,
+            "removed": self.removed,
+        }
 
     def emit(self, event: ProgressEvent) -> None:
-        self.inner.emit(event)
+        copying = event.detail is not None and "bytes" in event.detail
+        if copying:
+            assert event.detail is not None
+            self.in_hand = event.detail["bytes"]
+        else:
+            self._bank(event.done)
+        detail = self.totals() | ({"bytes": self.in_hand} if copying else {})
+        self.inner.emit(
+            ProgressEvent(event.phase, event.done, event.total, event.current, detail)
+        )
         if event.detail is None:
             self.folders.status(
                 self.run_id,
@@ -196,8 +241,9 @@ class Sync:
                     )
                     continue
                 passed.append((i, transfer_op))
-            run_sink = _RunSink(sink, self._folders, run_id, len(work), self._clock)
-            done = transfer.run([t for _, t in passed], run_sink, cancel)
+            handed = [t for _, t in passed]
+            run_sink = _RunSink(sink, self._folders, run_id, handed, len(work), self._clock)
+            done = transfer.run(handed, run_sink, cancel)
             results = dict(refused)
             results.update({i: r for (i, _), r in zip(passed, done, strict=True)})
             ordered_results = tuple(results[i] for i in range(len(work)))

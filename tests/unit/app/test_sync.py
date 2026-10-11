@@ -37,7 +37,8 @@ class CrashMidCopy(SinkSpy):
 
     def emit(self, event: object) -> None:
         super().emit(event)
-        if isinstance(event, ProgressEvent) and event.detail and event.done == self.at:
+        copying = isinstance(event, ProgressEvent) and event.detail and "bytes" in event.detail
+        if copying and event.done == self.at:  # type: ignore[union-attr]
             raise Crash
 
 
@@ -302,6 +303,38 @@ def test_counts_reported(
     assert outcome.run.bytes_moved == 3
 
 
+def test_progress_carries_the_run_totals(
+    r: Repos, folders: FsRunFolders, store: StoreRoot, profile: DeviceProfile, dest: FakeDest
+) -> None:
+    """F10-S25 (added): bytes sent and removed so far, and how many of each finished."""
+    dest._mkdirs(("ROMs", "nes"))
+    dest.files[("ROMs", "nes", "Old.nes")] = b"old!!"
+    spy = SinkSpy()
+    run(
+        sync(r, folders, store),
+        profile,
+        dest,
+        op(Action.SEND, NES, "A.nes", size=3),
+        op(Action.SEND, NES, "B.nes", size=4),
+        op(Action.REMOVE, NES, "Old.nes", size=5),
+        sink=spy,
+    )
+    events = [e for e in spy.events if isinstance(e, ProgressEvent)]
+    assert all(e.detail is not None for e in events)
+    done = [e.detail["bytes_done"] for e in events if e.detail]
+    assert done == sorted(done), "bytes sent never go backwards"
+    last = events[-1].detail
+    assert last is not None
+    assert {k: last[k] for k in ("bytes_done", "bytes_removed", "sent", "removed")} == {
+        "bytes_done": 7,
+        "bytes_removed": 5,
+        "sent": 2,
+        "removed": 1,
+    }
+    mid = [e.detail for e in events if e.detail and "bytes" in e.detail]
+    assert mid and all(m["bytes_done"] <= 7 for m in mid), "a copy in hand counts as it goes"
+
+
 def test_a_cancelled_run_is_cancelled(
     r: Repos, folders: FsRunFolders, store: StoreRoot, profile: DeviceProfile, dest: FakeDest
 ) -> None:
@@ -454,7 +487,8 @@ def test_cancel_between_items(
     def cancel_after_first(ctx: Context) -> object:
         def emit(event: ProgressEvent) -> None:
             ctx.progress(event)
-            if event.detail is None and event.done == 1:
+            between_items = "bytes" not in (event.detail or {})
+            if between_items and event.done == 1:
                 jobs.cancel(ctx.job_id)  # type: ignore[attr-defined]
 
         return work(Context(ctx.job_id, ctx.cancel, emit))
