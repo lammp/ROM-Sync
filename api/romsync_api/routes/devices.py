@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Depends
 
-from romsync.app.devices import Attached, DeviceProfile
+from romsync.app.devices import Attached, Blocked, DeviceProfile
 from romsync.compose import Engine
 from romsync.domain.models import Mode, Selection, SystemKey
 from romsync.domain.refs import encode
@@ -17,6 +17,7 @@ from romsync_api.deps import engine
 from romsync_api.models import (
     AttachedDevice,
     AttachedDevices,
+    BlockedDevice,
     CapacityView,
     GamesChange,
     GamesChanged,
@@ -46,27 +47,35 @@ def profile_of(p: DeviceProfile) -> Profile:
     )
 
 
-def attached_of(a: Attached) -> AttachedDevice:
+def attached_of(a: Attached, roms_root: str) -> AttachedDevice:
     return AttachedDevice(
         ref=a.ref,
         kind=str(a.dest.kind),
         description=a.description,
         has_marker=a.marker is not None,
         profile=profile_of(a.profile) if a.profile is not None else None,
+        roms_root=roms_root,
     )
+
+
+def blocked_of(b: Blocked) -> BlockedDevice:
+    return BlockedDevice(kind=b.kind, description=b.description, reason=b.reason)
 
 
 @router.get("/devices", response_model=AttachedDevices)
 def devices(e: Engine = Depends(engine)) -> AttachedDevices:  # noqa: B008
     found = e.devices.refresh()
     return AttachedDevices(
-        devices=[attached_of(a) for a in found], unreachable=e.devices.unreachable
+        devices=[attached_of(a, e.devices.roms_root(a)) for a in found],
+        blocked=[blocked_of(b) for b in e.devices.blocked],
+        unreachable=e.devices.unreachable,
     )
 
 
 @router.get("/devices/{ref}", response_model=AttachedDevice)
 def device(ref: str, e: Engine = Depends(engine)) -> AttachedDevice:  # noqa: B008
-    return attached_of(e.devices.find(ref))
+    found = e.devices.find(ref)
+    return attached_of(found, e.devices.roms_root(found))
 
 
 @router.get("/devices/{ref}/capacity", response_model=CapacityView)

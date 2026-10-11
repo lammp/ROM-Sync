@@ -214,6 +214,7 @@ they can only be taken while version 1 still runs.
 | F10-S20 (added) | Recover: what only the device holds, pulled and placed in the store without overwriting | F7-S11, F9-S1 | Placing never overwrites | `tests/unit/api/test_recover_routes.py::test_place_never_overwrites` |
 | F10-S21 (added) | A game's cover served by the name its game records; no request names a path | F5-S8, F10-S7 | An unrecorded name, or one shaped like a path, is not found and never reaches the disk | `tests/unit/api/test_library_routes.py::test_only_a_recorded_cover_is_served` |
 | F10-S22 (added) | A device's inventory and its run history, read by profile | F6-S9, F7-S1 | Both answer for a profile and refuse an unknown one; history is newest first | `tests/unit/api/test_history_routes.py::test_history_newest_first` |
+| F10-S23 (added) | A device the probe finds but cannot read is listed with its transport, description and reason; an attached device says where a new profile would keep its ROMs | F6-S9, F10-S10 | `GET /devices` lists blocked devices beside readable ones, and forgets one once it goes | `tests/unit/app/test_devices.py::test_a_blocked_device_says_what_it_is_and_why`, `tests/unit/api/test_device_routes.py::test_a_device_that_cannot_be_read_is_listed_with_its_reason` |
 
 ## F11 Interface rebuild as atomic components
 
@@ -338,6 +339,6 @@ component, feature or function they cover.
 | | |
 |---|---|
 | Features | 16 |
-| Stories | 176 |
+| Stories | 177 |
 | Security requirements from SPEC section 12, each covered by at least one story | 9 |
 | Stories whose acceptance needs a real device or a clean machine, and therefore sit outside the gate | F6-S5, F6-S6, F13-S1, F13-S2, F13-S6; each is marked for manual verification, and [TESTING.md](TESTING.md) section 8 states what the gate does not prove |

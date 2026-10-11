@@ -93,6 +93,31 @@ def test_an_unreachable_device_is_counted_not_fatal(r: Repos) -> None:
     assert d.unreachable == 1
 
 
+def test_a_blocked_device_says_what_it_is_and_why(r: Repos) -> None:
+    gone = FakeDest("gone", faults=Faults(vanish_after=0))
+    probe = Probe(gone)
+    d = devices(probe, r)
+    d.refresh()
+    (blocked,) = d.blocked
+    assert (blocked.kind, blocked.description, blocked.reason) == (
+        "fake",
+        gone.describe(),
+        "gone went away",
+    )
+    probe.dests.clear()
+    d.refresh()
+    assert (d.blocked, d.unreachable) == ((), 0), "a blocked device is forgotten once it goes"
+
+
+def test_a_new_profile_keeps_its_roms_where_the_destination_says(r: Repos) -> None:
+    thor = FakeDest("thor")
+    d = devices(Probe(thor), r)
+    (found,) = d.refresh()
+    root = d.roms_root(found)
+    assert root == thor.roots().roms_at.relative("/")
+    assert d.create(found.ref, "Thor").roms_root == root
+
+
 def _profile(r: Repos, device_id: str, identity: VolumeIdentity | None = None) -> DeviceProfile:
     kind = DeviceKind.VOLUME if identity else DeviceKind.FAKE
     profile = DeviceProfile(device_id, "Thor", kind, "ROMs", "x", "x", identity=identity)

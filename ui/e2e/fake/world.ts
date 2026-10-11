@@ -40,6 +40,7 @@ export type World = {
   settings: Json[]
   profiles: Json[]
   attached: Json[]
+  blocked: { kind: string; description: string; reason: string }[]
   selections: Record<string, { modes: Record<string, string>; overrides: Record<string, boolean> }>
   inventory: Record<string, { system: string; name: string; kind: string; size: number | null }[]>
   runs: Record<string, Json[]>
@@ -167,8 +168,15 @@ export function freshWorld(): World {
       },
     ],
     attached: [
-      { ref: THOR_REF, kind: 'adb', description: 'AYN Thor (serial-1)', has_marker: true },
+      {
+        ref: THOR_REF,
+        kind: 'adb',
+        description: 'AYN Thor (serial-1)',
+        has_marker: true,
+        roms_root: '/storage/emulated/0/ROMs',
+      },
     ],
+    blocked: [],
     selections: { 'dev-1': { modes: { snes: 'all', gba: 'none' }, overrides: { '2': true } } },
     inventory: {
       'dev-1': [
@@ -349,7 +357,8 @@ const ROUTES: Route[] = [
         ...a,
         profile: w.profiles.find((p) => p.ref === a.ref) ?? null,
       })),
-      unreachable: 0,
+      blocked: w.blocked,
+      unreachable: w.blocked.length,
     },
   })),
   route('GET', '/api/v1/profiles', (w) => ({ status: 200, body: { profiles: w.profiles } })),

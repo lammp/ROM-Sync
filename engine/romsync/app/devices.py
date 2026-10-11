@@ -69,6 +69,24 @@ class Attached:
     description: str = ""
 
 
+@dataclass(frozen=True, slots=True)
+class Blocked:
+    """An attached destination the probe found but could not read, and why
+    (F10-S23, added): an ADB device waiting on its debugging prompt, say."""
+
+    kind: str
+    description: str
+    reason: str
+
+
+def _describe(dest: Dest) -> str:
+    try:
+        port: DestIdentity = require(dest, DestIdentity)
+        return port.describe()
+    except RomSyncError:
+        return ""
+
+
 class Devices:
     def __init__(
         self,
@@ -84,7 +102,7 @@ class Devices:
         self._clock = clock
         self._ids = ids
         self._seen: dict[str, Attached] = {}
-        self.unreachable = 0
+        self.blocked: tuple[Blocked, ...] = ()
 
     def _now(self) -> str:
         return self._clock.now().isoformat(timespec="seconds")
@@ -101,22 +119,31 @@ class Devices:
     def refresh(self) -> tuple[Attached, ...]:
         """One device-wide probe. Reads only: nothing is written to a device or here."""
         found: dict[str, Attached] = {}
-        unreachable = 0
+        blocked: list[Blocked] = []
         for dest in self._probe():
             try:
                 port: DestIdentity = require(dest, DestIdentity)
                 identity = port.identity()
                 marker = port.read_marker() if port.root_exists() else None
-            except RomSyncError:
-                unreachable += 1
+            except RomSyncError as e:
+                blocked.append(Blocked(str(dest.kind), _describe(dest), str(e)))
                 continue
             ref = encode(identity.ref)
             found[ref] = Attached(
                 ref, dest, identity, marker, self.recognise(marker, identity), port.describe()
             )
         self._seen = found
-        self.unreachable = unreachable
+        self.blocked = tuple(blocked)
         return tuple(found[r] for r in sorted(found))
+
+    @property
+    def unreachable(self) -> int:
+        """How many attached destinations the last probe could not read."""
+        return len(self.blocked)
+
+    def roms_root(self, found: Attached) -> str:
+        """Where a profile made for this device keeps its ROMs: the destination's root."""
+        return found.dest.roots().roms_at.relative("/")
 
     def profiles(self) -> tuple[DeviceProfile, ...]:
         """Every device this computer has a profile for, attached or not."""
@@ -157,7 +184,7 @@ class Devices:
             id=self._ids.new_id(),
             name=name,
             kind=found.dest.kind,
-            roms_root=found.dest.roots().roms_at.relative("/"),
+            roms_root=self.roms_root(found),
             first_seen=now,
             last_seen=now,
             identity=found.identity,

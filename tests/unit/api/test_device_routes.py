@@ -7,7 +7,7 @@ from pathlib import Path
 
 from fastapi.testclient import TestClient
 
-from romsync.adapters.dest_fake import FakeDest
+from romsync.adapters.dest_fake import FakeDest, Faults
 from romsync.compose import build
 from romsync.domain.models import Marker
 from romsync_api.app import PREFIX, create_app
@@ -42,7 +42,8 @@ def test_ref_only(tmp_path: Path) -> None:
     c = client(tmp_path, probe)
     first = listed(c)
     assert all(
-        set(d.model_dump()) == {"ref", "kind", "description", "has_marker", "profile"}
+        set(d.model_dump())
+        == {"ref", "kind", "description", "has_marker", "profile", "roms_root"}
         for d in first.devices
     )
     refs = {d.description: d.ref for d in first.devices}
@@ -92,3 +93,16 @@ def test_adopt(tmp_path: Path) -> None:
     ref = listed(c).devices[0].ref
     adopted = c.post(f"{PREFIX}/devices/{ref}/adopt")
     assert adopted.status_code == 200 and adopted.json()["id"] == "dev-elsewhere"
+
+
+def test_a_device_that_cannot_be_read_is_listed_with_its_reason(tmp_path: Path) -> None:
+    thor = FakeDest("thor")
+    stuck = FakeDest("stuck", faults=Faults(vanish_after=0))
+    c = client(tmp_path, Probe(thor, stuck))
+    found = listed(c)
+    assert [d.description for d in found.devices] == [thor.describe()]
+    assert found.devices[0].roms_root == thor.roots().roms_at.relative("/")
+    assert [(b.kind, b.description, b.reason) for b in found.blocked] == [
+        ("fake", stuck.describe(), "stuck went away")
+    ]
+    assert found.unreachable == 1

@@ -850,13 +850,29 @@ export interface components {
             profile: components["schemas"]["Profile"] | null;
             /** Ref */
             ref: string;
+            /** Roms Root */
+            roms_root: string;
         };
         /** AttachedDevices */
         AttachedDevices: {
+            /** Blocked */
+            blocked: components["schemas"]["BlockedDevice"][];
             /** Devices */
             devices: components["schemas"]["AttachedDevice"][];
             /** Unreachable */
             unreachable: number;
+        };
+        /**
+         * BlockedDevice
+         * @description An attached destination the probe could not read, and why.
+         */
+        BlockedDevice: {
+            /** Description */
+            description: string;
+            /** Kind */
+            kind: string;
+            /** Reason */
+            reason: string;
         };
         /** CapacityView */
         CapacityView: {

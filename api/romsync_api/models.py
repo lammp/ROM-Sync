@@ -172,10 +172,21 @@ class AttachedDevice(Model):
     description: str
     has_marker: bool
     profile: Profile | None
+    #: Where a profile made for it keeps its ROMs: the destination's own root.
+    roms_root: str
+
+
+class BlockedDevice(Model):
+    """An attached destination the probe could not read, and why."""
+
+    kind: str
+    description: str
+    reason: str
 
 
 class AttachedDevices(Model):
     devices: list[AttachedDevice]
+    blocked: list[BlockedDevice]
     unreachable: int
 
 
