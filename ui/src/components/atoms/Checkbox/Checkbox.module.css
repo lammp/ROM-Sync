@@ -1,0 +1,12 @@
+.row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 4px;
+  cursor: pointer;
+}
+
+.row input {
+  accent-color: var(--accent-solid);
+  margin: 0;
+}

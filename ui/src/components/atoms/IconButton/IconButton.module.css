@@ -1,0 +1,21 @@
+.icon {
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-6);
+  padding: 6px 8px;
+  display: inline-flex;
+  align-items: center;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.icon:hover,
+.active {
+  color: var(--fg);
+  background: var(--bg3);
+  border-color: var(--border);
+}
+
+.glyph {
+  display: inline-flex;
+}

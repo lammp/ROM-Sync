@@ -1,0 +1,20 @@
+.dot {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border-radius: var(--radius-round);
+  background: var(--muted);
+  flex: none;
+}
+
+.ok {
+  background: var(--ok);
+}
+
+.warn {
+  background: var(--warn);
+}
+
+.bad {
+  background: var(--bad);
+}

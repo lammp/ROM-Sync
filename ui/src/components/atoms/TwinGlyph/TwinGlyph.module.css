@@ -1,0 +1,20 @@
+.twin {
+  width: 20px;
+  height: 20px;
+  border-radius: var(--radius-round);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--text-base-sm);
+  line-height: 1;
+  background: var(--scrim-3);
+  border: 1px solid var(--border);
+  color: var(--fg);
+}
+
+.dupe {
+  background: var(--warn);
+  border-color: var(--warn);
+  color: var(--on-warn);
+  font-weight: 700;
+}

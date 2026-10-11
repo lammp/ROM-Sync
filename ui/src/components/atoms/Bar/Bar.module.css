@@ -1,0 +1,18 @@
+.bar {
+  height: 6px;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-3);
+  overflow: hidden;
+  margin: 6px 0;
+}
+
+.fill {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+}
+
+.dim .fill {
+  opacity: 0.45;
+}

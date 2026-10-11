@@ -1,4 +1,10 @@
 /* The document's base, as version 1 had it: the page surface, body text and type, from tokens. */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
 html,
 body {
   height: 100%;

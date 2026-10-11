@@ -23,7 +23,7 @@ export default defineConfig({
         test: {
           name: 'unit',
           environment: 'jsdom',
-          setupFiles: ['structure/guard/network.ts'],
+          setupFiles: ['structure/guard/network.ts', 'structure/guard/dom.ts'],
           include: ['src/**/*.test.{ts,tsx}', 'parity/**/*.test.ts', 'structure/**/*.test.ts'],
         },
       },
