@@ -1,0 +1,28 @@
+.grid {
+  flex: 1;
+  overflow: auto;
+  padding: 14px 16px;
+  min-height: 0;
+}
+
+.list {
+  padding: 0;
+}
+
+.inner {
+  display: grid;
+  gap: var(--grid-gap);
+  align-content: start;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+.list .inner {
+  display: block;
+}
+
+.empty {
+  color: var(--muted);
+}
