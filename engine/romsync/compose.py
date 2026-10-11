@@ -12,14 +12,23 @@ database handle.
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+import time
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from pathlib import Path
 
 from romsync.adapters.db_sqlite.connect import connect
 from romsync.adapters.db_sqlite.migrations import migrate
 from romsync.adapters.db_sqlite.repos import repos
+from romsync.adapters.metadata_igdb.client import (
+    Credentials,
+    IgdbClient,
+    Transport,
+    UrllibTransport,
+)
+from romsync.adapters.metadata_igdb.throttle import Throttle
 from romsync.adapters.system.clock import SystemClock
+from romsync.app.connection_check import ConnectionCheck
 from romsync.app.library import Library
 from romsync.app.settings import Settings
 from romsync.config.registry import REGISTRY, Registry
@@ -35,6 +44,7 @@ class Engine:
     registry: Registry
     settings: Settings
     library: Library
+    connection: ConnectionCheck
     data: Path
 
 
@@ -52,6 +62,8 @@ def build(
     overrides: Mapping[str, object] | None = None,
     *,
     clock: ClockPort | None = None,
+    metadata_transport: Transport | None = None,
+    sleep: Callable[[float], None] = time.sleep,
 ) -> Engine:
     """Build an engine over the data folder `data`.
 
@@ -69,9 +81,23 @@ def build(
     conn = connect(db, busy, shared=True)
     stores = repos(conn)
     settings = Settings(REGISTRY, stores.config, clock, checked)
+    transport = metadata_transport or UrllibTransport()
+
+    def metadata_client(client_id: str, secret: str) -> IgdbClient:
+        """The one place credentials reach the client (S6): handed in, never read by it."""
+        rate = settings.value("igdb.requests_per_second")
+        assert isinstance(rate, int | float)
+        assert clock is not None
+        throttle = Throttle(float(rate), clock, sleep)
+        return IgdbClient(Credentials(client_id, secret), transport, throttle, clock, sleep)
+
+    def saved_credentials() -> tuple[str, str]:
+        return str(settings.value("igdb.client_id")), str(settings.value("igdb.client_secret"))
+
     return Engine(
         registry=REGISTRY,
         settings=settings,
         library=Library(stores.games, stores.tags),
+        connection=ConnectionCheck(metadata_client, saved_credentials),
         data=data,
     )

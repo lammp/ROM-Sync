@@ -121,3 +121,23 @@ class SettingsWrite(Model):
     """A partial write: only these keys change; null deletes a key."""
 
     values: dict[str, str | int | float | bool | None]
+
+
+class CredentialTest(Model):
+    """What was typed. A field left out or blank falls back to the saved value."""
+
+    client_id: str | None = None
+    client_secret: str | None = None
+
+
+class CredentialStage(Model):
+    name: str
+    outcome: str
+    code: str | None
+    message: str | None
+
+
+class CredentialResult(Model):
+    ok: bool
+    failed_at: str | None
+    stages: list[CredentialStage]
