@@ -30,6 +30,7 @@ from romsync.adapters.metadata_igdb.client import (
     UrllibTransport,
 )
 from romsync.adapters.metadata_igdb.throttle import Throttle
+from romsync.adapters.shell_win.windows import WindowsShell
 from romsync.adapters.system.clock import RandomIds, SystemClock
 from romsync.app.connection_check import ConnectionCheck
 from romsync.app.devices import Devices, Probe
@@ -38,6 +39,7 @@ from romsync.app.maintenance import Maintenance
 from romsync.app.plans import Plans
 from romsync.app.selection import Selections
 from romsync.app.settings import Settings
+from romsync.app.shell import Shell
 from romsync.app.sync import Sync
 from romsync.config.registry import REGISTRY, Registry
 from romsync.domain.paths import StoreRoot
@@ -45,6 +47,7 @@ from romsync.jobs.registry import Jobs, Runner, threaded
 from romsync.jobs.sync_job import Syncs
 from romsync.ports.clock import ClockPort, IdPort
 from romsync.ports.dest import Dest
+from romsync.ports.shell import ShellPort
 
 DATABASE = "romsync.db"
 
@@ -68,6 +71,7 @@ class Engine:
     jobs: Jobs
     syncs: Syncs
     maintenance: Maintenance
+    shell: Shell
     data: Path
 
 
@@ -88,6 +92,7 @@ def build(
     ids: IdPort | None = None,
     probe: Probe | None = None,
     runner: Runner = threaded,
+    shell: ShellPort | None = None,
     metadata_transport: Transport | None = None,
     sleep: Callable[[float], None] = time.sleep,
 ) -> Engine:
@@ -133,6 +138,13 @@ def build(
 
     write_marker = bool(settings.value("device.write_marker_after_sync"))
 
+    def roots() -> dict[str, str]:
+        return {
+            "store": str(settings.value("store.root") or ""),
+            "data": str(data),
+            "firmware": str(settings.value("firmware.folder") or ""),
+        }
+
     def retention() -> int:
         kept = settings.value("runs.retention")
         assert isinstance(kept, int)
@@ -152,5 +164,6 @@ def build(
         maintenance=Maintenance(
             FsDataFolder(data), SqliteCompactor(conn, db), stores.games, retention
         ),
+        shell=Shell(shell or WindowsShell(), roots),
         data=data,
     )

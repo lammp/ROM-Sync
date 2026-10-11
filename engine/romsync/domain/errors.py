@@ -170,6 +170,21 @@ class MarkerUntrusted(RomSyncError):
     code = "dest.marker_untrusted"
 
 
+# --- the desktop shell --------------------------------------------------------
+
+
+class ShellUnavailable(RomSyncError):
+    """The shell endpoints answer only while the server listens on loopback."""
+
+    code = "shell.unavailable"
+
+
+class LinkRefused(RomSyncError):
+    """A link that is not https to a site on the allow-list."""
+
+    code = "shell.link_refused"
+
+
 # --- guards ------------------------------------------------------------------
 
 

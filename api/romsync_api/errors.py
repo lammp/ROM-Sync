@@ -42,6 +42,8 @@ STATUS: Final[Mapping[str, int]] = {
     "metadata.unreachable": 502,
     "metadata.throttled": 503,
     "request.forbidden": 403,
+    "shell.unavailable": 403,
+    "shell.link_refused": 422,
     "request.invalid": 422,
     "config.unknown_key": 422,
     "config.out_of_range": 422,

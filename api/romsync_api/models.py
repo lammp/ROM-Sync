@@ -293,3 +293,26 @@ class MaintenanceReport(Model):
 class MaintenanceRun(Model):
     #: The count the dry run found; required for a destructive action.
     expected: int | None = None
+
+
+class Reveal(Model):
+    #: One of the configured folders: "store", "data" or "firmware".
+    root: str
+    #: A path below it, or nothing for the folder itself.
+    path: str | None = None
+
+
+class PickFolder(Model):
+    title: str
+
+
+class PickedFolder(Model):
+    path: str | None
+
+
+class OpenLink(Model):
+    url: str
+
+
+class ShellDone(Model):
+    done: bool
