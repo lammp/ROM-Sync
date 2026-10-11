@@ -115,3 +115,9 @@ class SettingItem(Model):
 
 class SettingsList(Model):
     settings: list[SettingItem]
+
+
+class SettingsWrite(Model):
+    """A partial write: only these keys change; null deletes a key."""
+
+    values: dict[str, str | int | float | bool | None]

@@ -16,6 +16,7 @@ from romsync_api.models import (
     Secret,
     SettingItem,
     SettingsList,
+    SettingsWrite,
     Systems,
     SystemSummary,
 )
@@ -116,3 +117,10 @@ def setting_item(view: SettingView) -> SettingItem:
 @router.get("/settings", response_model=SettingsList)
 def settings(e: Engine = Depends(engine)) -> SettingsList:  # noqa: B008
     return SettingsList(settings=[setting_item(v) for v in e.settings.describe()])
+
+
+@router.post("/settings", response_model=SettingsList)
+def write_settings(body: SettingsWrite, e: Engine = Depends(engine)) -> SettingsList:  # noqa: B008
+    """Validate every key, store them, delete a key sent as null. A rejection
+    names its field; a secret is never echoed back."""
+    return SettingsList(settings=[setting_item(v) for v in e.settings.write(body.values)])
