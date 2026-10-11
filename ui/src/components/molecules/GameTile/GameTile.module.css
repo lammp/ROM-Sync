@@ -1,0 +1,78 @@
+.tile {
+  position: relative;
+  border-radius: var(--radius-8);
+  background: var(--bg2);
+  overflow: hidden;
+  border: 1px solid transparent;
+}
+
+.tile:hover {
+  border-color: var(--accent);
+}
+
+.current {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent);
+}
+
+.open {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+}
+
+.open:focus-visible {
+  outline-offset: -2px;
+}
+
+.cap {
+  display: block;
+  padding: 6px 8px;
+  font-size: var(--text-base-sm);
+  line-height: 1.25;
+}
+
+.t {
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.s {
+  color: var(--muted);
+  font-size: var(--text-sm);
+  display: flex;
+  justify-content: space-between;
+}
+
+.sel {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+}
+
+.twin {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+}
+
+.ondev {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  background: var(--scrim-2);
+  border-radius: var(--radius-4);
+  padding: 1px 5px;
+  font-size: var(--text-xs);
+  color: var(--ok);
+}
+
+.below {
+  top: 32px;
+}
