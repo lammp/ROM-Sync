@@ -1,7 +1,11 @@
 import type { ReactNode } from 'react'
 import styles from './PageLayout.module.css'
 
-/** A page with its heading; the page itself scrolls. */
+/**
+ * A page with its heading and, beside it, its actions; the page itself
+ * scrolls. The actions sit outside the heading, so the heading's name is the
+ * page's name alone.
+ */
 export function PageLayout({
   heading,
   actions,
@@ -13,10 +17,10 @@ export function PageLayout({
 }) {
   return (
     <div className={styles.page}>
-      <h1 className={styles.heading}>
-        {heading}
-        {actions && <span className={styles.actions}>{actions}</span>}
-      </h1>
+      <header className={styles.head}>
+        <h1 className={styles.heading}>{heading}</h1>
+        {actions && <div className={styles.actions}>{actions}</div>}
+      </header>
       {children}
     </div>
   )

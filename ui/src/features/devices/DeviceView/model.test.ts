@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { startOf, systemRows, workIn } from './model'
+import { readinessLine, startOf, systemRows, workIn } from './model'
 
 const systems = [
   { key: 'snes', label: 'Super Nintendo', games: 3, bytes: 30 },
@@ -48,5 +48,24 @@ describe('the device page model', () => {
     expect(startOf(plan, held)).toEqual({ bytesTotal: 15, removesTotal: 1, onDevice: 3, free: 100 })
     expect(workIn(plan)).toBe(4)
     expect(workIn({ ...plan, send: [], update: [], remove: [] })).toBe(0)
+  })
+
+  it('says what system files a device lacks, or that it has not been read, or that it has all', () => {
+    const labels = { gba: 'Game Boy Advance' }
+    expect(
+      readinessLine(
+        [
+          { key: 'gba', readiness: 'missing', missing: ['gba_bios.bin'] },
+          { key: 'n64', readiness: 'unknown', missing: [] },
+        ],
+        labels,
+      ),
+    ).toEqual({ kind: 'missing', items: ['Game Boy Advance: missing gba_bios.bin'] })
+    expect(readinessLine([{ key: 'n64', readiness: 'unknown', missing: [] }], labels)).toEqual({
+      kind: 'unread',
+    })
+    expect(readinessLine([{ key: 'ps2', readiness: 'ready', missing: [] }], labels)).toEqual({
+      kind: 'ready',
+    })
   })
 })

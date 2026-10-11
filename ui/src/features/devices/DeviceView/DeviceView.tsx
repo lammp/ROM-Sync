@@ -36,11 +36,34 @@ import { EngineError } from '../../../queries/engine/engine'
 import { TERMINAL, useJob } from '../../../queries/job/job'
 import { useLibrary, useSystems } from '../../../queries/library/library'
 import { useAfterDeviceJob, useCancelSync, useStartSync } from '../../../queries/sync/sync'
+import { useSysReport } from '../../../queries/sysfiles/sysfiles'
 import { appStore, useAppStore } from '../../../store/store'
 import styles from './DeviceView.module.css'
-import { startOf, systemRows, workIn } from './model'
+import { readinessLine, startOf, systemRows, workIn, type ReadinessLine } from './model'
 
 type Ask = 'rename' | 'marker' | 'sync' | null
+
+function SysfilesLine({ connected, line }: { connected: boolean; line: ReadinessLine | null }) {
+  if (!connected) return <Muted>Plug the device in to read its system files.</Muted>
+  if (!line) return <Muted>loading…</Muted>
+  if (line.kind === 'missing')
+    return (
+      <p className={styles.pills}>
+        {line.items.map((i) => (
+          <Pill key={i} tone="bad">
+            {i}
+          </Pill>
+        ))}
+      </p>
+    )
+  return (
+    <Muted>
+      {line.kind === 'unread'
+        ? 'Not read yet: open System files and press Refresh from device.'
+        : 'Every system on the device has what its emulator needs.'}
+    </Muted>
+  )
+}
 
 const toast = (text: string, bad = false) =>
   appStore.getState().ui.toast(text, bad ? 'bad' : 'info')
@@ -65,6 +88,7 @@ export function DeviceView({ id }: { id: string }) {
   const inventory = useInventory(id).data
   const runs = useRuns(id).data ?? []
   const plan = usePlan(ref)
+  const sysfiles = useSysReport(ref).data
   const live = useCapacity(ref).data
   const refresh = useRefreshCapacity(ref)
   const setMode = useSetMode(id)
@@ -260,6 +284,17 @@ export function DeviceView({ id }: { id: string }) {
           Open System files
         </Button>
       </h2>
+      <SysfilesLine
+        connected={connected}
+        line={
+          sysfiles
+            ? readinessLine(
+                sysfiles.systems,
+                Object.fromEntries(systems.map((x) => [x.key, x.label])),
+              )
+            : null
+        }
+      />
 
       <h2 className={styles.section}>History</h2>
       <RunHistory

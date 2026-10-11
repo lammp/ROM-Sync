@@ -35,6 +35,9 @@ describe('DeviceView', () => {
     expect(screen.getByRole('radiogroup', { name: 'Selection for Super Nintendo' })).toBeTruthy()
     expect(screen.getByText(/send 10/)).toBeTruthy()
     expect(screen.getByText('no runs yet')).toBeTruthy()
+    expect(
+      await screen.findByText('Not read yet: open System files and press Refresh from device.'),
+    ).toBeTruthy()
   })
 
   it('changes a system’s mode through the engine', async () => {

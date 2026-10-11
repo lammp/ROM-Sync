@@ -311,6 +311,7 @@ Parity is the constraint, so every departure is listed here or it is a defect.
 | Sync in the library's selection summary opens the device's page, where the plan and the sync dialog are; version 1 opened the dialog over the library | one place starts a sync, with the plan in view; while one runs, the summary shows its progress as version 1's did |
 | A new profile's ROMs folder is shown, not edited | the destination decides its own roots (F10-S23); a typed folder could not be held to them |
 | Each system's selection has a third mode, "left alone" | v2's selection has an unmanaged mode that sync neither sends to nor removes from; version 1 could not return a system to it |
+| Removing a stray file under the staging folder asks first | it deletes from the device something that belongs to no system's set, which the store may not hold; version 1 removed it on the click |
 
 ## 11. Recover is routed in
 

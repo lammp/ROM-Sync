@@ -49,6 +49,11 @@ export type World = {
   nextJob: number
   /** A sync per device reference; each status read moves it on one step. */
   syncs: Record<string, { job: Json; run: Json; step: number; plan: Json; id: string }>
+  /** Each device's system files: whether it has been read, what is staged, what is stray. */
+  sysfiles: Record<
+    string,
+    { surveyed: string | null; staged: Record<string, boolean>; others: Json[] }
+  >
   nextRun: number
 }
 
@@ -228,6 +233,7 @@ export function freshWorld(): World {
     jobs: [],
     nextJob: 1,
     syncs: {},
+    sysfiles: {},
     nextRun: 1,
   }
 }
@@ -247,6 +253,95 @@ function selected(w: World, deviceId: string, g: Game): boolean {
   if (!s) return false
   const o = s.overrides[String(g.id)]
   return o !== undefined ? o : s.modes[g.system] === 'all'
+}
+
+/** The registry, cut down: what each fake system's emulator needs. */
+const SYSFILES: Record<
+  string,
+  {
+    emulator: string
+    package: string
+    files: { name: string; required: boolean; size: number; verified: boolean | null; at: string }[]
+  }
+> = {
+  gba: {
+    emulator: 'mGBA',
+    package: 'io.mgba.mgba',
+    files: [
+      {
+        name: 'gba_bios.bin',
+        required: true,
+        size: 16_384,
+        verified: true,
+        at: 'Android/data/io.mgba.mgba/files/bios',
+      },
+    ],
+  },
+  ps2: {
+    emulator: 'NetherSX2',
+    package: 'xyz.aethersx2.android',
+    files: [
+      {
+        name: 'scph39001.bin',
+        required: true,
+        size: 4_194_304,
+        verified: false,
+        at: 'Android/data/xyz.aethersx2.android/files/bios',
+      },
+    ],
+  },
+  snes: { emulator: 'Snes9x', package: 'com.explusalpha.Snes9xPlus', files: [] },
+  n64: { emulator: 'Mupen64Plus', package: 'org.mupen64plusae.v3.fzurita', files: [] },
+}
+const STAGE_ROOT = 'ROM-Sync/bios'
+
+function sysfilesOf(w: World, ref: string) {
+  return (w.sysfiles[ref] ??= { surveyed: null, staged: {}, others: [] })
+}
+
+/** A device's readiness as the engine reports it from its last survey. */
+function sysReport(w: World, ref: string): Answer {
+  if (!w.profiles.some((p) => p.ref === ref))
+    return error(404, 'profile.not_found', 'this device has no profile yet', 'device')
+  const d = sysfilesOf(w, ref)
+  const read = d.surveyed !== null
+  const systems = Object.entries(SYSFILES).map(([key, s]) => {
+    const staged = Boolean(d.staged[key])
+    // ps2's file is installed already; gba's never is until the person installs it on the device
+    const installed = key === 'ps2'
+    const requirements = s.files.map((f) => ({
+      name: f.name,
+      required: f.required,
+      group: null,
+      note: '',
+      install_label: 'BIOS folder',
+      installed_at: f.at,
+      staged: !read ? 'unknown' : staged ? 'current' : 'absent',
+      installed: !read ? 'unknown' : installed ? 'installed' : 'missing',
+      store: { present: true, staged_name: f.name, size: f.size, verified: f.verified },
+    }))
+    const readiness = !s.files.length ? 'none' : !read ? 'unknown' : installed ? 'ready' : 'missing'
+    return {
+      key,
+      emulator: s.emulator,
+      emulator_seen: read ? true : null,
+      package: read ? s.package : null,
+      readiness,
+      staging: !s.files.length
+        ? 'nothing_to_stage'
+        : !read
+          ? 'unknown'
+          : staged
+            ? 'current'
+            : 'absent',
+      staging_folder: `${STAGE_ROOT}/${key}`,
+      note: '',
+      requirements,
+      missing: readiness === 'missing' ? s.files.map((f) => f.name) : [],
+      staged_any: staged,
+    }
+  })
+  return { status: 200, body: { surveyed_at: d.surveyed, apps: {}, systems, others: d.others } }
 }
 
 type PlanOp = { system: string; name: string; kind: string; size: number }
@@ -624,6 +719,46 @@ const ROUTES: Route[] = [
     if (!found.has_marker)
       return error(400, 'dest.marker_untrusted', 'the device has no marker to adopt', 'device')
     return { status: 200, body: makeProfile(w, found, 'dev-elsewhere', 'Retroid') }
+  }),
+  route('GET', '/api/v1/sysfiles/store', () => ({
+    status: 200,
+    body: {
+      items: Object.entries(SYSFILES).flatMap(([system, s]) =>
+        s.files.map((f) => ({
+          system,
+          emulator: s.emulator,
+          name: f.name,
+          required: f.required,
+          present: true,
+          size: f.size,
+          verified: f.verified,
+          note: '',
+        })),
+      ),
+    },
+  })),
+  route('GET', '/api/v1/devices/{ref}/sysfiles', (w, [ref]) => sysReport(w, String(ref))),
+  route('POST', '/api/v1/devices/{ref}/sysfiles/survey', (w, [ref]) => {
+    const d = sysfilesOf(w, String(ref))
+    d.surveyed = '2026-10-11T12:00:00'
+    if (!d.others.length && !Object.keys(d.staged).length)
+      d.others = [{ path: `${STAGE_ROOT}/gba`, name: 'old_bios.bin', kind: 'file', size: 16_384 }]
+    return job(w, 'sysfiles', String(ref), { entries: 12 })
+  }),
+  route('POST', '/api/v1/devices/{ref}/sysfiles/{system}/stage', (w, [ref, system]) => {
+    sysfilesOf(w, String(ref)).staged[String(system)] = true
+    return job(w, 'sysfiles', String(ref), { placed: SYSFILES[String(system)]?.files.length ?? 0 })
+  }),
+  route('POST', '/api/v1/devices/{ref}/sysfiles/{system}/unstage', (w, [ref, system]) => {
+    const d = sysfilesOf(w, String(ref))
+    const had = Boolean(d.staged[String(system)])
+    d.staged[String(system)] = false
+    return job(w, 'sysfiles', String(ref), { removed: had ? 1 : 0 })
+  }),
+  route('POST', '/api/v1/devices/{ref}/sysfiles/remove-other', (w, [ref], b) => {
+    const d = sysfilesOf(w, String(ref))
+    d.others = d.others.filter((o) => !(o.path === b.path && o.name === b.name))
+    return job(w, 'sysfiles', String(ref), { removed: 1 })
   }),
   route('GET', '/api/v1/devices/{ref}/plan', (w, [ref]) => plan(w, String(ref))),
   route('POST', '/api/v1/devices/{ref}/sync', (w, [ref], b) =>

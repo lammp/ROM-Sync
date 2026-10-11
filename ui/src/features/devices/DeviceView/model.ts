@@ -80,3 +80,27 @@ export function startOf(plan: Plan, held: readonly Held[]): Start {
 export function workIn(plan: Plan): number {
   return plan.send.length + plan.update.length + plan.remove.length
 }
+
+export type ReadinessLine =
+  | { readonly kind: 'missing'; readonly items: readonly string[] }
+  | { readonly kind: 'unread' }
+  | { readonly kind: 'ready' }
+
+/** The device page's one line about system files, as version 1 put it. */
+export function readinessLine(
+  systems: readonly {
+    readonly key: string
+    readonly readiness: string
+    readonly missing: readonly string[]
+  }[],
+  labels: Readonly<Record<string, string>>,
+): ReadinessLine {
+  const missing = systems.filter((s) => s.readiness === 'missing')
+  if (missing.length)
+    return {
+      kind: 'missing',
+      items: missing.map((s) => `${labels[s.key] ?? s.key}: missing ${s.missing.join(', ')}`),
+    }
+  if (systems.some((s) => s.readiness === 'unknown')) return { kind: 'unread' }
+  return { kind: 'ready' }
+}
