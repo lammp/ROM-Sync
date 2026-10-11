@@ -31,6 +31,8 @@ jobs:
           node-version: "22"
       - name: Install the interface toolchain, resolved fresh
         run: npm install --no-package-lock --prefix ui
+      - name: Install the browser
+        run: npx --prefix ui playwright install chromium
       - name: Verify
         run: python tools/verify.py
       - name: Random test order
