@@ -208,3 +208,76 @@ class GamesChange(Model):
 class GamesChanged(Model):
     selection: SelectionView
     changed: int
+
+
+class PlanOp(Model):
+    action: str
+    system: str
+    name: str
+    kind: str
+    size: int
+    game_id: int | None
+
+
+class PlanBytes(Model):
+    add: int
+    drop: int
+    net: int
+    peak: int
+    free: int | None
+    fits: bool | None
+
+
+class PlanView(Model):
+    device_id: str
+    send: list[PlanOp]
+    update: list[PlanOp]
+    remove: list[PlanOp]
+    unchanged: int
+    unknown_systems: dict[str, int]
+    managed_systems: list[str]
+    bytes: PlanBytes
+
+
+class StartSync(Model):
+    #: The removal count, when it is at or above the confirmation threshold.
+    confirm_removals: int | None = None
+
+
+class ProgressView(Model):
+    phase: str
+    done: int
+    total: int | None
+    current: str | None
+    detail: dict[str, int] | None
+
+
+class JobView(Model):
+    id: str
+    kind: str
+    target: str | None
+    state: str
+    progress: ProgressView | None
+    result: dict[str, int] | None
+    error_code: str | None
+    error_message: str | None
+    started: str | None
+    finished: str | None
+
+
+class JobList(Model):
+    jobs: list[JobView]
+
+
+class RunView(Model):
+    id: int
+    state: str
+    started: str
+    finished: str | None
+    counts: dict[str, int | str] | None
+    bytes_moved: int | None
+
+
+class SyncStatusView(Model):
+    job: JobView | None
+    run: RunView | None

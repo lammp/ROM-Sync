@@ -21,7 +21,8 @@ from typing import Final, Protocol
 
 from romsync.domain.errors import JobCancelled, JobConflict, JobFailed, RomSyncError
 from romsync.ports.clock import ClockPort, IdPort
-from romsync.ports.repo import JobRecord, JobRepo, JobState
+from romsync.ports.repo import JobRecord as JobRecord
+from romsync.ports.repo import JobRepo, JobState
 from romsync.ports.sink import ProgressEvent
 
 #: Kinds that write the library, and so exclude one another whatever their target.

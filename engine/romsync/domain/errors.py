@@ -179,6 +179,12 @@ class GuardRefused(RomSyncError):
     code = "guard.refused"
 
 
+class ConfirmRemovals(RomSyncError):
+    """A sync removing this many games needs the count confirmed first."""
+
+    code = "sync.confirm_removals"
+
+
 class DoesNotFit(RomSyncError):
     """The plan's peak usage exceeds the destination's capacity."""
 
@@ -246,6 +252,12 @@ class JobConflict(RomSyncError):
     """A job of a conflicting kind is already running against this target."""
 
     code = "job.conflict"
+
+
+class JobNotFound(RomSyncError):
+    """No job has that id."""
+
+    code = "job.not_found"
 
 
 class JobCancelled(RomSyncError):

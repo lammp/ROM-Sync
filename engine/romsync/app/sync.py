@@ -25,11 +25,11 @@ and never overwrite.
 from __future__ import annotations
 
 from collections import Counter
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 
 from romsync.app.devices import marker_for, require
-from romsync.domain.errors import GuardRefused, PathEscape, RomSyncError
+from romsync.domain.errors import ConfigMissing, GuardRefused, PathEscape, RomSyncError
 from romsync.domain.models import Action, DeviceItem, Kind, Op
 from romsync.domain.paths import ContainedPath, StoreRoot
 from romsync.domain.planning import ORDER, UNMANAGED_ALWAYS, is_emulator_state
@@ -120,17 +120,25 @@ class Sync:
         repos: Repos,
         folders: RunFolders,
         clock: ClockPort,
-        store: StoreRoot,
+        store: StoreRoot | Callable[[], StoreRoot],
         write_marker: bool = True,
     ) -> None:
         self._repos = repos
         self._folders = folders
         self._clock = clock
-        self._store = store
+        self._store_root = store
         self._write_marker = write_marker
 
     def _now(self) -> str:
         return self._clock.now().isoformat(timespec="seconds")
+
+    def store(self) -> StoreRoot:
+        """The store as configured now. An unset store is refused, never read
+        from wherever the process happens to be."""
+        root = self._store_root() if callable(self._store_root) else self._store_root
+        if not root.base:
+            raise ConfigMissing("choose the store folder first", field="store.root")
+        return root
 
     def _transfer_op(self, op: Op, dest: Dest) -> TransferOp:
         """The operation with both paths contained: under the device's ROMs root and
@@ -140,7 +148,7 @@ class Sync:
             raise PathEscape(f"{op.system}/{op.name} does not name one item", field="name")
         source = None
         if op.action is not Action.REMOVE:
-            source = self._store.resolve(f"{op.system}/{op.name}")
+            source = self.store().resolve(f"{op.system}/{op.name}")
         return TransferOp(op.action, target, op.kind, op.size, source)
 
     def _log(self, line: str) -> None:
@@ -295,6 +303,6 @@ class Sync:
         self, pulled: ContainedPath, system: str, name: str, files: LocalFiles
     ) -> ContainedPath:
         """Move a pulled item into the store. Never overwrites (F7-S11)."""
-        target = self._store.resolve(f"{system}/{name}")
+        target = self.store().resolve(f"{system}/{name}")
         files.place(pulled, target)
         return target

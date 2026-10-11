@@ -31,6 +31,7 @@ SAMPLES: dict[str, str] = {
     "game_id": "1",
     "ref": encode(FakeDest("thor").identity().ref),
     "device_id": "dev-1",
+    "job_id": "job-1",
 }
 
 

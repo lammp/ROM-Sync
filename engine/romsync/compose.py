@@ -20,6 +20,7 @@ from pathlib import Path
 from romsync.adapters.db_sqlite.connect import connect
 from romsync.adapters.db_sqlite.migrations import migrate
 from romsync.adapters.db_sqlite.repos import repos
+from romsync.adapters.local_fs.runs import FsRunFolders
 from romsync.adapters.metadata_igdb.client import (
     Credentials,
     IgdbClient,
@@ -31,9 +32,14 @@ from romsync.adapters.system.clock import RandomIds, SystemClock
 from romsync.app.connection_check import ConnectionCheck
 from romsync.app.devices import Devices, Probe
 from romsync.app.library import Library
+from romsync.app.plans import Plans
 from romsync.app.selection import Selections
 from romsync.app.settings import Settings
+from romsync.app.sync import Sync
 from romsync.config.registry import REGISTRY, Registry
+from romsync.domain.paths import StoreRoot
+from romsync.jobs.registry import Jobs, Runner, threaded
+from romsync.jobs.sync_job import Syncs
 from romsync.ports.clock import ClockPort, IdPort
 from romsync.ports.dest import Dest
 
@@ -55,6 +61,9 @@ class Engine:
     connection: ConnectionCheck
     devices: Devices
     selections: Selections
+    plans: Plans
+    jobs: Jobs
+    syncs: Syncs
     data: Path
 
 
@@ -74,6 +83,7 @@ def build(
     clock: ClockPort | None = None,
     ids: IdPort | None = None,
     probe: Probe | None = None,
+    runner: Runner = threaded,
     metadata_transport: Transport | None = None,
     sleep: Callable[[float], None] = time.sleep,
 ) -> Engine:
@@ -107,12 +117,27 @@ def build(
     def saved_credentials() -> tuple[str, str]:
         return str(settings.value("igdb.client_id")), str(settings.value("igdb.client_secret"))
 
+    devices = Devices(probe or no_discovery, stores.devices, stores.selections, clock, ids)
+    plans = Plans(stores, devices, settings.value)
+    history = settings.value("jobs.history_length")
+    assert isinstance(history, int)
+    jobs = Jobs(stores.jobs, clock, ids, history, runner)
+    jobs.reconcile()
+
+    def store_root() -> StoreRoot:
+        return StoreRoot(str(settings.value("store.root") or ""))
+
+    write_marker = bool(settings.value("device.write_marker_after_sync"))
+    sync = Sync(stores, FsRunFolders(data), clock, store_root, write_marker)
     return Engine(
         registry=REGISTRY,
         settings=settings,
         library=Library(stores.games, stores.tags),
         connection=ConnectionCheck(metadata_client, saved_credentials),
-        devices=Devices(probe or no_discovery, stores.devices, stores.selections, clock, ids),
+        devices=devices,
         selections=Selections(stores.selections, stores.games, stores.devices),
+        plans=plans,
+        jobs=jobs,
+        syncs=Syncs(plans, sync, jobs, stores.runs),
         data=data,
     )

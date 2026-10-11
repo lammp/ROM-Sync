@@ -35,6 +35,7 @@ STATUS: Final[Mapping[str, int]] = {
     "dest.capability_unsupported": 409,
     "store.would_overwrite": 409,
     "plan.does_not_fit": 409,
+    "sync.confirm_removals": 409,
     "dest.unavailable": 503,
     "dest.tool_missing": 503,
     "metadata.unreachable": 502,
