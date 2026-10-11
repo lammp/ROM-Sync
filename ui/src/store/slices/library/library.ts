@@ -1,6 +1,6 @@
 /** How the library is laid out and which game the detail panel shows. */
 import type { StateCreator } from 'zustand'
-import { TILE } from '../../../design/tokens/tokens'
+import { TILE, TILE_MAX, TILE_MIN } from '../../../design/tokens/tokens'
 
 export type Layout = 'grid' | 'list'
 
@@ -15,10 +15,6 @@ export type LibrarySlice = {
     close(): void
   }
 }
-
-/** The tile slider's range, in pixels. */
-export const TILE_MIN = 90
-export const TILE_MAX = 260
 
 export const librarySlice: StateCreator<LibrarySlice> = (set) => {
   const patch = (p: Partial<LibrarySlice['library']>) =>

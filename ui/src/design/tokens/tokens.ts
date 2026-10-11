@@ -101,6 +101,9 @@ export const RADIUS = {
 
 /** Grid geometry in pixels, read by both the stylesheet and the windowing arithmetic. */
 export const TILE = 150
+/** The tile slider's range, version 1's 90 to 260 px. */
+export const TILE_MIN = 90
+export const TILE_MAX = 260
 export const GRID_GAP = 14
 
 export const LAYOUT = {

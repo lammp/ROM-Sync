@@ -1,0 +1,14 @@
+.tagadd {
+  display: flex;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.tagadd > span {
+  flex: 1;
+}
+
+.tagadd input {
+  width: 100%;
+  padding: 4px 8px;
+}

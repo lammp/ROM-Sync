@@ -1,0 +1,8 @@
+.muted {
+  color: var(--muted);
+}
+
+.sm {
+  font-size: var(--text-sm);
+  word-break: break-all;
+}

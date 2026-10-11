@@ -1,0 +1,13 @@
+.job {
+  font-size: var(--text-base-sm);
+  color: var(--muted);
+  min-height: 16px;
+  margin-top: 6px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.bad {
+  color: var(--bad);
+}

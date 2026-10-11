@@ -1,0 +1,16 @@
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+.decide {
+  display: inline-flex;
+  gap: 2px;
+}
+
+.decide button {
+  padding: 0 5px;
+  line-height: 1.2;
+}

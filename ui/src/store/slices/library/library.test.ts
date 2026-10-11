@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { createStore } from 'zustand/vanilla'
-import { TILE } from '../../../design/tokens/tokens'
-import { TILE_MAX, TILE_MIN, librarySlice } from './library'
+import { TILE, TILE_MAX, TILE_MIN } from '../../../design/tokens/tokens'
+import { librarySlice } from './library'
 
 const make = () => createStore(librarySlice)
 

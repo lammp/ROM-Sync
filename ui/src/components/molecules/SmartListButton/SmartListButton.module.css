@@ -1,0 +1,15 @@
+.smart {
+  display: block;
+  width: 100%;
+  text-align: left;
+  margin-bottom: 4px;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-6);
+  padding: 5px 10px;
+  cursor: pointer;
+}
+
+.smart:hover {
+  border-color: var(--accent);
+}
