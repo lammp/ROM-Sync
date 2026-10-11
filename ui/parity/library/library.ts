@@ -212,3 +212,36 @@ export function makeGame(seed: Seed, index: number): V1Game {
 export function syntheticLibrary(): { systems: Record<string, string>; games: V1Game[] } {
   return { systems: { ...SYSTEMS }, games: SEEDS.map(makeGame) }
 }
+
+export type ListedGame = Omit<V1Game, 'igdb' | 'cover' | 'tags'> & {
+  readonly igdb_name: string | null
+  readonly tags: Readonly<Record<string, readonly string[]>>
+}
+
+/**
+ * A synthetic game as the version 2 engine lists it: the canonical name is
+ * `igdb_name`, accepted tags are grouped by kind in the order they first
+ * appear, and there is no cover field.
+ */
+export function asListed(g: V1Game): ListedGame {
+  const tags: Record<string, string[]> = {}
+  for (const t of g.tags) (tags[t.kind] ??= []).push(t.tag)
+  return {
+    id: g.id,
+    name: g.name,
+    title: g.title,
+    igdb_name: g.igdb,
+    system: g.system,
+    genres: g.genres,
+    tags,
+    region: g.region,
+    year: g.year,
+    size: g.size,
+    rating: g.rating,
+    votes: g.votes,
+    files: g.files,
+    kind: g.kind,
+    matched: g.matched,
+    mtime: g.mtime,
+  }
+}
