@@ -47,3 +47,35 @@ def test_the_engine_exposes_no_adapter() -> None:
     """The interfaces get use cases, never a connection or a transport."""
     fields = {f.name for f in dataclasses.fields(Engine)}
     assert fields == {"registry"}
+
+
+def test_compose_is_the_only_migrator() -> None:
+    """Only the composition root calls the migration runner (SPEC section 6)."""
+    import ast
+    from pathlib import Path
+
+    root = Path(__file__).resolve().parents[2] / "engine" / "romsync"
+    callers = []
+    for path in root.rglob("*.py"):
+        if path.name == "migrations.py":
+            continue
+        for node in ast.walk(ast.parse(path.read_text(encoding="utf-8"))):
+            if (
+                isinstance(node, ast.ImportFrom)
+                and node.module
+                and node.module.endswith("migrations")
+            ):
+                callers.append(path.relative_to(root).as_posix())
+    assert callers == ["compose.py"]
+
+
+def test_prepare_database_migrates(tmp_path: object) -> None:
+    from pathlib import Path
+
+    from romsync.adapters.db_sqlite.migrations import HEAD
+    from romsync.compose import prepare_database
+    from tests.helpers.fakes import FrozenClock
+
+    db = Path(str(tmp_path)) / "romsync.db"
+    assert prepare_database(db, FrozenClock())[-1] == HEAD
+    assert prepare_database(db, FrozenClock()) == ()

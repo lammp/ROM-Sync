@@ -14,8 +14,11 @@ adapter from the domain.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from pathlib import Path
 
+from romsync.adapters.db_sqlite.migrations import migrate
 from romsync.config.registry import REGISTRY, Registry
+from romsync.ports.clock import ClockPort
 
 
 @dataclass(frozen=True, slots=True)
@@ -39,3 +42,12 @@ def build(overrides: dict[str, object] | None = None) -> Engine:
     if overrides:
         REGISTRY.validate_all(overrides)
     return Engine(registry=REGISTRY)
+
+
+def prepare_database(db: Path, clock: ClockPort) -> tuple[int, ...]:
+    """Bring the database to the current schema, once, before any worker connects.
+
+    The only caller of the migration runner (SPEC section 6): a connection
+    never migrates, and no other module may.
+    """
+    return migrate(db, clock)
