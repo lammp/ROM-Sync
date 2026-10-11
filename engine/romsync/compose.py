@@ -23,7 +23,7 @@ from romsync.adapters.db_sqlite.connect import connect
 from romsync.adapters.db_sqlite.migrations import migrate
 from romsync.adapters.db_sqlite.repos import repos
 from romsync.adapters.local_fs.data_folder import FsDataFolder
-from romsync.adapters.local_fs.runs import FsRunFolders
+from romsync.adapters.local_fs.runs import FsLocalFiles, FsRunFolders
 from romsync.adapters.local_fs.sysfiles import FsSysfileStore
 from romsync.adapters.metadata_igdb.client import (
     Credentials,
@@ -42,6 +42,7 @@ from romsync.app.library import Library
 from romsync.app.maintenance import Maintenance
 from romsync.app.passes import Passes
 from romsync.app.plans import Plans
+from romsync.app.recover import Recover
 from romsync.app.selection import Selections
 from romsync.app.settings import Settings
 from romsync.app.shell import Shell
@@ -84,6 +85,7 @@ class Engine:
     tags: Tagging
     #: System files as configured at the moment of asking.
     sysfiles: Callable[[], SystemFiles]
+    recover: Recover
     data: Path
 
 
@@ -208,6 +210,7 @@ def build(
         passes=Passes(stores.games, metadata_port, igdb_covers, artwork, settings.value),
         tags=Tagging(stores.games, stores.tags),
         sysfiles=system_files,
+        recover=Recover(stores, sync, FsLocalFiles(), LocalRoot(str(data / "pull"))),
         data=data,
     )
 

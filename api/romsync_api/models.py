@@ -417,3 +417,19 @@ class RemoveOther(Model):
     #: The folder, relative to the device's storage, under the staging root.
     path: str
     name: str
+
+
+class RecoverItem(Model):
+    system: str
+    name: str
+    kind: str
+    size: int | None
+
+
+class RecoverList(Model):
+    items: list[RecoverItem]
+
+
+class RecoverOne(Model):
+    system: str
+    name: str
