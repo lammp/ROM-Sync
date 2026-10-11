@@ -121,6 +121,9 @@ function setting(key: string, kind: string, value: unknown, description: string)
 }
 
 export const THOR_REF = 'YWRiAHNlcmlhbC0x'
+/** A drive plugged in with no profile, and a handheld carrying another computer's marker. */
+export const CARD_REF = 'dm9sdW1lAGNhcmQ'
+export const RETROID_REF = 'YWRiAHNlcmlhbC0y'
 
 export function freshWorld(): World {
   const all = games()
@@ -166,6 +169,17 @@ export function freshWorld(): World {
         free: 120 * 1024 * MB,
         ref: THOR_REF,
       },
+      {
+        id: 'dev-2',
+        name: 'Deck card',
+        kind: 'volume',
+        roms_root: 'ROMs',
+        first_seen: '2026-08-01T09:00:00',
+        last_seen: '2026-09-20T18:30:00',
+        capacity: 512 * 1024 * MB,
+        free: 300 * 1024 * MB,
+        ref: null,
+      },
     ],
     attached: [
       {
@@ -175,17 +189,39 @@ export function freshWorld(): World {
         has_marker: true,
         roms_root: '/storage/emulated/0/ROMs',
       },
+      {
+        ref: CARD_REF,
+        kind: 'volume',
+        description: 'SD card (E:)',
+        has_marker: false,
+        roms_root: 'ROMs',
+      },
+      {
+        ref: RETROID_REF,
+        kind: 'adb',
+        description: 'Retroid (serial-2)',
+        has_marker: true,
+        roms_root: '/storage/emulated/0/ROMs',
+      },
     ],
-    blocked: [],
-    selections: { 'dev-1': { modes: { snes: 'all', gba: 'none' }, overrides: { '2': true } } },
+    blocked: [{ kind: 'adb', description: 'Android device (serial-3)', reason: 'unauthorized' }],
+    selections: {
+      'dev-1': { modes: { snes: 'all', gba: 'none' }, overrides: { '2': true } },
+      'dev-2': { modes: { n64: 'all' }, overrides: {} },
+    },
     inventory: {
       'dev-1': [
         { system: 'snes', name: String(all[0]?.name), kind: 'file', size: all[0]?.size ?? 0 },
         { system: 'bios', name: 'scph5501.bin', kind: 'sysfile', size: 524_288 },
       ],
+      'dev-2': [],
     },
-    runs: { 'dev-1': [] },
-    capacity: { [THOR_REF]: { total: 256 * 1024 * MB, free: 120 * 1024 * MB } },
+    runs: { 'dev-1': [], 'dev-2': [] },
+    capacity: {
+      [THOR_REF]: { total: 256 * 1024 * MB, free: 120 * 1024 * MB },
+      [CARD_REF]: { total: 512 * 1024 * MB, free: 500 * 1024 * MB },
+      [RETROID_REF]: { total: 128 * 1024 * MB, free: 64 * 1024 * MB },
+    },
     jobs: [],
     nextJob: 1,
   }
@@ -256,6 +292,28 @@ function plan(w: World, ref: string): Answer {
       },
     },
   }
+}
+
+/** A profile for an attached device, as the engine makes one: empty selection, nothing held. */
+function makeProfile(w: World, found: Json, id: string, name: string): Json {
+  const now = '2026-10-11T12:00:00'
+  const profile = {
+    id,
+    name,
+    kind: found.kind,
+    roms_root: found.roms_root,
+    first_seen: now,
+    last_seen: now,
+    capacity: w.capacity[String(found.ref)]?.total ?? null,
+    free: w.capacity[String(found.ref)]?.free ?? null,
+    ref: found.ref,
+  }
+  w.profiles.push(profile)
+  w.selections[id] = { modes: {}, overrides: {} }
+  w.inventory[id] = []
+  w.runs[id] = []
+  found.has_marker = true
+  return profile
 }
 
 function selectionView(w: World, id: string): Answer {
@@ -404,6 +462,25 @@ const ROUTES: Route[] = [
     for (const k of Object.keys(s.modes)) if (s.modes[k] !== 'off') s.modes[k] = 'none'
     s.overrides = {}
     return selectionView(w, String(id))
+  }),
+  route('POST', '/api/v1/devices/{ref}/profile', (w, [ref], b) => {
+    const found = w.attached.find((a) => a.ref === ref)
+    if (!found) return error(404, 'dest.unknown', 'that device is not attached', 'device')
+    const had = w.profiles.find((p) => p.ref === ref)
+    if (had) return { status: 200, body: had }
+    return {
+      status: 200,
+      body: makeProfile(w, found, `dev-${w.profiles.length + 1}`, String(b.name)),
+    }
+  }),
+  route('POST', '/api/v1/devices/{ref}/adopt', (w, [ref]) => {
+    const found = w.attached.find((a) => a.ref === ref)
+    if (!found) return error(404, 'dest.unknown', 'that device is not attached', 'device')
+    const had = w.profiles.find((p) => p.ref === ref)
+    if (had) return { status: 200, body: had }
+    if (!found.has_marker)
+      return error(422, 'marker.untrusted', 'the device has no marker to adopt', 'device')
+    return { status: 200, body: makeProfile(w, found, 'dev-elsewhere', 'Retroid') }
   }),
   route('GET', '/api/v1/devices/{ref}/plan', (w, [ref]) => plan(w, String(ref))),
   route('GET', '/api/v1/devices/{ref}/capacity', (w, [ref]) => {

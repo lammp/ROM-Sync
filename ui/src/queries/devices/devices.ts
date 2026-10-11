@@ -1,15 +1,17 @@
 /**
  * Devices (F10-S10, S11, S22): what is attached, the profiles, and for one
- * profile its selection, its inventory, its plan and its capacity; and the
- * selection changes, each answered by the engine's own rule.
+ * profile its selection, its inventory, its plan and its capacity; the
+ * selection changes, each answered by the engine's own rule; and making a
+ * profile for a device, or adopting one another computer made (F10-S23).
  */
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useCallback } from 'react'
 import type { components } from '../../lib/api/api'
-import { unwrap, useEngine } from '../engine/engine'
+import { unwrap, useEngine, type Engine } from '../engine/engine'
 
 export type Profile = components['schemas']['Profile']
 export type Attached = components['schemas']['AttachedDevice']
+export type Blocked = components['schemas']['BlockedDevice']
 export type SelectionView = components['schemas']['SelectionView']
 export type PlanView = components['schemas']['PlanView']
 
@@ -33,34 +35,56 @@ export function useProfiles() {
   })
 }
 
+type Api = Engine['api']
+
+const selectionQuery = (api: Api, deviceId: string) => ({
+  queryKey: ['selection', deviceId],
+  queryFn: async ({ signal }: { signal: AbortSignal }) =>
+    unwrap(
+      await api.GET('/api/v1/profiles/{device_id}/selection', {
+        params: { path: { device_id: deviceId } },
+        signal,
+      }),
+    ),
+})
+
+const inventoryQuery = (api: Api, deviceId: string) => ({
+  queryKey: ['inventory', deviceId],
+  queryFn: async ({ signal }: { signal: AbortSignal }) =>
+    unwrap(
+      await api.GET('/api/v1/profiles/{device_id}/inventory', {
+        params: { path: { device_id: deviceId } },
+        signal,
+      }),
+    ).items,
+})
+
+const capacityQuery = (api: Api, ref: string) => ({
+  queryKey: ['capacity', ref],
+  queryFn: async ({ signal }: { signal: AbortSignal }) =>
+    unwrap(await api.GET('/api/v1/devices/{ref}/capacity', { params: { path: { ref } }, signal })),
+})
+
 export function useSelection(deviceId: string | null) {
   const { api } = useEngine()
-  return useQuery({
-    queryKey: ['selection', deviceId ?? ''],
-    enabled: deviceId !== null,
-    queryFn: async ({ signal }) =>
-      unwrap(
-        await api.GET('/api/v1/profiles/{device_id}/selection', {
-          params: { path: { device_id: deviceId ?? '' } },
-          signal,
-        }),
-      ),
-  })
+  return useQuery({ ...selectionQuery(api, deviceId ?? ''), enabled: deviceId !== null })
 }
 
 export function useInventory(deviceId: string | null) {
   const { api } = useEngine()
-  return useQuery({
-    queryKey: ['inventory', deviceId ?? ''],
-    enabled: deviceId !== null,
-    queryFn: async ({ signal }) =>
-      unwrap(
-        await api.GET('/api/v1/profiles/{device_id}/inventory', {
-          params: { path: { device_id: deviceId ?? '' } },
-          signal,
-        }),
-      ).items,
-  })
+  return useQuery({ ...inventoryQuery(api, deviceId ?? ''), enabled: deviceId !== null })
+}
+
+/** Every profile's selection, in the order given, sharing `useSelection`'s cache. */
+export function useSelections(deviceIds: readonly string[]) {
+  const { api } = useEngine()
+  return useQueries({ queries: deviceIds.map((id) => selectionQuery(api, id)) })
+}
+
+/** Every profile's contents as last read, in the order given. */
+export function useInventories(deviceIds: readonly string[]) {
+  const { api } = useEngine()
+  return useQueries({ queries: deviceIds.map((id) => inventoryQuery(api, id)) })
 }
 
 export function usePlan(ref: string | null) {
@@ -80,17 +104,13 @@ export function usePlan(ref: string | null) {
 
 export function useCapacity(ref: string | null) {
   const { api } = useEngine()
-  return useQuery({
-    queryKey: ['capacity', ref ?? ''],
-    enabled: ref !== null,
-    queryFn: async ({ signal }) =>
-      unwrap(
-        await api.GET('/api/v1/devices/{ref}/capacity', {
-          params: { path: { ref: ref ?? '' } },
-          signal,
-        }),
-      ),
-  })
+  return useQuery({ ...capacityQuery(api, ref ?? ''), enabled: ref !== null })
+}
+
+/** Each attached device's space, asked of that device alone. */
+export function useCapacities(refs: readonly string[]) {
+  const { api } = useEngine()
+  return useQueries({ queries: refs.map((ref) => capacityQuery(api, ref)) })
 }
 
 /**
@@ -153,6 +173,41 @@ export function useClearSelection(deviceId: string) {
           params: { path: { device_id: deviceId } },
         }),
       ),
+    onSuccess: after,
+  })
+}
+
+/** After a profile is made or adopted, what is attached and the profiles are read again. */
+function useAfterProfile() {
+  const client = useQueryClient()
+  return () => {
+    void client.invalidateQueries({ queryKey: ['devices'] })
+    void client.invalidateQueries({ queryKey: ['profiles'] })
+  }
+}
+
+export function useCreateProfile() {
+  const { api } = useEngine()
+  const after = useAfterProfile()
+  return useMutation({
+    mutationFn: async (p: { ref: string; name: string; writeMarker: boolean }) =>
+      unwrap(
+        await api.POST('/api/v1/devices/{ref}/profile', {
+          params: { path: { ref: p.ref } },
+          body: { name: p.name, write_marker: p.writeMarker },
+        }),
+      ),
+    onSuccess: after,
+  })
+}
+
+/** Rebuilds a profile from another computer's marker; the engine trusts it whole or not at all. */
+export function useAdopt() {
+  const { api } = useEngine()
+  const after = useAfterProfile()
+  return useMutation({
+    mutationFn: async (ref: string) =>
+      unwrap(await api.POST('/api/v1/devices/{ref}/adopt', { params: { path: { ref } } })),
     onSuccess: after,
   })
 }

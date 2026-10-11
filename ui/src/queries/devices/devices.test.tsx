@@ -1,10 +1,15 @@
 import { act, renderHook, waitFor } from '@testing-library/react'
 import type { ReactNode } from 'react'
 import { describe, expect, it } from 'vitest'
-import { THOR_REF, fakeFetch, freshWorld } from '../../../e2e/fake/world'
+import { CARD_REF, RETROID_REF, THOR_REF, fakeFetch, freshWorld } from '../../../e2e/fake/world'
 import { EngineProvider, createEngine } from '../engine/engine'
 import {
   PROBE_MS,
+  useAdopt,
+  useCapacities,
+  useCreateProfile,
+  useInventories,
+  useSelections,
   useAttached,
   useCapacity,
   useClearSelection,
@@ -45,7 +50,7 @@ describe('device queries', () => {
       { wrapper },
     )
     await waitFor(() => expect(result.current.inventory.data).toHaveLength(2))
-    expect(result.current.profiles.data?.map((p) => p.name)).toEqual(['Thor'])
+    expect(result.current.profiles.data?.map((p) => p.name)).toEqual(['Thor', 'Deck card'])
     expect(result.current.selection.data?.modes).toEqual({ snes: 'all', gba: 'none' })
   })
 
@@ -111,5 +116,55 @@ describe('device queries', () => {
     result.current()
     expect(engine.client.getQueryState(['plan', THOR_REF])?.isInvalidated).toBe(true)
     expect(engine.client.getQueryState(['capacity', THOR_REF])?.isInvalidated).toBe(true)
+  })
+
+  it('reads every profile’s selection and contents, and every attached device’s space, in order', async () => {
+    const { wrapper } = harness()
+    const { result } = renderHook(
+      () => ({
+        selections: useSelections(['dev-1', 'dev-2']),
+        inventories: useInventories(['dev-1', 'dev-2']),
+        space: useCapacities([THOR_REF, CARD_REF]),
+      }),
+      { wrapper },
+    )
+    await waitFor(() => expect(result.current.space.every((q) => q.isSuccess)).toBe(true))
+    await waitFor(() => expect(result.current.inventories.every((q) => q.isSuccess)).toBe(true))
+    expect(result.current.selections.map((q) => q.data?.device_id)).toEqual(['dev-1', 'dev-2'])
+    expect(result.current.inventories.map((q) => q.data?.length)).toEqual([2, 0])
+    expect(result.current.space[1]?.data?.free).toBeGreaterThan(
+      result.current.space[0]?.data?.free ?? 0,
+    )
+  })
+
+  it('makes a profile and adopts another computer’s, then reads devices and profiles again', async () => {
+    const { wrapper, engine } = harness()
+    engine.client.setQueryData(['devices'], { stale: true })
+    engine.client.setQueryData(['profiles'], [])
+    const { result } = renderHook(() => ({ create: useCreateProfile(), adopt: useAdopt() }), {
+      wrapper,
+    })
+    let made = ''
+    await act(async () => {
+      made = (
+        await result.current.create.mutateAsync({ ref: CARD_REF, name: 'Card', writeMarker: true })
+      ).id
+    })
+    expect(made).toBe('dev-3')
+    expect(engine.client.getQueryState(['devices'])?.isInvalidated).toBe(true)
+    expect(engine.client.getQueryState(['profiles'])?.isInvalidated).toBe(true)
+    let adopted = ''
+    await act(async () => {
+      adopted = (await result.current.adopt.mutateAsync(RETROID_REF)).id
+    })
+    expect(adopted).toBe('dev-elsewhere')
+  })
+
+  it('carries the engine’s refusal to adopt a device with no marker', async () => {
+    const { wrapper } = harness()
+    const { result } = renderHook(() => useAdopt(), { wrapper })
+    await expect(result.current.mutateAsync(CARD_REF)).rejects.toMatchObject({
+      code: 'marker.untrusted',
+    })
   })
 })
