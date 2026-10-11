@@ -242,6 +242,12 @@ class JobCancelled(RomSyncError):
     code = "job.cancelled"
 
 
+class JobFailed(RomSyncError):
+    """A job's worker raised something outside the taxonomy."""
+
+    code = "job.failed"
+
+
 class JobInterrupted(RomSyncError):
     """The job was running when the process stopped. Found at startup."""
 

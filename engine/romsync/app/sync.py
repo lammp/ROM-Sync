@@ -84,12 +84,18 @@ class _RunSink:
     """Passes progress on, and keeps the run folder's status current."""
 
     def __init__(
-        self, inner: ProgressSink, folders: RunFolders, run_id: int, total: int
+        self,
+        inner: ProgressSink,
+        folders: RunFolders,
+        run_id: int,
+        total: int,
+        clock: ClockPort,
     ) -> None:
         self.inner = inner
         self.folders = folders
         self.run_id = run_id
         self.total = total
+        self.clock = clock
 
     def emit(self, event: ProgressEvent) -> None:
         self.inner.emit(event)
@@ -102,6 +108,8 @@ class _RunSink:
                     "done": event.done,
                     "total": self.total,
                     "current": event.current,
+                    # the heartbeat startup reconciliation reads (F9-S4)
+                    "updated": self.clock.now().isoformat(timespec="seconds"),
                 },
             )
 
@@ -160,7 +168,9 @@ class Sync:
         state = "interrupted"
         try:
             self._folders.open(run_id, [_row(o) for o in work])
-            self._folders.status(run_id, {"state": "running", "done": 0, "total": len(work)})
+            self._folders.status(
+                run_id, {"state": "running", "done": 0, "total": len(work), "updated": started}
+            )
             # every operation is checked before the destination is touched at all
             refused: dict[int, OpResult] = {}
             passed: list[tuple[int, TransferOp]] = []
@@ -177,7 +187,7 @@ class Sync:
                     )
                     continue
                 passed.append((i, transfer_op))
-            run_sink = _RunSink(sink, self._folders, run_id, len(work))
+            run_sink = _RunSink(sink, self._folders, run_id, len(work), self._clock)
             done = transfer.run([t for _, t in passed], run_sink, cancel)
             results = dict(refused)
             results.update({i: r for (i, _), r in zip(passed, done, strict=True)})
