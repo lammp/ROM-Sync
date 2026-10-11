@@ -19,7 +19,7 @@ from romsync.domain.paths import LocalRoot, StoreRoot
 from romsync.ports.dest import CancelToken, DestVerify, OpResult, Outcome
 from romsync.ports.repo import DeviceProfile, Repos, RunState
 from romsync.ports.sink import ProgressEvent, ProgressSink
-from tests.helpers.fakes import FrozenClock, SinkSpy
+from tests.helpers.fakes import CountingIds, FrozenClock, SinkSpy
 
 ROOT = Path(__file__).resolve().parents[3]
 NES = SystemKey("nes")
@@ -425,3 +425,72 @@ def test_an_op_that_names_its_system_folder_is_refused(
     with pytest.raises(PathEscape):
         run(sync(r, folders, store), profile, dest, whole_folder)
     assert ("ROMs", "nes", "Keep.nes") in dest.files
+
+
+# --- F7-S8 -------------------------------------------------------------------------------
+
+
+def _sync_jobs() -> object:
+    from romsync.jobs.registry import Jobs
+    from tests.unit.jobs.test_registry import MemoryJobs
+
+    return Jobs(MemoryJobs(), FrozenClock(), CountingIds("job"), 10)
+
+
+def test_cancel_between_items(
+    r: Repos, folders: FsRunFolders, store: StoreRoot, profile: DeviceProfile, dest: FakeDest
+) -> None:
+    from romsync.jobs.registry import Context
+    from romsync.jobs.sync_job import sync_job
+
+    jobs = _sync_jobs()
+    work = sync_job(
+        sync(r, folders, store),
+        profile,
+        dest,
+        [op(Action.SEND, NES, "A.nes"), op(Action.SEND, NES, "B.nes", 4)],
+    )
+
+    def cancel_after_first(ctx: Context) -> object:
+        def emit(event: ProgressEvent) -> None:
+            ctx.progress(event)
+            if event.detail is None and event.done == 1:
+                jobs.cancel(ctx.job_id)  # type: ignore[attr-defined]
+
+        return work(Context(ctx.job_id, ctx.cancel, emit))
+
+    job = jobs.submit("sync", "dev-1", cancel_after_first)  # type: ignore[attr-defined]
+    assert job.state.value == "cancelled"
+    assert dict(job.result) == {"run": 1, "done": 1, "send": 1, "skipped": 1}
+    assert ("ROMs", "nes", "A.nes") in dest.files
+    assert ("ROMs", "nes", "B.nes") not in dest.files
+    (run_record,) = r.runs.for_device(profile.id, 1)
+    assert run_record.state is RunState.CANCELLED
+
+
+def test_never_cancels_mid_copy(
+    r: Repos, folders: FsRunFolders, store: StoreRoot, profile: DeviceProfile, dest: FakeDest
+) -> None:
+    from romsync.jobs.registry import Context
+    from romsync.jobs.sync_job import sync_job
+
+    jobs = _sync_jobs()
+    work = sync_job(
+        sync(r, folders, store),
+        profile,
+        dest,
+        [op(Action.SEND, NES, "B.nes", 4), op(Action.SEND, NES, "A.nes")],
+    )
+
+    def cancel_during_copy(ctx: Context) -> object:
+        def emit(event: ProgressEvent) -> None:
+            ctx.progress(event)
+            if event.detail is not None:
+                jobs.cancel(ctx.job_id)  # type: ignore[attr-defined]
+
+        return work(Context(ctx.job_id, ctx.cancel, emit))
+
+    job = jobs.submit("sync", "dev-1", cancel_during_copy)  # type: ignore[attr-defined]
+    assert job.state.value == "cancelled"
+    assert dest.files[("ROMs", "nes", "B.nes")] == b"bbbb", "the copy in hand finished whole"
+    assert ("ROMs", "nes", "A.nes") not in dest.files
