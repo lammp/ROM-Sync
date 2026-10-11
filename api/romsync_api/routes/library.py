@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends
+from fastapi.responses import Response
 
 from romsync.app.library import GameView, by_kind
 from romsync.app.settings import SettingView
@@ -64,6 +65,35 @@ def game(game_id: int, e: Engine = Depends(engine)) -> GameDetail:  # noqa: B008
         **summary_of(view),  # type: ignore[arg-type]
         summary=view.meta.summary,
         members=[Member(name=m.name, size=m.size) for m in view.unit.members],
+    )
+
+
+#: Covers are stored as the service gives them; anything else is served as bytes.
+COVER_TYPES = {
+    ".jpg": "image/jpeg",
+    ".jpeg": "image/jpeg",
+    ".png": "image/png",
+    ".webp": "image/webp",
+}
+
+
+@router.get(
+    "/covers/{name}",
+    response_class=Response,
+    responses={200: {"content": {"image/jpeg": {}, "image/png": {}, "image/webp": {}}}},
+)
+def cover(name: str, e: Engine = Depends(engine)) -> Response:  # noqa: B008
+    """A game's cover, by the name its game records (F10-S21, added)."""
+    data = e.library.cover(name)
+    dot = name.rfind(".")
+    kind = COVER_TYPES.get(name[dot:].lower() if dot >= 0 else "", "application/octet-stream")
+    return Response(
+        data,
+        media_type=kind,
+        headers={
+            "Cache-Control": "private, max-age=86400",
+            "X-Content-Type-Options": "nosniff",
+        },
     )
 
 

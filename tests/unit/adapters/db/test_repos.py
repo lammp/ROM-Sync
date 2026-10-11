@@ -246,3 +246,12 @@ def test_a_corrupt_stored_list_reads_as_empty(r: Repos, conn: sqlite3.Connection
     meta = r.games.meta(int(str(ids["gid"])))
     assert meta is not None and meta.genres == ()
     assert r.games.systems()[0].exts == ()
+
+
+def test_a_cover_is_known_only_when_a_game_records_it(r: Repos) -> None:
+    gid = r.games.add(mario(), AT)
+    assert not r.games.has_cover("7.jpg")
+    r.games.set_meta(gid, GameMeta(state="matched", cover="7.jpg"))
+    assert r.games.has_cover("7.jpg")
+    assert not r.games.has_cover("8.jpg")
+    assert not r.games.has_cover("")

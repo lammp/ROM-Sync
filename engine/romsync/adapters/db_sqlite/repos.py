@@ -189,6 +189,10 @@ class SqliteGames:
         )
         return {r["id"]: self._meta(r) for r in rows}
 
+    def has_cover(self, name: str) -> bool:
+        row = self._c.execute("SELECT 1 FROM games WHERE cover_file = ? LIMIT 1", (name,))
+        return row.fetchone() is not None
+
     @staticmethod
     def _meta(row: sqlite3.Row) -> GameMeta:
         genres = _load(row["genres"]) or []

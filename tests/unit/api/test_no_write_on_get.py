@@ -33,6 +33,7 @@ SAMPLES: dict[str, str] = {
     "device_id": "dev-1",
     "job_id": "job-1",
     "action": "prune-runs",
+    "name": "1234.jpg",
 }
 
 

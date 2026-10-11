@@ -14,3 +14,9 @@ class CoverPort(Protocol):
     def fetch_igdb(self, image_id: str) -> str | None:
         """Keep the service's cover with this id. Returns its stored name."""
         ...
+
+
+class CoverFiles(Protocol):
+    def read(self, name: str) -> bytes | None:
+        """A stored cover's bytes by its bare name; None when there is none."""
+        ...

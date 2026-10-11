@@ -22,6 +22,7 @@ from romsync.adapters.db_sqlite.compact import SqliteCompactor
 from romsync.adapters.db_sqlite.connect import connect
 from romsync.adapters.db_sqlite.migrations import migrate
 from romsync.adapters.db_sqlite.repos import repos
+from romsync.adapters.local_fs.covers import FsCoverFiles
 from romsync.adapters.local_fs.data_folder import FsDataFolder
 from romsync.adapters.local_fs.runs import FsLocalFiles, FsRunFolders
 from romsync.adapters.local_fs.sysfiles import FsSysfileStore
@@ -196,7 +197,9 @@ def build(
     return Engine(
         registry=REGISTRY,
         settings=settings,
-        library=Library(stores.games, stores.tags, open_store, clock),
+        library=Library(
+            stores.games, stores.tags, open_store, clock, FsCoverFiles(covers_folder)
+        ),
         connection=ConnectionCheck(metadata_client, saved_credentials),
         devices=devices,
         selections=Selections(stores.selections, stores.games, stores.devices),

@@ -22,9 +22,11 @@ def test_models_declared(app: FastAPI) -> None:
     assert routes
     for route in routes:
         model = route.response_model
-        assert isinstance(model, type) and issubclass(model, Model), (
-            f"{route.path} returns no declared model"
-        )
+        # A binary answer (a cover) cannot be a model; it declares its media types instead.
+        binary = set(route.responses.get(200, {}).get("content", {})) - {"application/json"}
+        assert (isinstance(model, type) and issubclass(model, Model)) or (
+            model is None and binary
+        ), f"{route.path} returns no declared model and declares no media type"
     document = app.openapi()
     assert document["paths"]
     for path, operations in document["paths"].items():

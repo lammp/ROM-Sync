@@ -14,10 +14,11 @@ from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
 from datetime import UTC, datetime
 
-from romsync.domain.errors import ConfigMissing, GameNotFound
+from romsync.domain.errors import ConfigMissing, CoverNotFound, GameNotFound
 from romsync.domain.library import reconcile
 from romsync.domain.models import GameUnit, SystemKey
 from romsync.ports.clock import ClockPort
+from romsync.ports.covers import CoverFiles
 from romsync.ports.repo import GameMeta, GameRepo, SystemInfo, TagRecord, TagRepo
 from romsync.ports.sink import ProgressEvent, ProgressSink
 from romsync.ports.store import StorePort
@@ -68,11 +69,24 @@ class Library:
         tags: TagRepo,
         store: StoreOpener | None = None,
         clock: ClockPort | None = None,
+        covers: CoverFiles | None = None,
     ) -> None:
         self._games = games
         self._tags = tags
         self._store = store
         self._clock = clock
+        self._covers = covers
+
+    def cover(self, name: str) -> bytes:
+        """A game's stored cover (F10-S21, added). Only a name some game records is read."""
+        data = (
+            self._covers.read(name)
+            if self._covers is not None and self._games.has_cover(name)
+            else None
+        )
+        if data is None:
+            raise CoverNotFound(f"no cover named {name!r}", field="name")
+        return data
 
     def scan(self, sink: ProgressSink) -> ScanResult:
         """Bring the library to what the store holds now."""

@@ -89,6 +89,12 @@ class GameNotFound(RomSyncError):
     code = "game.not_found"
 
 
+class CoverNotFound(RomSyncError):
+    """No game's cover is stored under that name."""
+
+    code = "cover.not_found"
+
+
 class NothingIndexed(RomSyncError):
     """A scan indexed no systems, so a prune would delete everything."""
 

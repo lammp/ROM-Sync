@@ -85,3 +85,31 @@ def test_settings(tmp_path: Path) -> None:
     assert secret.secret_state is not None and secret.secret_state.present is False
     margin = items["plan.free_space_margin"]
     assert margin.value == margin.default
+
+
+def test_a_recorded_cover_is_served(tmp_path: Path) -> None:
+    c, _ = client(tmp_path)
+    covers = tmp_path / "data" / "covers"
+    covers.mkdir(parents=True, exist_ok=True)
+    (covers / "1234.jpg").write_bytes(b"\xff\xd8jpeg")
+    got = c.get(f"{PREFIX}/covers/1234.jpg")
+    assert got.status_code == 200 and got.content == b"\xff\xd8jpeg"
+    assert got.headers["content-type"] == "image/jpeg"
+    assert got.headers["x-content-type-options"] == "nosniff"
+
+
+def test_only_a_recorded_cover_is_served(tmp_path: Path) -> None:
+    c, _ = client(tmp_path)
+    data = tmp_path / "data"
+    (data / "covers").mkdir(parents=True, exist_ok=True)
+    (data / "covers" / "stray.jpg").write_bytes(b"not recorded")
+    for name in ("stray.jpg", "..%2Fgames.db", "%2E%2E", "missing.jpg"):
+        got = c.get(f"{PREFIX}/covers/{name}")
+        assert got.status_code == 404, name
+        assert got.json()["error"]["code"] in ("cover.not_found", "request.not_found"), name
+
+
+def test_a_recorded_name_whose_file_is_gone_is_not_found(tmp_path: Path) -> None:
+    c, _ = client(tmp_path)
+    got = c.get(f"{PREFIX}/covers/1234.jpg")
+    assert got.status_code == 404 and got.json()["error"]["code"] == "cover.not_found"
