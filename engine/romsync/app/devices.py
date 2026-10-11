@@ -19,10 +19,11 @@ from romsync.app.marker_trust import trust
 from romsync.domain.errors import (
     CapabilityUnsupported,
     MarkerUntrusted,
+    ProfileNotFound,
     RomSyncError,
     UnknownDevice,
 )
-from romsync.domain.models import Marker, MarkerEntry, Mode
+from romsync.domain.models import DeviceItem, Marker, MarkerEntry, Mode
 from romsync.domain.refs import decode, encode
 from romsync.ports.clock import ClockPort, IdPort
 from romsync.ports.dest import Capacity, Dest, DestCapacity, DestIdentity, Identity
@@ -120,6 +121,12 @@ class Devices:
     def profiles(self) -> tuple[DeviceProfile, ...]:
         """Every device this computer has a profile for, attached or not."""
         return self._devices.all()
+
+    def inventory(self, device_id: str) -> tuple[DeviceItem, ...]:
+        """What the device held when it was last read (F10-S22, added)."""
+        if self._devices.get(device_id) is None:
+            raise ProfileNotFound(f"no device profile {device_id}", field="device_id")
+        return self._devices.inventory(device_id)
 
     def find(self, ref: str) -> Attached:
         """The attached device a reference names, probing again only if it is not known."""

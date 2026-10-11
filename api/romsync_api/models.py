@@ -278,6 +278,24 @@ class RunView(Model):
     bytes_moved: int | None
 
 
+class RunList(Model):
+    runs: list[RunView]
+
+
+class InventoryItem(Model):
+    #: The device folder it sits in, which need not be a store system.
+    system: str
+    name: str
+    kind: str
+    size: int | None
+
+
+class Inventory(Model):
+    """What the device held when it was last read."""
+
+    items: list[InventoryItem]
+
+
 class SyncStatusView(Model):
     job: JobView | None
     run: RunView | None

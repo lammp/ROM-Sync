@@ -44,7 +44,8 @@ from romsync.ports.dest import (
     Outcome,
     TransferOp,
 )
-from romsync.ports.repo import DeviceProfile, Repos, RunRecord, RunState
+from romsync.ports.repo import DeviceProfile, Repos, RunState
+from romsync.ports.repo import RunRecord as RunRecord
 from romsync.ports.runs import LocalFiles, RunFolders
 from romsync.ports.sink import ProgressEvent, ProgressSink
 

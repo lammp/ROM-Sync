@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Depends
 
+from romsync.app.sync import RunRecord
 from romsync.compose import Engine
 from romsync.domain.errors import JobNotFound, ProfileNotFound
 from romsync.domain.models import Op
@@ -13,6 +14,7 @@ from romsync_api.models import (
     PlanBytes,
     PlanOp,
     PlanView,
+    RunList,
     RunView,
     StartSync,
     SyncStatusView,
@@ -20,6 +22,30 @@ from romsync_api.models import (
 from romsync_api.routes.jobs import job_view
 
 router = APIRouter(tags=["sync"])
+
+#: How many past runs a device's history shows.
+HISTORY = 20
+
+
+def run_view(run: RunRecord) -> RunView:
+    assert run.id is not None
+    return RunView(
+        id=run.id,
+        state=str(run.state),
+        started=run.started,
+        finished=run.finished,
+        counts={k: v for k, v in (run.counts or {}).items() if isinstance(v, int | str)},
+        bytes_moved=run.bytes_moved,
+    )
+
+
+@router.get("/profiles/{device_id}/runs", response_model=RunList)
+def history(device_id: str, e: Engine = Depends(engine)) -> RunList:  # noqa: B008
+    """The device's last twenty runs, newest first (F10-S22, added)."""
+    e.selections.get(device_id)
+    return RunList(
+        runs=[run_view(r) for r in e.syncs.history(device_id, HISTORY) if r.id is not None]
+    )
 
 
 def _op(o: Op) -> PlanOp:
@@ -65,16 +91,7 @@ def status(ref: str, e: Engine = Depends(engine)) -> SyncStatusView:  # noqa: B0
     run = found.run
     return SyncStatusView(
         job=job_view(found.job) if found.job else None,
-        run=None
-        if run is None or run.id is None
-        else RunView(
-            id=run.id,
-            state=str(run.state),
-            started=run.started,
-            finished=run.finished,
-            counts={k: v for k, v in (run.counts or {}).items() if isinstance(v, int | str)},
-            bytes_moved=run.bytes_moved,
-        ),
+        run=None if run is None or run.id is None else run_view(run),
     )
 
 

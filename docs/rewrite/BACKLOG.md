@@ -213,6 +213,7 @@ they can only be taken while version 1 still runs.
 | F10-S19 (added) | System files: store side, device survey, readiness as state, stage and unstage as jobs | F8-S6, F9-S1 | Readiness is read without touching a device; staging is a job on the device's reference | `tests/unit/api/test_sysfiles_routes.py::test_readiness_read_only`, `::test_stage_job` |
 | F10-S20 (added) | Recover: what only the device holds, pulled and placed in the store without overwriting | F7-S11, F9-S1 | Placing never overwrites | `tests/unit/api/test_recover_routes.py::test_place_never_overwrites` |
 | F10-S21 (added) | A game's cover served by the name its game records; no request names a path | F5-S8, F10-S7 | An unrecorded name, or one shaped like a path, is not found and never reaches the disk | `tests/unit/api/test_library_routes.py::test_only_a_recorded_cover_is_served` |
+| F10-S22 (added) | A device's inventory and its run history, read by profile | F6-S9, F7-S1 | Both answer for a profile and refuse an unknown one; history is newest first | `tests/unit/api/test_history_routes.py::test_history_newest_first` |
 
 ## F11 Interface rebuild as atomic components
 
@@ -336,6 +337,6 @@ component, feature or function they cover.
 | | |
 |---|---|
 | Features | 16 |
-| Stories | 174 |
+| Stories | 175 |
 | Security requirements from SPEC section 12, each covered by at least one story | 9 |
 | Stories whose acceptance needs a real device or a clean machine, and therefore sit outside the gate | F6-S5, F6-S6, F13-S1, F13-S2, F13-S6; each is marked for manual verification, and [TESTING.md](TESTING.md) section 8 states what the gate does not prove |

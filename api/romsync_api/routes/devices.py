@@ -20,6 +20,8 @@ from romsync_api.models import (
     CapacityView,
     GamesChange,
     GamesChanged,
+    Inventory,
+    InventoryItem,
     ModeChange,
     NewProfile,
     Profile,
@@ -99,6 +101,17 @@ def selection_of(device_id: str, s: Selection) -> SelectionView:
 @router.get("/profiles/{device_id}/selection", response_model=SelectionView)
 def selection(device_id: str, e: Engine = Depends(engine)) -> SelectionView:  # noqa: B008
     return selection_of(device_id, e.selections.get(device_id))
+
+
+@router.get("/profiles/{device_id}/inventory", response_model=Inventory)
+def inventory(device_id: str, e: Engine = Depends(engine)) -> Inventory:  # noqa: B008
+    """What the device held when it was last read (F10-S22, added)."""
+    return Inventory(
+        items=[
+            InventoryItem(system=i.system, name=i.name, kind=i.kind, size=i.size)
+            for i in e.devices.inventory(device_id)
+        ]
+    )
 
 
 @router.post("/profiles/{device_id}/selection/mode", response_model=SelectionView)

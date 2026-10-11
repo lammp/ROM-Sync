@@ -62,6 +62,10 @@ class Syncs:
         runs = self._runs.for_device(device_id, 1)
         return SyncStatus(self._job(ref), runs[0] if runs else None)
 
+    def history(self, device_id: str, limit: int) -> tuple[RunRecord, ...]:
+        """The device's runs, newest first (F10-S22, added)."""
+        return self._runs.for_device(device_id, limit)
+
     def cancel(self, ref: str) -> JobRecord | None:
         job = self._job(ref)
         return None if job is None else self._jobs.cancel(job.id)
