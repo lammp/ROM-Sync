@@ -13,6 +13,12 @@ The branches it carries: file games, a folder game holding a multi-disc set,
 a zero-byte file, a name at the 255-character limit, a `bios` folder and an
 `emulators` folder that are not systems, a system with no games, and a system
 whose system file cannot be read.
+
+The tree can be written to disk and scanned (F4), so its sizes are small: a
+thousandth of the sizes the planner corpus was first drawn up with, which
+keeps every comparison it exercises. Every system folder carries the
+front-end's `systeminfo.txt`, whose text is `systeminfo(system)`; `gb` has
+one but no games, so a scan does not keep it as a system, as in version 1.
 """
 
 from __future__ import annotations
@@ -42,54 +48,91 @@ class UnitRow(NamedTuple):
     mtime: float
 
 
-#: The store's systems, as the database records them after a scan.
-SYSTEMS: tuple[str, ...] = ("gb", "gba", "md", "n3ds", "nes", "psp", "psx", "snes")
+#: The store's systems, as the database records them after a scan: every folder
+#: with a readable system file and at least one game.
+SYSTEMS: tuple[str, ...] = ("gba", "md", "n3ds", "nes", "psp", "psx", "snes")
+
+#: Each system folder's front-end system file: its full name and extensions.
+SYSTEMINFO: dict[str, tuple[str, tuple[str, ...]]] = {
+    "nes": ("Nintendo Entertainment System", (".nes", ".zip", ".7z")),
+    "snes": ("Super Nintendo", (".sfc", ".smc", ".zip")),
+    "psx": ("Sony PlayStation", (".chd", ".cue", ".m3u")),
+    "psp": ("Sony PlayStation Portable", (".iso", ".cso")),
+    "n3ds": ("Nintendo 3DS", (".3ds", ".cci")),
+    "gba": ("Game Boy Advance", (".gba", ".zip")),
+    "md": ("Sega Mega Drive", (".md", ".bin", ".zip")),
+    "gb": ("Game Boy", (".gb", ".zip")),
+    "pce": ("PC Engine", (".pce",)),
+}
+
+
+def systeminfo(system: str) -> str:
+    """The text of a system's `systeminfo.txt`, in the front end's layout."""
+    label, exts = SYSTEMINFO[system]
+    return (
+        "System name:\n"
+        f"{system}\n"
+        "Full system name:\n"
+        f"{label}\n"
+        "Supported file extensions:\n"
+        f"{' '.join(e for x in exts for e in (x, x.upper()))}\n"
+    )
+
+
+def info(system: str, readable: bool = True) -> FileRow:
+    return FileRow(f"{system}\\systeminfo.txt", len(systeminfo(system).encode()), T, readable)
+
 
 TREE: tuple[FileRow, ...] = (
-    FileRow("nes\\systeminfo.txt", 120, T),
-    FileRow("nes\\Star Quest (Europe).zip", 131072, T),
-    FileRow("nes\\Cave Runner (USA).zip", 262144, T + 100),
-    FileRow("nes\\Moon Patrol Kid (Japan).zip", 65536, T),
-    FileRow("nes\\Iron Tiger (USA).zip", 98304, T),
-    FileRow("nes\\Pixel Garden (World).zip", 40960, T + 0.5),
+    info("nes"),
+    FileRow("nes\\Star Quest (Europe).zip", 131, T),
+    FileRow("nes\\Cave Runner (USA).zip", 262, T + 100),
+    FileRow("nes\\Moon Patrol Kid (Japan).zip", 65, T),
+    FileRow("nes\\Iron Tiger (USA).zip", 98, T),
+    FileRow("nes\\Pixel Garden (World).zip", 40, T + 0.5),
     FileRow("nes\\Blank Cart (World).nes", 0, T),
-    FileRow("nes\\" + LONG_NAME, 70000, T),
-    FileRow("nes\\Echo Valley (Europe).zip", 50000, T),
-    FileRow("snes\\Sky Lancer (USA).sfc", 524288, T),
-    FileRow("snes\\Rune Keeper (Japan).sfc", 1048576, T),
-    FileRow("snes\\Glass Harbor (Europe).sfc", 786432, T),
-    FileRow("psx\\systeminfo.txt", 140, T),
-    FileRow("psx\\Moon Saga (Europe)\\Moon Saga (Europe) (Disc 1).chd", 400000000, T + 20),
-    FileRow("psx\\Moon Saga (Europe)\\Moon Saga (Europe) (Disc 2).chd", 380000000, T + 50),
-    FileRow("psx\\Moon Saga (Europe)\\Moon Saga (Europe).m3u", 120, T),
-    FileRow("psx\\Neon Drift (USA).chd", 300000000, T + 5000),
-    FileRow("psp\\Hover Racer (Europe).iso", 900000000, T),
-    FileRow("n3ds\\Leaf Quest (Europe).3ds", 2000000000, T),
-    FileRow("gba\\Tiny Knight (USA).gba", 8388608, T),
-    FileRow("md\\Turbo Blade (Europe).md", 2097152, T),
-    FileRow("gb\\systeminfo.txt", 110, T),
-    FileRow("pce\\systeminfo.txt", 130, T, readable=False),
-    FileRow("pce\\Comet Run (Japan).pce", 393216, T),
-    FileRow("bios\\sample-bios.bin", 524288, T),
-    FileRow("emulators\\readme.txt", 900, T),
+    FileRow("nes\\" + LONG_NAME, 70, T),
+    FileRow("nes\\Echo Valley (Europe).zip", 50, T),
+    info("snes"),
+    FileRow("snes\\Sky Lancer (USA).sfc", 524, T),
+    FileRow("snes\\Rune Keeper (Japan).sfc", 1048, T),
+    FileRow("snes\\Glass Harbor (Europe).sfc", 786, T),
+    info("psx"),
+    FileRow("psx\\Moon Saga (Europe)\\Moon Saga (Europe) (Disc 1).chd", 400000, T + 20),
+    FileRow("psx\\Moon Saga (Europe)\\Moon Saga (Europe) (Disc 2).chd", 380000, T + 50),
+    FileRow("psx\\Moon Saga (Europe)\\Moon Saga (Europe).m3u", 0, T),
+    FileRow("psx\\Neon Drift (USA).chd", 300000, T + 5000),
+    info("psp"),
+    FileRow("psp\\Hover Racer (Europe).iso", 900000, T),
+    info("n3ds"),
+    FileRow("n3ds\\Leaf Quest (Europe).3ds", 2000000, T),
+    info("gba"),
+    FileRow("gba\\Tiny Knight (USA).gba", 8388, T),
+    info("md"),
+    FileRow("md\\Turbo Blade (Europe).md", 2097, T),
+    info("gb"),
+    info("pce", readable=False),
+    FileRow("pce\\Comet Run (Japan).pce", 393, T),
+    FileRow("bios\\sample-bios.bin", 524, T),
+    FileRow("emulators\\readme.txt", 0, T),
 )
 
 UNITS: tuple[UnitRow, ...] = (
-    UnitRow(1, "nes", "Star Quest (Europe).zip", "file", 131072, T),
-    UnitRow(2, "nes", "Cave Runner (USA).zip", "file", 262144, T + 100),
-    UnitRow(3, "nes", "Moon Patrol Kid (Japan).zip", "file", 65536, T),
-    UnitRow(4, "nes", "Iron Tiger (USA).zip", "file", 98304, T),
-    UnitRow(5, "nes", "Pixel Garden (World).zip", "file", 40960, T + 0.5),
+    UnitRow(1, "nes", "Star Quest (Europe).zip", "file", 131, T),
+    UnitRow(2, "nes", "Cave Runner (USA).zip", "file", 262, T + 100),
+    UnitRow(3, "nes", "Moon Patrol Kid (Japan).zip", "file", 65, T),
+    UnitRow(4, "nes", "Iron Tiger (USA).zip", "file", 98, T),
+    UnitRow(5, "nes", "Pixel Garden (World).zip", "file", 40, T + 0.5),
     UnitRow(6, "nes", "Blank Cart (World).nes", "file", 0, T),
-    UnitRow(7, "nes", LONG_NAME, "file", 70000, T),
-    UnitRow(8, "nes", "Echo Valley (Europe).zip", "file", 50000, T),
-    UnitRow(9, "snes", "Sky Lancer (USA).sfc", "file", 524288, T),
-    UnitRow(10, "snes", "Rune Keeper (Japan).sfc", "file", 1048576, T),
-    UnitRow(11, "snes", "Glass Harbor (Europe).sfc", "file", 786432, T),
-    UnitRow(12, "psx", "Moon Saga (Europe)", "folder", 780000120, T + 50),
-    UnitRow(13, "psx", "Neon Drift (USA).chd", "file", 300000000, T + 5000),
-    UnitRow(14, "psp", "Hover Racer (Europe).iso", "file", 900000000, T),
-    UnitRow(15, "n3ds", "Leaf Quest (Europe).3ds", "file", 2000000000, T),
-    UnitRow(16, "gba", "Tiny Knight (USA).gba", "file", 8388608, T),
-    UnitRow(17, "md", "Turbo Blade (Europe).md", "file", 2097152, T),
+    UnitRow(7, "nes", LONG_NAME, "file", 70, T),
+    UnitRow(8, "nes", "Echo Valley (Europe).zip", "file", 50, T),
+    UnitRow(9, "snes", "Sky Lancer (USA).sfc", "file", 524, T),
+    UnitRow(10, "snes", "Rune Keeper (Japan).sfc", "file", 1048, T),
+    UnitRow(11, "snes", "Glass Harbor (Europe).sfc", "file", 786, T),
+    UnitRow(12, "psx", "Moon Saga (Europe)", "folder", 780000, T + 50),
+    UnitRow(13, "psx", "Neon Drift (USA).chd", "file", 300000, T + 5000),
+    UnitRow(14, "psp", "Hover Racer (Europe).iso", "file", 900000, T),
+    UnitRow(15, "n3ds", "Leaf Quest (Europe).3ds", "file", 2000000, T),
+    UnitRow(16, "gba", "Tiny Knight (USA).gba", "file", 8388, T),
+    UnitRow(17, "md", "Turbo Blade (Europe).md", "file", 2097, T),
 )
