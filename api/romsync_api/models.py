@@ -281,3 +281,15 @@ class RunView(Model):
 class SyncStatusView(Model):
     job: JobView | None
     run: RunView | None
+
+
+class MaintenanceReport(Model):
+    action: str
+    count: int
+    bytes: int
+    names: list[str]
+
+
+class MaintenanceRun(Model):
+    #: The count the dry run found; required for a destructive action.
+    expected: int | None = None

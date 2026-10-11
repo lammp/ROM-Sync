@@ -17,9 +17,11 @@ from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from pathlib import Path
 
+from romsync.adapters.db_sqlite.compact import SqliteCompactor
 from romsync.adapters.db_sqlite.connect import connect
 from romsync.adapters.db_sqlite.migrations import migrate
 from romsync.adapters.db_sqlite.repos import repos
+from romsync.adapters.local_fs.data_folder import FsDataFolder
 from romsync.adapters.local_fs.runs import FsRunFolders
 from romsync.adapters.metadata_igdb.client import (
     Credentials,
@@ -32,6 +34,7 @@ from romsync.adapters.system.clock import RandomIds, SystemClock
 from romsync.app.connection_check import ConnectionCheck
 from romsync.app.devices import Devices, Probe
 from romsync.app.library import Library
+from romsync.app.maintenance import Maintenance
 from romsync.app.plans import Plans
 from romsync.app.selection import Selections
 from romsync.app.settings import Settings
@@ -64,6 +67,7 @@ class Engine:
     plans: Plans
     jobs: Jobs
     syncs: Syncs
+    maintenance: Maintenance
     data: Path
 
 
@@ -128,6 +132,12 @@ def build(
         return StoreRoot(str(settings.value("store.root") or ""))
 
     write_marker = bool(settings.value("device.write_marker_after_sync"))
+
+    def retention() -> int:
+        kept = settings.value("runs.retention")
+        assert isinstance(kept, int)
+        return kept
+
     sync = Sync(stores, FsRunFolders(data), clock, store_root, write_marker)
     return Engine(
         registry=REGISTRY,
@@ -139,5 +149,8 @@ def build(
         plans=plans,
         jobs=jobs,
         syncs=Syncs(plans, sync, jobs, stores.runs),
+        maintenance=Maintenance(
+            FsDataFolder(data), SqliteCompactor(conn, db), stores.games, retention
+        ),
         data=data,
     )

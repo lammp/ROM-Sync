@@ -32,6 +32,7 @@ SAMPLES: dict[str, str] = {
     "ref": encode(FakeDest("thor").identity().ref),
     "device_id": "dev-1",
     "job_id": "job-1",
+    "action": "prune-runs",
 }
 
 

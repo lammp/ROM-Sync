@@ -185,6 +185,12 @@ class ConfirmRemovals(RomSyncError):
     code = "sync.confirm_removals"
 
 
+class DryRunFirst(RomSyncError):
+    """A destructive maintenance run did not name the count its dry run found."""
+
+    code = "maintenance.dry_run_first"
+
+
 class DoesNotFit(RomSyncError):
     """The plan's peak usage exceeds the destination's capacity."""
 

@@ -18,7 +18,16 @@ from romsync.compose import Engine
 from romsync_api import errors, security, static
 from romsync_api.binding import Binding, binding_of
 from romsync_api.models import ErrorEnvelope
-from romsync_api.routes import devices, igdb, jobs, library, meta, session, sync
+from romsync_api.routes import (
+    devices,
+    igdb,
+    jobs,
+    library,
+    maintenance,
+    meta,
+    session,
+    sync,
+)
 
 PREFIX = "/api/v1"
 
@@ -37,6 +46,7 @@ ROUTERS: tuple[APIRouter, ...] = (
     devices.router,
     sync.router,
     jobs.router,
+    maintenance.router,
 )
 
 
