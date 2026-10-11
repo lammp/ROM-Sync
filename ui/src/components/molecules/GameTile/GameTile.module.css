@@ -76,3 +76,12 @@
 .below {
   top: 32px;
 }
+
+.compare {
+  padding: 0;
+  border: 0;
+  background: none;
+  border-radius: var(--radius-round);
+  cursor: pointer;
+  display: inline-flex;
+}

@@ -24,7 +24,12 @@ export type TileDevice = {
   readonly onToggle: () => void
 }
 
-export type TileTwin = { readonly dupe: boolean; readonly label: string }
+export type TileTwin = {
+  readonly dupe: boolean
+  readonly label: string
+  /** Opens the compare card; offered on the selected tile only. */
+  readonly onCompare?: () => void
+}
 
 export type GameTileProps = {
   readonly game: TileGame
@@ -73,7 +78,18 @@ export function GameTile({ game, current, onOpen, device, twin }: GameTileProps)
       )}
       {twin && (
         <span className={styles.twin}>
-          <TwinGlyph dupe={twin.dupe} label={twin.label} />
+          {current && twin.onCompare ? (
+            <button
+              type="button"
+              className={styles.compare}
+              aria-label={`Compare versions: ${twin.label}`}
+              onClick={twin.onCompare}
+            >
+              <TwinGlyph dupe={twin.dupe} label={twin.label} />
+            </button>
+          ) : (
+            <TwinGlyph dupe={twin.dupe} label={twin.label} />
+          )}
         </span>
       )}
       {device?.onDevice && (

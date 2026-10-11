@@ -3,7 +3,15 @@ import { fireEvent, render, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 import * as stories from './GameTile.stories'
 
-const { NoDevice, WithCover, Current, AllFourBadges, DuplicateSelected } = composeStories(stories)
+const {
+  NoDevice,
+  WithCover,
+  Current,
+  AllFourBadges,
+  DuplicateSelected,
+  CompareOnSelectedTile,
+  NoCompareOffTheSelectedTile,
+} = composeStories(stories)
 
 describe('GameTile', () => {
   it('opens the game from a button named by its title and caption', () => {
@@ -55,5 +63,15 @@ describe('GameTile', () => {
     render(<DuplicateSelected />)
     expect(screen.getByRole('img', { name: 'Already selected on gba' })).toBeTruthy()
     expect(screen.queryByText('on device')).toBeNull()
+  })
+
+  it('selected_tile_only: the compare card opens from the selected tile, and from no other', () => {
+    const { unmount } = render(<CompareOnSelectedTile />)
+    fireEvent.click(screen.getByRole('button', { name: /^Compare versions/ }))
+    expect(CompareOnSelectedTile.args.twin?.onCompare).toHaveBeenCalled()
+    unmount()
+    render(<NoCompareOffTheSelectedTile />)
+    expect(screen.queryByRole('button', { name: /^Compare versions/ })).toBeNull()
+    expect(screen.getByRole('img', { name: 'Also on 1 other system: gba' })).toBeTruthy()
   })
 })

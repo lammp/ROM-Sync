@@ -57,6 +57,27 @@ export const AllFourBadges: Story = {
   },
 }
 
+export const CompareOnSelectedTile: Story = {
+  args: {
+    current: true,
+    twin: { dupe: false, label: 'Also on 1 other system: gba', onCompare: fn() },
+  },
+  play: async ({ canvas, args, userEvent }) => {
+    await userEvent.tab()
+    await userEvent.tab()
+    await expect(canvas.getByRole('button', { name: /^Compare versions/ })).toHaveFocus()
+    await userEvent.keyboard('{Enter}')
+    await expect(args.twin?.onCompare).toHaveBeenCalledOnce()
+  },
+}
+
+export const NoCompareOffTheSelectedTile: Story = {
+  args: {
+    current: false,
+    twin: { dupe: false, label: 'Also on 1 other system: gba', onCompare: fn() },
+  },
+}
+
 export const DuplicateSelected: Story = {
   args: {
     device: { name: 'Thor', selected: true, override: false, onDevice: false, onToggle: fn() },
