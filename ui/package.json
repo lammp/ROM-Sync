@@ -18,12 +18,16 @@
     "test:storybook": "vitest run --project=storybook",
     "test:e2e": "playwright test",
     "storybook": "storybook dev -p 6006",
-    "tokens": "node --experimental-strip-types --disable-warning=ExperimentalWarning scripts/tokens.ts"
+    "tokens": "node --experimental-strip-types --disable-warning=ExperimentalWarning scripts/tokens.ts",
+    "api": "node --experimental-strip-types --disable-warning=ExperimentalWarning scripts/api.ts"
   },
   "dependencies": {
+    "@tanstack/react-query": "5.104.1",
     "next": "16.4.0",
+    "openapi-fetch": "0.17.0",
     "react": "19.3.0",
-    "react-dom": "19.3.0"
+    "react-dom": "19.3.0",
+    "zustand": "5.0.15"
   },
   "devDependencies": {
     "@playwright/test": "1.56.1",
@@ -44,6 +48,7 @@
     "eslint-config-next": "16.4.0",
     "eslint-config-prettier": "10.1.8",
     "jsdom": "30.1.2",
+    "openapi-typescript": "7.13.0",
     "playwright": "1.56.1",
     "prettier": "3.9.9",
     "storybook": "10.6.1",
