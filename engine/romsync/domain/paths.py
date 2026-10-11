@@ -112,6 +112,21 @@ class StoreRoot(Root):
 
 
 @dataclass(frozen=True, slots=True)
+class DeviceRoot(Root):
+    """A destination's storage, which its ROMs folder sits inside.
+
+    System files are staged at a template relative to it, which need not be
+    under the ROMs folder.
+    """
+
+
+@dataclass(frozen=True, slots=True)
+class LocalRoot(Root):
+    """A folder of the application's own on this computer: a pull folder, a
+    staging copy, the firmware folder. Never the store."""
+
+
+@dataclass(frozen=True, slots=True)
 class ContainedPath:
     """A path proved to sit strictly inside its root."""
 

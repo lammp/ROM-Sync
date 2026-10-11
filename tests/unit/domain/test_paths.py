@@ -5,10 +5,10 @@ from __future__ import annotations
 import pytest
 
 from romsync.domain.errors import NotAName, PathEscape
-from romsync.domain.paths import ContainedPath, RomsRoot, Root, StoreRoot
+from romsync.domain.paths import ContainedPath, DeviceRoot, LocalRoot, RomsRoot, Root, StoreRoot
 from tests.fixtures.escapes import ESCAPES
 
-ROOTS: list[Root] = [RomsRoot("ROMs"), StoreRoot("store")]
+ROOTS: list[Root] = [RomsRoot("ROMs"), StoreRoot("store"), DeviceRoot("E:"), LocalRoot("data")]
 
 
 class Links:

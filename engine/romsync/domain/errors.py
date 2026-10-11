@@ -104,6 +104,18 @@ class DestinationRootMissing(RomSyncError):
     code = "dest.root_missing"
 
 
+class DestinationItemMissing(RomSyncError):
+    """An item asked for by name is not on the destination."""
+
+    code = "dest.item_missing"
+
+
+class DestinationToolMissing(RomSyncError):
+    """The program a transport is driven through is not installed."""
+
+    code = "dest.tool_missing"
+
+
 class CapabilityUnsupported(RomSyncError):
     """A port was asked of an adapter that does not declare it."""
 
