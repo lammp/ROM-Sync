@@ -48,7 +48,7 @@ const MAY_IMPORT: Readonly<Record<Layer, readonly Layer[]>> = {
   design: ['design'],
   lib: ['lib', 'design'],
   'lib/api': ['lib/api'],
-  store: ['store', 'lib', 'lib/api'],
+  store: ['store', 'design', 'lib', 'lib/api'],
   queries: ['queries', 'store', 'lib', 'lib/api'],
 }
 
