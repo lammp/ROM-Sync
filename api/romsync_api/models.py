@@ -27,3 +27,11 @@ class Version(Model):
     application: str
     version: str
     api: str
+
+
+class Session(Model):
+    """What a page needs before it can change anything."""
+
+    token: str
+    #: Whether the shell endpoints answer: only while the bind is loopback.
+    shell: bool

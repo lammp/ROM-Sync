@@ -21,6 +21,7 @@ from romsync_api.app import PREFIX, ROUTERS, create_app
 from romsync_api.deps import engine as engine_of
 from romsync_api.models import Version
 from tests.helpers.fakes import FrozenClock
+from tests.unit.api.conftest import BASE
 
 #: A value for every path parameter a GET takes.
 SAMPLES: dict[str, str] = {}
@@ -53,7 +54,7 @@ def gets(routers: tuple[APIRouter, ...]) -> list[str]:
 
 
 def writes(app: FastAPI, data: Path, routers: tuple[APIRouter, ...]) -> list[str]:
-    client = TestClient(app)
+    client = TestClient(app, base_url=BASE)
     offenders = []
     for path in gets(routers):
         before = snapshot(data)

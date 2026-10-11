@@ -10,6 +10,7 @@ from pydantic import BaseModel
 from romsync.domain.errors import GuardRefused, UnknownDevice
 from romsync_api.app import PREFIX, ROUTERS, create_app
 from romsync_api.models import Model
+from tests.unit.api.conftest import BASE
 
 
 def api_routes() -> list[APIRoute]:
@@ -69,7 +70,7 @@ def _with_failures() -> TestClient:
         return payload
 
     app.include_router(router, prefix=PREFIX)
-    return TestClient(app)
+    return TestClient(app, base_url=BASE)
 
 
 def test_error_envelope() -> None:
@@ -84,7 +85,12 @@ def test_error_envelope() -> None:
         }
     }
     assert client.get(f"{PREFIX}/boom/device").status_code == 404
-    invalid = client.post(f"{PREFIX}/boom/body", json={"count": "many"})
+    token = client.get(f"{PREFIX}/session").json()["token"]
+    invalid = client.post(
+        f"{PREFIX}/boom/body",
+        json={"count": "many"},
+        headers={"Origin": BASE, "X-RomSync-Token": token},
+    )
     assert invalid.status_code == 422
     assert invalid.json()["error"]["code"] == "request.invalid"
     assert invalid.json()["error"]["field"] == "count"
@@ -92,7 +98,9 @@ def test_error_envelope() -> None:
     assert missing.status_code == 404
     assert set(missing.json()) == {"error"}
     assert missing.json()["error"]["code"] == "request.not_found"
-    wrong_method = client.delete(f"{PREFIX}/version")
+    wrong_method = client.delete(
+        f"{PREFIX}/version", headers={"Origin": BASE, "X-RomSync-Token": token}
+    )
     assert wrong_method.json()["error"]["code"] == "request.method"
 
 
@@ -116,5 +124,5 @@ def test_an_app_built_to_describe_itself_has_no_engine() -> None:
         return Body(count=1)
 
     app.include_router(router, prefix=PREFIX)
-    got = TestClient(app).get(f"{PREFIX}/needs-engine")
+    got = TestClient(app, base_url=BASE).get(f"{PREFIX}/needs-engine")
     assert got.json()["error"]["code"] == "request.no_engine"
