@@ -164,6 +164,24 @@ class MetadataThrottled(RomSyncError):
     code = "metadata.throttled"
 
 
+class MetadataUnreachable(RomSyncError):
+    """The metadata service could not be reached."""
+
+    code = "metadata.unreachable"
+
+
+class MetadataFailed(RomSyncError):
+    """The metadata service refused a query for a reason other than credentials."""
+
+    code = "metadata.failed"
+
+
+class MetadataNotFound(RomSyncError):
+    """The metadata service has no game by that reference."""
+
+    code = "metadata.not_found"
+
+
 # --- persistence -------------------------------------------------------------
 
 
