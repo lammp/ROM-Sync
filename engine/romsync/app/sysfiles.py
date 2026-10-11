@@ -225,6 +225,10 @@ class SystemFiles:
         self.hash_limit = hash_limit
         self.systems = tuple(systems) if systems is not None else load()
 
+    @property
+    def store(self) -> SysfileStore:
+        return self._store
+
     def _system(self, key: str) -> SystemEntry:
         for s in self.systems:
             if s.key == key:

@@ -349,3 +349,71 @@ class TagDecision(Model):
     tag: str
     kind: str
     accept: bool
+
+
+class SysStoreCopy(Model):
+    present: bool
+    staged_name: str
+    size: int | None
+    verified: bool | None
+
+
+class SysRequirement(Model):
+    name: str
+    required: bool
+    group: str | None
+    note: str
+    install_label: str
+    installed_at: str
+    staged: str
+    installed: str
+    store: SysStoreCopy
+
+
+class SysSystem(Model):
+    key: str
+    emulator: str
+    package: str | None
+    emulator_seen: bool | None
+    readiness: str
+    staging: str
+    staging_folder: str
+    note: str
+    requirements: list[SysRequirement]
+    missing: list[str]
+    staged_any: bool
+
+
+class SysOther(Model):
+    path: str
+    name: str
+    kind: str
+    size: int | None
+
+
+class SysReport(Model):
+    surveyed_at: str | None
+    apps: dict[str, str]
+    systems: list[SysSystem]
+    others: list[SysOther]
+
+
+class SysStoreItem(Model):
+    system: str
+    emulator: str
+    name: str
+    required: bool
+    present: bool
+    size: int | None
+    verified: bool | None
+    note: str
+
+
+class SysStore(Model):
+    items: list[SysStoreItem]
+
+
+class RemoveOther(Model):
+    #: The folder, relative to the device's storage, under the staging root.
+    path: str
+    name: str

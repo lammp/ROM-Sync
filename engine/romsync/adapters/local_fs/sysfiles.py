@@ -44,6 +44,8 @@ class FsSysfileStore:
 
     def locate(self, kind: str, name: str) -> Located | None:
         if kind == "bios":
+            if not self.store.base:
+                return None  # no store chosen: nothing is read from the working folder
             return self._located(self.store, Path("bios", name))
         if kind == "firmware" and self.firmware is not None:
             for folder, files in self._walk():

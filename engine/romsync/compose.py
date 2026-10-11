@@ -24,6 +24,7 @@ from romsync.adapters.db_sqlite.migrations import migrate
 from romsync.adapters.db_sqlite.repos import repos
 from romsync.adapters.local_fs.data_folder import FsDataFolder
 from romsync.adapters.local_fs.runs import FsRunFolders
+from romsync.adapters.local_fs.sysfiles import FsSysfileStore
 from romsync.adapters.metadata_igdb.client import (
     Credentials,
     IgdbClient,
@@ -45,9 +46,10 @@ from romsync.app.selection import Selections
 from romsync.app.settings import Settings
 from romsync.app.shell import Shell
 from romsync.app.sync import Sync
+from romsync.app.sysfiles import SystemFiles
 from romsync.app.tags import Tagging
 from romsync.config.registry import REGISTRY, Registry
-from romsync.domain.paths import StoreRoot
+from romsync.domain.paths import LocalRoot, StoreRoot
 from romsync.jobs.registry import Context, JobRecord, Jobs, Runner, Work, threaded
 from romsync.jobs.sync_job import Syncs
 from romsync.ports.clock import ClockPort, IdPort
@@ -80,6 +82,8 @@ class Engine:
     shell: Shell
     passes: Passes
     tags: Tagging
+    #: System files as configured at the moment of asking.
+    sysfiles: Callable[[], SystemFiles]
     data: Path
 
 
@@ -161,6 +165,19 @@ def build(
         root = str(settings.value("store.root") or "")
         return FsStore(Path(root)) if root else None
 
+    def system_files() -> SystemFiles:
+        firmware = str(settings.value("firmware.folder") or "")
+        limit = settings.value("sysfiles.hash_limit")
+        assert isinstance(limit, int)
+        return SystemFiles(
+            FsSysfileStore(store_root(), LocalRoot(firmware) if firmware else None),
+            stores.sysfiles,
+            clock,
+            LocalRoot(str(data / "tmp")),
+            str(settings.value("device.staging_template")),
+            limit,
+        )
+
     def roots() -> dict[str, str]:
         return {
             "store": str(settings.value("store.root") or ""),
@@ -190,6 +207,7 @@ def build(
         shell=Shell(shell or WindowsShell(), roots),
         passes=Passes(stores.games, metadata_port, igdb_covers, artwork, settings.value),
         tags=Tagging(stores.games, stores.tags),
+        sysfiles=system_files,
         data=data,
     )
 
