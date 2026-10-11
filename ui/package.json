@@ -17,7 +17,8 @@
     "bundle": "next build && node --experimental-strip-types --disable-warning=ExperimentalWarning scripts/manifest.ts out",
     "test:storybook": "vitest run --project=storybook",
     "test:e2e": "playwright test",
-    "storybook": "storybook dev -p 6006"
+    "storybook": "storybook dev -p 6006",
+    "tokens": "node --experimental-strip-types --disable-warning=ExperimentalWarning scripts/tokens.ts"
   },
   "dependencies": {
     "next": "16.4.0",

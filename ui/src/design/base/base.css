@@ -1,0 +1,24 @@
+/* The document's base, as version 1 had it: the page surface, body text and type, from tokens. */
+html,
+body {
+  height: 100%;
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font:
+    var(--text-body) / 1.4 system-ui,
+    'Segoe UI',
+    sans-serif;
+  overflow: hidden;
+}
+
+html {
+  color-scheme: dark;
+}
+
+button,
+input,
+select {
+  font: inherit;
+  color: inherit;
+}

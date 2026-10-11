@@ -1,5 +1,7 @@
 import type { Metadata } from 'next'
 import type { ReactNode } from 'react'
+import '../design/tokens/tokens.css'
+import '../design/base/base.css'
 
 export const metadata: Metadata = {
   title: 'ROM-Sync',
