@@ -16,6 +16,7 @@ from romsync.domain.errors import (
     BadDeviceRef,
     CapabilityUnsupported,
     MarkerUntrusted,
+    ProfileNotFound,
     UnknownDevice,
 )
 from romsync.domain.models import DeviceKind, Marker, MarkerEntry, Mode, SystemKey
@@ -239,3 +240,81 @@ class IdentityOnly(Declared):
 def test_a_role_not_declared_is_refused_by_name() -> None:
     with pytest.raises(CapabilityUnsupported, match="DestCapacity"):
         require(IdentityOnly(), DestCapacity)  # type: ignore[arg-type]
+
+
+class Sink:
+    def __init__(self) -> None:
+        self.events: list[object] = []
+
+    def emit(self, event: object) -> None:
+        self.events.append(event)
+
+
+def _thor_with_games() -> FakeDest:
+    thor = FakeDest("thor", total=1000)
+    thor._mkdirs((*thor.roms_parts(), "nes"))
+    thor.files[(*thor.roms_parts(), "nes", "Zelda.nes")] = b"x" * 10
+    thor.files[(*thor.roms_parts(), "nes", "Metroid.nes")] = b"x" * 7
+    return thor
+
+
+def test_a_scan_reads_the_games_into_the_inventory_and_writes_nothing(r: Repos) -> None:
+    thor = _thor_with_games()
+    d = devices(Probe(thor), r)
+    (found,) = d.refresh()
+    profile = d.create(found.ref, "Thor", write_marker=False)
+    before = (dict(thor.files), set(thor.dirs), thor.writes)
+    sink = Sink()
+    assert d.scan(found.ref, sink) == 2
+    assert (dict(thor.files), set(thor.dirs), thor.writes) == before
+    assert sorted((i.system, i.name, i.size) for i in r.devices.inventory(profile.id)) == [
+        ("nes", "Metroid.nes", 7),
+        ("nes", "Zelda.nes", 10),
+    ]
+    assert sink.events, "a scan reports its progress"
+    seen = r.devices.get(profile.id)
+    assert seen is not None and seen.capacity == 1000
+
+
+def test_a_scan_forgets_what_has_left_the_device(r: Repos) -> None:
+    thor = _thor_with_games()
+    d = devices(Probe(thor), r)
+    (found,) = d.refresh()
+    profile = d.create(found.ref, "Thor", write_marker=False)
+    d.scan(found.ref, Sink())
+    del thor.files[(*thor.roms_parts(), "nes", "Zelda.nes")]
+    d.scan(found.ref, Sink())
+    assert [i.name for i in r.devices.inventory(profile.id)] == ["Metroid.nes"]
+
+
+def test_scan_and_marker_need_a_profile(r: Repos) -> None:
+    d = devices(Probe(FakeDest("card")), r)
+    (found,) = d.refresh()
+    with pytest.raises(ProfileNotFound):
+        d.scan(found.ref, Sink())
+    with pytest.raises(ProfileNotFound):
+        d.write_marker(found.ref)
+
+
+def test_the_marker_is_written_again_as_the_profile_stands(r: Repos) -> None:
+    thor = FakeDest("thor")
+    d = devices(Probe(thor), r)
+    (found,) = d.refresh()
+    profile = d.create(found.ref, "Thor", write_marker=False)
+    assert thor.read_marker() is None
+    d.rename(profile.id, "AYN Thor")
+    d.write_marker(found.ref)
+    marker = thor.read_marker()
+    assert marker is not None and (marker.device_id, marker.name) == (profile.id, "AYN Thor")
+
+
+def test_a_rename_changes_the_profile_only(r: Repos) -> None:
+    thor = FakeDest("thor")
+    d = devices(Probe(thor), r)
+    (found,) = d.refresh()
+    profile = d.create(found.ref, "Thor")
+    written = dict(thor.files)
+    assert d.rename(profile.id, "AYN Thor").name == "AYN Thor"
+    assert dict(thor.files) == written, "a rename writes nothing to the device"
+    with pytest.raises(ProfileNotFound):
+        d.rename("dev-missing", "x")

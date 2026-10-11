@@ -10,8 +10,9 @@ from fastapi.testclient import TestClient
 from romsync.adapters.dest_fake import FakeDest, Faults
 from romsync.compose import build
 from romsync.domain.models import Marker
+from romsync.jobs.registry import inline
 from romsync_api.app import PREFIX, create_app
-from romsync_api.models import AttachedDevices, CapacityView, Profile, Profiles
+from romsync_api.models import AttachedDevices, CapacityView, JobView, Profile, Profiles
 from romsync_api.security import TOKEN_HEADER
 from tests.helpers.fakes import CountingIds, FrozenClock
 from tests.unit.api.conftest import BASE
@@ -106,3 +107,63 @@ def test_a_device_that_cannot_be_read_is_listed_with_its_reason(tmp_path: Path) 
         ("fake", stuck.describe(), "stuck went away")
     ]
     assert found.unreachable == 1
+
+
+def jobs_client(tmp_path: Path, probe: Probe) -> TestClient:
+    engine = build(
+        tmp_path / "data",
+        clock=FrozenClock(),
+        ids=CountingIds("dev"),
+        probe=probe,
+        runner=inline,
+    )
+    c = TestClient(create_app(engine), base_url=BASE)
+    c.headers.update({"Origin": BASE, TOKEN_HEADER: c.get(f"{PREFIX}/session").json()["token"]})
+    return c
+
+
+def test_scan_rename_and_marker(tmp_path: Path) -> None:
+    thor = FakeDest("thor")
+    thor._mkdirs((*thor.roms_parts(), "nes"))
+    thor.files[(*thor.roms_parts(), "nes", "Zelda.nes")] = b"x" * 10
+    c = jobs_client(tmp_path, Probe(thor))
+    ref = listed(c).devices[0].ref
+    made = c.post(
+        f"{PREFIX}/devices/{ref}/profile", json={"name": "Thor", "write_marker": False}
+    )
+    device_id = made.json()["id"]
+    scanned = JobView.model_validate(c.post(f"{PREFIX}/devices/{ref}/scan").json())
+    assert (scanned.kind, scanned.target, scanned.state) == ("device", ref, "done")
+    assert scanned.result == {"games": 1}
+    items = c.get(f"{PREFIX}/profiles/{device_id}/inventory").json()["items"]
+    assert [(i["system"], i["name"]) for i in items] == [("nes", "Zelda.nes")]
+    renamed = c.post(f"{PREFIX}/profiles/{device_id}/rename", json={"name": "  AYN Thor "})
+    assert renamed.status_code == 200 and renamed.json()["name"] == "AYN Thor"
+    written = JobView.model_validate(c.post(f"{PREFIX}/devices/{ref}/marker").json())
+    assert written.state == "done"
+    marker = thor.read_marker()
+    assert marker is not None and marker.name == "AYN Thor"
+
+
+def test_a_name_must_say_something(tmp_path: Path) -> None:
+    c = jobs_client(tmp_path, Probe(FakeDest("thor")))
+    ref = listed(c).devices[0].ref
+    blank = c.post(f"{PREFIX}/devices/{ref}/profile", json={"name": "   "})
+    assert (blank.status_code, blank.json()["error"]["field"]) == (422, "name")
+    device_id = c.post(f"{PREFIX}/devices/{ref}/profile", json={"name": "Thor"}).json()["id"]
+    assert c.post(f"{PREFIX}/profiles/{device_id}/rename", json={"name": ""}).status_code == 422
+    assert (
+        c.post(f"{PREFIX}/profiles/dev-missing/rename", json={"name": "x"}).status_code == 404
+    )
+
+
+def test_scan_and_marker_refuse_a_device_with_no_profile_before_any_job(tmp_path: Path) -> None:
+    c = jobs_client(tmp_path, Probe(FakeDest("card")))
+    ref = listed(c).devices[0].ref
+    for action in ("scan", "marker"):
+        refused = c.post(f"{PREFIX}/devices/{ref}/{action}")
+        assert (refused.status_code, refused.json()["error"]["code"]) == (
+            404,
+            "profile.not_found",
+        )
+    assert c.get(f"{PREFIX}/jobs").json()["jobs"] == []

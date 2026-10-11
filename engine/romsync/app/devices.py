@@ -26,9 +26,17 @@ from romsync.domain.errors import (
 from romsync.domain.models import DeviceItem, Marker, MarkerEntry, Mode
 from romsync.domain.refs import decode, encode
 from romsync.ports.clock import ClockPort, IdPort
-from romsync.ports.dest import Capacity, Dest, DestCapacity, DestIdentity, Identity
+from romsync.ports.dest import (
+    Capacity,
+    Dest,
+    DestCapacity,
+    DestIdentity,
+    DestInventory,
+    Identity,
+)
 from romsync.ports.repo import DeviceProfile as DeviceProfile
 from romsync.ports.repo import DeviceRepo, SelectionRepo
+from romsync.ports.sink import ProgressSink
 
 Probe = Callable[[], Sequence[Dest]]
 SEP = "\\"
@@ -195,6 +203,51 @@ class Devices:
             port.create_root()
             port.write_marker(self._marker_for(profile))
         self._remember(found, profile)
+        return profile
+
+    def _profiled(self, ref: str) -> tuple[Attached, DeviceProfile]:
+        """The attached device and its profile as stored now, not as the last probe saw it."""
+        found = self.find(ref)
+        current = None if found.profile is None else self._devices.get(found.profile.id)
+        if current is None:
+            raise ProfileNotFound("this device has no profile yet", field="device")
+        return found, current
+
+    def rename(self, device_id: str, name: str) -> DeviceProfile:
+        """A profile's new name (F10-S24, added). Nothing is written to the device:
+        its marker keeps the old name until it is written again."""
+        if self._devices.get(device_id) is None:
+            raise ProfileNotFound(f"no device profile {device_id}", field="device_id")
+        self._devices.rename(device_id, name)
+        renamed = self._devices.get(device_id)
+        assert renamed is not None
+        return renamed
+
+    def scan(self, ref: str, sink: ProgressSink) -> int:
+        """Read the device's games into its inventory (F10-S24, added). Reads only:
+        the plan is made against what the device holds, not what was last sent.
+        Returns the number of games found."""
+        found, profile = self._profiled(ref)
+        port: DestInventory = require(found.dest, DestInventory)
+        inventory = port.scan(None, sink)
+        now = self._now()
+        self._devices.put_inventory(profile.id, inventory.items, now)
+        space = None
+        if found.dest.supports(DestCapacity):
+            capacity: DestCapacity = require(found.dest, DestCapacity)
+            space = capacity.capacity()
+        self._devices.seen(
+            profile.id, now, space.total if space else None, space.free if space else None
+        )
+        return len(inventory.items)
+
+    def write_marker(self, ref: str) -> DeviceProfile:
+        """Write the profile's marker to the device again, as it stands now (F10-S24)."""
+        found, profile = self._profiled(ref)
+        port: DestIdentity = require(found.dest, DestIdentity)
+        if not port.root_exists():
+            port.create_root()
+        port.write_marker(self._marker_for(profile))
         return profile
 
     def adopt(self, ref: str) -> DeviceProfile:

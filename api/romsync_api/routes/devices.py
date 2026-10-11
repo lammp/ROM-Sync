@@ -11,8 +11,10 @@ from fastapi import APIRouter, Depends
 
 from romsync.app.devices import Attached, Blocked, DeviceProfile
 from romsync.compose import Engine
+from romsync.domain.errors import ProfileNotFound
 from romsync.domain.models import Mode, Selection, SystemKey
 from romsync.domain.refs import encode
+from romsync.jobs.registry import Context
 from romsync_api.deps import engine
 from romsync_api.models import (
     AttachedDevice,
@@ -23,12 +25,15 @@ from romsync_api.models import (
     GamesChanged,
     Inventory,
     InventoryItem,
+    JobView,
     ModeChange,
     NewProfile,
     Profile,
     Profiles,
+    Rename,
     SelectionView,
 )
+from romsync_api.routes.jobs import job_view
 
 router = APIRouter(tags=["devices"])
 
@@ -92,6 +97,40 @@ def create_profile(ref: str, body: NewProfile, e: Engine = Depends(engine)) -> P
 @router.post("/devices/{ref}/adopt", response_model=Profile)
 def adopt(ref: str, e: Engine = Depends(engine)) -> Profile:  # noqa: B008
     return profile_of(e.devices.adopt(ref))
+
+
+def _profiled(e: Engine, ref: str) -> None:
+    """Refuses at once, before any job, a device that is not attached or has no profile."""
+    if e.devices.find(ref).profile is None:
+        raise ProfileNotFound("this device has no profile yet", field="device")
+
+
+@router.post("/devices/{ref}/scan", response_model=JobView)
+def scan(ref: str, e: Engine = Depends(engine)) -> JobView:  # noqa: B008
+    """Read the device's games into its inventory, read-only, as a job (F10-S24, added)."""
+    _profiled(e, ref)
+
+    def work(ctx: Context) -> dict[str, int]:
+        return {"games": e.devices.scan(ref, ctx)}
+
+    return job_view(e.jobs.submit("device", ref, work))
+
+
+@router.post("/devices/{ref}/marker", response_model=JobView)
+def write_marker(ref: str, e: Engine = Depends(engine)) -> JobView:  # noqa: B008
+    """Write the profile's marker to the device again, as a job on the device (F10-S24)."""
+    _profiled(e, ref)
+
+    def work(ctx: Context) -> dict[str, int]:
+        e.devices.write_marker(ref)
+        return {"written": 1}
+
+    return job_view(e.jobs.submit("device", ref, work))
+
+
+@router.post("/profiles/{device_id}/rename", response_model=Profile)
+def rename(device_id: str, body: Rename, e: Engine = Depends(engine)) -> Profile:  # noqa: B008
+    return profile_of(e.devices.rename(device_id, body.name))
 
 
 @router.get("/profiles", response_model=Profiles)

@@ -323,14 +323,19 @@ function selectionView(w: World, id: string): Answer {
     : error(404, 'profile.not_found', `no device profile ${id}`, 'device_id')
 }
 
-function job(w: World, kind: string, target: string | null): Answer {
+function job(
+  w: World,
+  kind: string,
+  target: string | null,
+  result: Record<string, number> = { done: 1 },
+): Answer {
   const view = {
     id: `job-${w.nextJob++}`,
     kind,
     target,
     state: 'done',
     progress: null,
-    result: { done: 1 },
+    result,
     error_code: null,
     error_message: null,
     started: null,
@@ -419,7 +424,36 @@ const ROUTES: Route[] = [
       unreachable: w.blocked.length,
     },
   })),
-  route('GET', '/api/v1/profiles', (w) => ({ status: 200, body: { profiles: w.profiles } })),
+  // The engine lists profiles by name.
+  route('GET', '/api/v1/profiles', (w) => ({
+    status: 200,
+    body: {
+      profiles: [...w.profiles].sort(
+        (a, b) =>
+          String(a.name).localeCompare(String(b.name)) || String(a.id).localeCompare(String(b.id)),
+      ),
+    },
+  })),
+  route('POST', '/api/v1/profiles/{id}/rename', (w, [id], b) => {
+    const p = w.profiles.find((x) => x.id === id)
+    if (!p) return error(404, 'profile.not_found', `no device profile ${id}`, 'device_id')
+    const name = String(b.name ?? '').trim()
+    if (!name)
+      return error(422, 'request.invalid', 'String should have at least 1 character', 'name')
+    p.name = name
+    return { status: 200, body: p }
+  }),
+  route('POST', '/api/v1/devices/{ref}/scan', (w, [ref]) => {
+    const p = w.profiles.find((x) => x.ref === ref)
+    if (!p) return error(404, 'profile.not_found', 'this device has no profile yet', 'device')
+    const games = (w.inventory[String(p.id)] ?? []).filter((i) => i.system !== 'bios').length
+    return job(w, 'device', String(ref), { games })
+  }),
+  route('POST', '/api/v1/devices/{ref}/marker', (w, [ref]) => {
+    const p = w.profiles.find((x) => x.ref === ref)
+    if (!p) return error(404, 'profile.not_found', 'this device has no profile yet', 'device')
+    return job(w, 'device', String(ref), { written: 1 })
+  }),
   route('GET', '/api/v1/profiles/{id}/selection', (w, [id]) => selectionView(w, String(id))),
   route('GET', '/api/v1/profiles/{id}/inventory', (w, [id]) =>
     w.inventory[String(id)]
@@ -465,7 +499,7 @@ const ROUTES: Route[] = [
   }),
   route('POST', '/api/v1/devices/{ref}/profile', (w, [ref], b) => {
     const found = w.attached.find((a) => a.ref === ref)
-    if (!found) return error(404, 'dest.unknown', 'that device is not attached', 'device')
+    if (!found) return error(404, 'dest.unknown_device', 'that device is not attached', 'device')
     const had = w.profiles.find((p) => p.ref === ref)
     if (had) return { status: 200, body: had }
     return {
@@ -475,17 +509,19 @@ const ROUTES: Route[] = [
   }),
   route('POST', '/api/v1/devices/{ref}/adopt', (w, [ref]) => {
     const found = w.attached.find((a) => a.ref === ref)
-    if (!found) return error(404, 'dest.unknown', 'that device is not attached', 'device')
+    if (!found) return error(404, 'dest.unknown_device', 'that device is not attached', 'device')
     const had = w.profiles.find((p) => p.ref === ref)
     if (had) return { status: 200, body: had }
     if (!found.has_marker)
-      return error(422, 'marker.untrusted', 'the device has no marker to adopt', 'device')
+      return error(400, 'dest.marker_untrusted', 'the device has no marker to adopt', 'device')
     return { status: 200, body: makeProfile(w, found, 'dev-elsewhere', 'Retroid') }
   }),
   route('GET', '/api/v1/devices/{ref}/plan', (w, [ref]) => plan(w, String(ref))),
   route('GET', '/api/v1/devices/{ref}/capacity', (w, [ref]) => {
     const c = w.capacity[String(ref)]
-    return c ? { status: 200, body: c } : error(404, 'dest.unknown', 'that device is not attached')
+    return c
+      ? { status: 200, body: c }
+      : error(404, 'dest.unknown_device', 'that device is not attached')
   }),
   route('GET', '/api/v1/jobs/{id}', (w, [id]) => {
     const j = w.jobs.find((x) => x.id === id)

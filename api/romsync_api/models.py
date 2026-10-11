@@ -6,9 +6,9 @@ model, and `tests/unit/api/test_contracts.py` holds the route table to it.
 
 from __future__ import annotations
 
-from typing import Literal
+from typing import Annotated, Literal
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, StringConstraints
 
 
 class Model(BaseModel):
@@ -195,9 +195,19 @@ class CapacityView(Model):
     free: int
 
 
+#: A profile's name: trimmed, never empty.
+ProfileName = Annotated[
+    str, StringConstraints(strip_whitespace=True, min_length=1, max_length=80)
+]
+
+
 class NewProfile(Model):
-    name: str
+    name: ProfileName
     write_marker: bool = True
+
+
+class Rename(Model):
+    name: ProfileName
 
 
 class SelectionView(Model):

@@ -20,7 +20,7 @@ async function cards() {
 }
 
 describe('DevicesView', () => {
-  it('lists the profiles first, then each device plugged in without one', async () => {
+  it('lists the profiles first, in the engine’s order, then each device plugged in without one', async () => {
     render(<EveryKind />)
     const list = await cards()
     expect(
@@ -28,8 +28,8 @@ describe('DevicesView', () => {
         .getAllByRole('article')
         .map((a) => a.getAttribute('aria-label')),
     ).toEqual([
-      'Thor',
       'Deck card',
+      'Thor',
       'SD card (E:)',
       'Retroid (serial-2)',
       'Android device (serial-3)',

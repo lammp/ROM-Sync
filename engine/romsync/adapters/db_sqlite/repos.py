@@ -338,6 +338,10 @@ class SqliteDevices:
         )
         _commit(self._c)
 
+    def rename(self, device_id: str, name: str) -> None:
+        self._c.execute("UPDATE devices SET name = ? WHERE id = ?", (name, device_id))
+        _commit(self._c)
+
     def inventory(self, device_id: str) -> tuple[DeviceItem, ...]:
         rows = self._c.execute(
             "SELECT rel_path, kind, size, sent_size, sent_mtime FROM device_files "

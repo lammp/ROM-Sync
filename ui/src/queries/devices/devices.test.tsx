@@ -50,7 +50,7 @@ describe('device queries', () => {
       { wrapper },
     )
     await waitFor(() => expect(result.current.inventory.data).toHaveLength(2))
-    expect(result.current.profiles.data?.map((p) => p.name)).toEqual(['Thor', 'Deck card'])
+    expect(result.current.profiles.data?.map((p) => p.name)).toEqual(['Deck card', 'Thor'])
     expect(result.current.selection.data?.modes).toEqual({ snes: 'all', gba: 'none' })
   })
 
@@ -164,7 +164,7 @@ describe('device queries', () => {
     const { wrapper } = harness()
     const { result } = renderHook(() => useAdopt(), { wrapper })
     await expect(result.current.mutateAsync(CARD_REF)).rejects.toMatchObject({
-      code: 'marker.untrusted',
+      code: 'dest.marker_untrusted',
     })
   })
 })
