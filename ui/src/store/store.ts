@@ -104,6 +104,16 @@ function browserStorage(): KeyValue | undefined {
 /** The application's store: the one container. */
 export const appStore: AppStore = createAppStore(browserStorage())
 
+const FIRST = appStore.getState()
+
+/**
+ * Puts the store back as the page found it, leaving storage alone: for tests
+ * and stories, which share one store across many renders.
+ */
+export function resetAppStore(): void {
+  appStore.setState(FIRST, true)
+}
+
 /** Subscribes a component to the part of the state it selects, and nothing more. */
 export function useAppStore<T>(selector: (state: AppState) => T): T {
   return useStore(appStore, selector)

@@ -56,7 +56,7 @@ describe('filters slice', () => {
     f().setQuery('zelda')
     f().toggle('genre', 'RPG')
     f().setFlag('matched', true)
-    f().setOpen('genre', true)
+    f().setUnfolded('genre', true)
     f().clear()
     const { query, chosen, size, year, rating, flags } = f()
     expect({ query, chosen, size, year, rating, flags, sort: f().sort }).toEqual({
@@ -66,13 +66,16 @@ describe('filters slice', () => {
     expect(f().expanded).toEqual(['genre'])
   })
 
-  it('keeps a facet in exactly one of expanded and collapsed', () => {
+  it('keeps the fold and the collapse as two separate choices', () => {
     const store = make()
     const f = () => store.getState().filters
-    f().setOpen('tag', true)
-    f().setOpen('tag', true)
-    expect([f().expanded, f().collapsed]).toEqual([['tag'], []])
-    f().setOpen('tag', false)
+    f().setUnfolded('tag', true)
+    f().setUnfolded('tag', true)
+    f().setCollapsed('tag', true)
+    expect([f().expanded, f().collapsed]).toEqual([['tag'], ['tag']])
+    f().setUnfolded('tag', false)
     expect([f().expanded, f().collapsed]).toEqual([[], ['tag']])
+    f().setCollapsed('tag', false)
+    expect(f().collapsed).toEqual([])
   })
 })

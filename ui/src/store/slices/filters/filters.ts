@@ -1,7 +1,8 @@
 /**
  * What the library is narrowed to: the search, the sort, the chosen facet
  * values, the ranges and the four flags, as version 1's `S.f` held them,
- * plus which facets are expanded or collapsed (`FX`).
+ * plus, as version 1's `FX` kept them, which facets are unfolded past their
+ * fold (expanded) and which sections are collapsed: two separate choices.
  */
 import type { StateCreator } from 'zustand'
 
@@ -44,7 +45,10 @@ export type FiltersSlice = {
     setRating(min: number): void
     setFlag(flag: Flag, on: boolean): void
     clear(): void
-    setOpen(facet: Facet, open: boolean): void
+    /** Shows a facet's values past the fold, or folds them again. */
+    setUnfolded(facet: Facet, unfolded: boolean): void
+    /** Collapses a facet's section to its heading, or opens it. */
+    setCollapsed(facet: Facet, collapsed: boolean): void
   }
 }
 
@@ -72,6 +76,12 @@ export function narrowed(f: FilterValues): boolean {
   )
 }
 
+/** The list with the facet in it or not, as asked. */
+function toggled(list: readonly Facet[], facet: Facet, on: boolean): readonly Facet[] {
+  const without = list.filter((f) => f !== facet)
+  return on ? [...without, facet] : without
+}
+
 export const filtersSlice: StateCreator<FiltersSlice> = (set) => {
   const patch = (p: Partial<FiltersSlice['filters']>) =>
     set((s) => ({ filters: { ...s.filters, ...p } }))
@@ -93,21 +103,14 @@ export const filtersSlice: StateCreator<FiltersSlice> = (set) => {
       setFlag: (flag, on) =>
         set((s) => ({ filters: { ...s.filters, flags: { ...s.filters.flags, [flag]: on } } })),
       clear: () => set((s) => ({ filters: { ...s.filters, ...EMPTY, sort: s.filters.sort } })),
-      setOpen: (facet, open) =>
-        set((s) => {
-          const without = (list: readonly Facet[]) => list.filter((f) => f !== facet)
-          return {
-            filters: {
-              ...s.filters,
-              expanded: open
-                ? [...without(s.filters.expanded), facet]
-                : without(s.filters.expanded),
-              collapsed: open
-                ? without(s.filters.collapsed)
-                : [...without(s.filters.collapsed), facet],
-            },
-          }
-        }),
+      setUnfolded: (facet, unfolded) =>
+        set((s) => ({
+          filters: { ...s.filters, expanded: toggled(s.filters.expanded, facet, unfolded) },
+        })),
+      setCollapsed: (facet, collapsed) =>
+        set((s) => ({
+          filters: { ...s.filters, collapsed: toggled(s.filters.collapsed, facet, collapsed) },
+        })),
     },
   }
 }

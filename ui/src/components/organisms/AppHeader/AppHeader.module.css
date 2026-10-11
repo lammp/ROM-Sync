@@ -1,0 +1,23 @@
+.brand {
+  font-weight: 700;
+}
+
+.nav {
+  display: flex;
+  gap: 4px;
+}
+
+.search {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.device {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+}

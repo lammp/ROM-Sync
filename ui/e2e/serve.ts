@@ -1,9 +1,10 @@
 // Serves the static export by manifest lookup, as the engine does, and answers
-// /api/v1 from the fake engine.
+// /api/v1 from the fake engine's world. `POST /__reset` starts a fresh world,
+// so each spec begins from the same data.
 import { readFileSync } from 'node:fs'
 import { createServer } from 'node:http'
 import { join } from 'node:path'
-import { answer } from './fake-engine.ts'
+import { answer, freshWorld } from './fake/world.ts'
 
 const ROOT = 'out'
 const port = Number(process.argv[2] ?? 4310)
@@ -12,13 +13,21 @@ const manifest = JSON.parse(readFileSync(join(ROOT, 'manifest.json'), 'utf8')) a
   { file: string; type: string }
 >
 
+let world = freshWorld()
+
 createServer((req, res) => {
   const url = new URL(req.url ?? '/', 'http://127.0.0.1')
+  if (req.method === 'POST' && url.pathname === '/__reset') {
+    world = freshWorld()
+    res.writeHead(204)
+    res.end()
+    return
+  }
   if (url.pathname.startsWith('/api/')) {
     let raw = ''
     req.on('data', (chunk: Buffer) => (raw += chunk.toString()))
     req.on('end', () => {
-      const result = answer(req.method ?? 'GET', url.pathname, raw ? JSON.parse(raw) : null)
+      const result = answer(world, req.method ?? 'GET', url.pathname, raw ? JSON.parse(raw) : null)
       res.writeHead(result.status, { 'content-type': 'application/json' })
       res.end(JSON.stringify(result.body))
     })

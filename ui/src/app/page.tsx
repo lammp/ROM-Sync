@@ -1,7 +1,5 @@
+import { LibraryView } from '../features/library/LibraryView/LibraryView'
+
 export default function LibraryPage() {
-  return (
-    <main>
-      <h1>Library</h1>
-    </main>
-  )
+  return <LibraryView />
 }

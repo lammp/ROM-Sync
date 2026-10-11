@@ -278,6 +278,7 @@ component, feature or function they cover.
 | F11-S34 | `/settings` built to `SETTINGS.md`, including the setup section in first-run order | F10-S8 | Per-section save, and an edit survives a job completing | `ui/tests/pages/settings.test.ts::per_section_save`, `::edit_survives_job`, `::setup_steps` |
 | F11-S39 | `/recover`, with a nav entry that appears only when a device holds something the store does not, and copy that states the next sync would remove it | F10-S10 | The nav entry is absent when there is nothing to recover | `ui/tests/pages/recover.test.ts::lists_missing_from_store`, `::nav_hidden_when_empty`, `::states_removal_consequence` |
 | F11-S40 | Pulled-item placement per run, refusing a name the store already holds, rescanning on success | F7-S11 | A colliding name is reported, never replaced | `ui/tests/pages/recover.test.ts::place_refuses_existing_name`, `::rescan_after_place` |
+| F11-S41 (added) | The library page assembled: the header with search and device picker, the library view bound to the store and the engine, toasts in their live region, and one fake engine shared by stories and end-to-end specs | F11-S26 to S30, F10-S22 | Browse, filter, choose a device, change its selection through the engine, open a game; the choice of device survives a reload | `ui/e2e/library/library.spec.ts`, `ui/src/features/library/LibraryView/LibraryView.test.tsx` |
 
 ### Band E, cross-cutting gates
 
@@ -337,6 +338,6 @@ component, feature or function they cover.
 | | |
 |---|---|
 | Features | 16 |
-| Stories | 175 |
+| Stories | 176 |
 | Security requirements from SPEC section 12, each covered by at least one story | 9 |
 | Stories whose acceptance needs a real device or a clean machine, and therefore sit outside the gate | F6-S5, F6-S6, F13-S1, F13-S2, F13-S6; each is marked for manual verification, and [TESTING.md](TESTING.md) section 8 states what the gate does not prove |

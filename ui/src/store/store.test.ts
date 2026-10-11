@@ -1,7 +1,15 @@
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { check, readTree } from '../../structure/layering/layering'
-import { DEVICE_KEY, FACETS_KEY, SLICES, appStore, createAppStore, type KeyValue } from './store'
+import {
+  DEVICE_KEY,
+  FACETS_KEY,
+  SLICES,
+  appStore,
+  createAppStore,
+  resetAppStore,
+  type KeyValue,
+} from './store'
 
 const SRC = join(import.meta.dirname, '..')
 
@@ -45,6 +53,15 @@ describe('store', () => {
     expect(check(readTree(SRC)).filter((v) => v.rule === 'module-state')).toEqual([])
   })
 
+  it('resets to the state the page found, actions included', () => {
+    const first = appStore.getState()
+    appStore.getState().filters.setQuery('quest')
+    appStore.getState().selection.choose('dev-9')
+    resetAppStore()
+    expect(appStore.getState()).toBe(first)
+    expect(appStore.getState().filters.query).toBe('')
+  })
+
   it('is one store whose slices share it', () => {
     const store = createAppStore()
     store.getState().selection.choose('dev')
@@ -72,7 +89,7 @@ describe('store', () => {
     store.getState().filters.setQuery('ignored')
     expect(storage.items.size).toBe(0)
     store.getState().selection.choose('dev')
-    store.getState().filters.setOpen('region', true)
+    store.getState().filters.setUnfolded('region', true)
     expect(storage.getItem(DEVICE_KEY)).toBe('dev')
     expect(JSON.parse(storage.getItem(FACETS_KEY) ?? '')).toEqual({
       expanded: ['region'],
@@ -88,7 +105,7 @@ describe('store', () => {
     for (const storage of [undefined, broken, garbage]) {
       const store = createAppStore(storage)
       store.getState().selection.choose('dev')
-      store.getState().filters.setOpen('mode', false)
+      store.getState().filters.setCollapsed('mode', true)
       expect(store.getState().selection.device).toBe('dev')
       expect(store.getState().filters.collapsed).toEqual(['mode'])
     }

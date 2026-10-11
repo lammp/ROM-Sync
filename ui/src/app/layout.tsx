@@ -2,6 +2,10 @@ import type { Metadata } from 'next'
 import type { ReactNode } from 'react'
 import '../design/tokens/tokens.css'
 import '../design/base/base.css'
+import { AppShell } from '../components/templates/AppShell/AppShell'
+import { HeaderBar } from '../features/shell/HeaderBar/HeaderBar'
+import { Providers } from '../features/shell/Providers/Providers'
+import { Toasts } from '../features/shell/Toasts/Toasts'
 
 export const metadata: Metadata = {
   title: 'ROM-Sync',
@@ -11,7 +15,13 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        <Providers>
+          <AppShell header={<HeaderBar />} toasts={<Toasts />}>
+            {children}
+          </AppShell>
+        </Providers>
+      </body>
     </html>
   )
 }
