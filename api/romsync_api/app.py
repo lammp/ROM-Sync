@@ -9,12 +9,13 @@ given, so a test builds one per case.
 from __future__ import annotations
 
 import secrets
+from pathlib import Path
 
 from fastapi import APIRouter, FastAPI
 
 from romsync import __version__
 from romsync.compose import Engine
-from romsync_api import errors, security
+from romsync_api import errors, security, static
 from romsync_api.binding import Binding, binding_of
 from romsync_api.models import ErrorEnvelope
 from romsync_api.routes import meta, session
@@ -31,7 +32,9 @@ ERROR_RESPONSES: dict[int | str, dict[str, object]] = {
 ROUTERS: tuple[APIRouter, ...] = (meta.router, session.router)
 
 
-def create_app(engine: Engine | None, binding: Binding | None = None) -> FastAPI:
+def create_app(
+    engine: Engine | None, binding: Binding | None = None, bundle: Path | None = None
+) -> FastAPI:
     """The application over `engine`. `None` builds one that can describe itself
     (the OpenAPI document) but answers every engine route with an error."""
     app = FastAPI(
@@ -48,4 +51,7 @@ def create_app(engine: Engine | None, binding: Binding | None = None) -> FastAPI
     security.install(app, app.state.binding, app.state.page_token)
     for router in ROUTERS:
         app.include_router(router, prefix=PREFIX, responses=ERROR_RESPONSES)
+    if bundle is not None:
+        # last, so every API route is matched before the interface's pages
+        static.install(app, bundle)
     return app
