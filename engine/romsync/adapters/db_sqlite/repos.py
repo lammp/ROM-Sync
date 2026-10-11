@@ -22,6 +22,7 @@ from romsync.domain.models import (
     Selection,
     SystemKey,
 )
+from romsync.ports.dest import AdbIdentity, Identity, MtpIdentity, VolumeIdentity
 from romsync.ports.repo import (
     DeviceProfile,
     GameMeta,
@@ -208,7 +209,19 @@ class SqliteDevices:
         self._c = conn
 
     @staticmethod
-    def _profile(r: sqlite3.Row) -> DeviceProfile:
+    def _identity(r: sqlite3.Row) -> Identity | None:
+        """The row's identity, read from its own kind's columns only (F6-S8)."""
+        kind = DeviceKind(r["kind"])
+        if kind is DeviceKind.VOLUME and r["volume_serial"]:
+            return VolumeIdentity(r["volume_serial"])
+        if kind is DeviceKind.ADB and r["adb_serial"]:
+            return AdbIdentity(r["adb_serial"])
+        if kind is DeviceKind.MTP and r["mtp_device_id"] and r["mtp_storage_id"]:
+            return MtpIdentity(r["mtp_device_id"], r["mtp_storage_id"])
+        return None
+
+    @classmethod
+    def _profile(cls, r: sqlite3.Row) -> DeviceProfile:
         return DeviceProfile(
             id=r["id"],
             name=r["name"],
@@ -218,18 +231,33 @@ class SqliteDevices:
             last_seen=r["last_seen"],
             capacity=r["capacity"],
             free=r["free"],
-            volume_serial=r["volume_serial"],
+            identity=cls._identity(r),
         )
+
+    @staticmethod
+    def _columns(
+        identity: Identity | None,
+    ) -> tuple[str | None, str | None, str | None, str | None]:
+        """(volume_serial, adb_serial, mtp_device_id, mtp_storage_id): only the
+        identity's own kind's columns are ever set."""
+        if isinstance(identity, VolumeIdentity):
+            return identity.serial, None, None, None
+        if isinstance(identity, AdbIdentity):
+            return None, identity.serial, None, None
+        if isinstance(identity, MtpIdentity):
+            return None, None, identity.device, identity.storage
+        return None, None, None, None
 
     def add(self, p: DeviceProfile) -> None:
         self._c.execute(
-            "INSERT INTO devices(id, name, kind, volume_serial, roms_root, capacity, free, "
-            "first_seen, last_seen) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            "INSERT INTO devices(id, name, kind, volume_serial, adb_serial, mtp_device_id, "
+            "mtp_storage_id, roms_root, capacity, free, first_seen, last_seen) "
+            "VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             (
                 p.id,
                 p.name,
                 str(p.kind),
-                p.volume_serial,
+                *self._columns(p.identity),
                 p.roms_root,
                 p.capacity,
                 p.free,
@@ -238,6 +266,17 @@ class SqliteDevices:
             ),
         )
         _commit(self._c)
+
+    def by_identity(self, identity: Identity) -> DeviceProfile | None:
+        if identity.kind is DeviceKind.FAKE:
+            return None  # the fake's identity is never stored; its marker finds it
+        volume, adb, device, storage = self._columns(identity)
+        r = self._c.execute(
+            "SELECT * FROM devices WHERE kind = ? AND volume_serial IS ? AND adb_serial IS ? "
+            "AND mtp_device_id IS ? AND mtp_storage_id IS ? ORDER BY first_seen, id LIMIT 1",
+            (str(identity.kind), volume, adb, device, storage),
+        ).fetchone()
+        return None if r is None else self._profile(r)
 
     def get(self, device_id: str) -> DeviceProfile | None:
         r = self._c.execute("SELECT * FROM devices WHERE id = ?", (device_id,)).fetchone()

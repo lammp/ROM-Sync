@@ -35,6 +35,9 @@ def user_version(db: Path) -> int:
         return int(conn.execute("PRAGMA user_version").fetchone()[0])
 
 
+#: Every step a version 1 database still needs.
+AFTER_V1 = tuple(range(2, HEAD + 1))
+
 V1_TABLES = {
     "meta", "systems", "games", "game_files", "devices", "selections",
     "selection_overrides", "device_files", "decisions", "system_files", "sync_runs",
@@ -120,7 +123,7 @@ def test_unversioned_treated_as_v1(tmp_path: Path) -> None:
     _v1_database(db, blob)
     with sqlite3.connect(db) as conn:
         assert version_of(conn) == 1
-    assert migrate(db, FrozenClock()) == (2,)
+    assert migrate(db, FrozenClock()) == AFTER_V1
     with sqlite3.connect(db) as conn:
         assert conn.execute("SELECT name FROM games").fetchall() == [("Mario.sfc",)]
         config = dict(conn.execute("SELECT key, value FROM config").fetchall())
@@ -188,4 +191,34 @@ def test_a_version_1_database_without_config_migrates(tmp_path: Path) -> None:
     db = tmp_path / "romsync.db"
     with sqlite3.connect(db) as conn:
         conn.executescript(schema.V1)
-    assert migrate(db, FrozenClock()) == (2,)
+    assert migrate(db, FrozenClock()) == AFTER_V1
+
+
+def test_version_1_identities_are_uncrossed(tmp_path: Path) -> None:
+    """Version 1 put an ADB serial in the MTP column and the volume column (F6-S8)."""
+    db = tmp_path / "romsync.db"
+    with sqlite3.connect(db) as conn:
+        conn.executescript(schema.V1)
+        rows = [
+            ("a", "adb", "R5CT", "R5CT", None),
+            ("m", "mtp", "1A2B", "Thor", "Internal"),
+            ("v", "volume", "1A2B3C4D", "stray", "stray"),
+        ]
+        for device_id, kind, volume, mtp_device, mtp_storage in rows:
+            conn.execute(
+                "INSERT INTO devices(id, name, kind, volume_serial, mtp_device_id, "
+                "mtp_storage_id, roms_root, first_seen, last_seen) "
+                "VALUES(?, ?, ?, ?, ?, ?, 'ROMs', 'x', 'x')",
+                (device_id, device_id, kind, volume, mtp_device, mtp_storage),
+            )
+    migrate(db, FrozenClock())
+    with sqlite3.connect(db) as conn:
+        found = conn.execute(
+            "SELECT id, volume_serial, adb_serial, mtp_device_id, mtp_storage_id "
+            "FROM devices ORDER BY id"
+        ).fetchall()
+    assert found == [
+        ("a", None, "R5CT", None, None),
+        ("m", None, None, "Thor", "Internal"),
+        ("v", "1A2B3C4D", None, None, None),
+    ]

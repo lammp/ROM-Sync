@@ -13,6 +13,7 @@ from types import MappingProxyType
 from typing import Protocol
 
 from romsync.domain.models import DeviceItem, DeviceKind, GameUnit, Mode, Selection, SystemKey
+from romsync.ports.dest import Identity
 from romsync.ports.sink import ProgressEvent
 
 
@@ -74,12 +75,23 @@ class DeviceProfile:
     last_seen: str
     capacity: int | None = None
     free: int | None = None
-    volume_serial: str | None = None
+    #: How the transport names the device, in the type of its own kind. The
+    #: marker on the device, not this, is the device's identity (F6-S11); this
+    #: finds a profile on a device whose marker has gone.
+    identity: Identity | None = None
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "kind", DeviceKind(self.kind))
+        if self.identity is not None and self.identity.kind != self.kind:
+            raise ValueError(
+                f"a {self.kind} profile cannot hold a {self.identity.kind} identity"
+            )
 
 
 class DeviceRepo(Protocol):
     def add(self, profile: DeviceProfile) -> None: ...
     def get(self, device_id: str) -> DeviceProfile | None: ...
+    def by_identity(self, identity: Identity) -> DeviceProfile | None: ...
     def all(self) -> tuple[DeviceProfile, ...]: ...
     def seen(self, device_id: str, at: str, capacity: int | None, free: int | None) -> None: ...
     def inventory(self, device_id: str) -> tuple[DeviceItem, ...]: ...

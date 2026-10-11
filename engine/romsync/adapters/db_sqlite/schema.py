@@ -192,3 +192,16 @@ CREATE TABLE IF NOT EXISTS jobs (
 );
 CREATE INDEX IF NOT EXISTS idx_jobs_seq ON jobs(seq);
 """
+
+#: Each transport's identity in its own column (F6-S8). Version 1 stored an ADB
+#: serial in `mtp_device_id`, and copied it into `volume_serial` as well; the
+#: step moves it to `adb_serial` and clears every column that is not the kind's.
+V3_DEVICE_IDENTITY = """
+ALTER TABLE devices ADD COLUMN adb_serial TEXT;
+UPDATE devices SET adb_serial = COALESCE(mtp_device_id, volume_serial) WHERE kind = 'adb';
+UPDATE devices SET volume_serial = NULL, mtp_device_id = NULL, mtp_storage_id = NULL
+    WHERE kind = 'adb';
+UPDATE devices SET volume_serial = NULL, adb_serial = NULL WHERE kind = 'mtp';
+UPDATE devices SET mtp_device_id = NULL, mtp_storage_id = NULL, adb_serial = NULL
+    WHERE kind = 'volume';
+"""
