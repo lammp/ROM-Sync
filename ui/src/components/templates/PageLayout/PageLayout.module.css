@@ -1,0 +1,21 @@
+.page {
+  flex: 1;
+  overflow: auto;
+  padding: 18px 26px;
+}
+
+.heading {
+  font-size: var(--text-xl);
+  margin: 0 0 10px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.actions {
+  margin-left: auto;
+  display: inline-flex;
+  gap: 8px;
+  font-size: var(--text-body);
+  font-weight: normal;
+}
