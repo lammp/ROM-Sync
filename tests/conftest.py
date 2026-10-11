@@ -129,7 +129,21 @@ def _no_network(monkeypatch: pytest.MonkeyPatch) -> None:
             "or a recorded response."
         )
 
+    real_socket = socket.socket
+    real_socketpair = socket.socketpair
+
+    def socketpair(*args: Any, **kwargs: Any) -> Any:
+        """An event loop wakes itself through a connected pair that never leaves
+        the process, so an in-process API test needs one. The real socket class
+        is back only for this call."""
+        socket.socket = real_socket  # type: ignore[misc]
+        try:
+            return real_socketpair(*args, **kwargs)
+        finally:
+            socket.socket = refuse  # type: ignore[misc]
+
     monkeypatch.setattr(socket, "socket", refuse)
+    monkeypatch.setattr(socket, "socketpair", socketpair)
     monkeypatch.setattr(socket, "create_connection", refuse)
     monkeypatch.setattr(socket, "getaddrinfo", refuse)
 

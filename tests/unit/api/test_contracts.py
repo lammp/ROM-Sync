@@ -1,0 +1,103 @@
+"""Declared models and one error envelope (F10-S1)."""
+
+from __future__ import annotations
+
+from fastapi import APIRouter, FastAPI
+from fastapi.routing import APIRoute
+from fastapi.testclient import TestClient
+from pydantic import BaseModel
+
+from romsync.compose import build
+from romsync.domain.errors import GuardRefused, UnknownDevice
+from romsync_api.app import PREFIX, ROUTERS, create_app
+from romsync_api.models import Model
+
+
+def api_routes() -> list[APIRoute]:
+    return [r for router in ROUTERS for r in router.routes if isinstance(r, APIRoute)]
+
+
+def test_models_declared(app: FastAPI) -> None:
+    routes = api_routes()
+    assert routes
+    for route in routes:
+        model = route.response_model
+        assert isinstance(model, type) and issubclass(model, Model), (
+            f"{route.path} returns no declared model"
+        )
+    document = app.openapi()
+    assert document["paths"]
+    for path, operations in document["paths"].items():
+        assert path.startswith(PREFIX), path
+        for method, operation in operations.items():
+            for status in ("400", "404", "422"):
+                schema = operation["responses"][status]["content"]["application/json"]["schema"]
+                assert schema == {"$ref": "#/components/schemas/ErrorEnvelope"}, (
+                    f"{method} {path} declares no error shape for {status}"
+                )
+
+
+def test_a_model_refuses_what_it_does_not_declare() -> None:
+    class Probe(Model):
+        a: int
+
+    assert issubclass(Probe, BaseModel)
+    try:
+        Probe(a=1, b=2)  # type: ignore[call-arg]
+    except ValueError:
+        return
+    raise AssertionError("an undeclared field was accepted")
+
+
+class Body(Model):
+    count: int
+
+
+def _with_failures() -> TestClient:
+    app = create_app(build())
+    router = APIRouter()
+
+    @router.get("/boom/guard", response_model=Body)
+    def guard() -> Body:
+        raise GuardRefused("saves are never removed", field="name")
+
+    @router.get("/boom/device", response_model=Body)
+    def device() -> Body:
+        raise UnknownDevice("that device is not attached", field="device")
+
+    @router.post("/boom/body", response_model=Body)
+    def body(payload: Body) -> Body:
+        return payload
+
+    app.include_router(router, prefix=PREFIX)
+    return TestClient(app)
+
+
+def test_error_envelope() -> None:
+    client = _with_failures()
+    refused = client.get(f"{PREFIX}/boom/guard")
+    assert refused.status_code == 409
+    assert refused.json() == {
+        "error": {
+            "code": "guard.refused",
+            "message": "saves are never removed",
+            "field": "name",
+        }
+    }
+    assert client.get(f"{PREFIX}/boom/device").status_code == 404
+    invalid = client.post(f"{PREFIX}/boom/body", json={"count": "many"})
+    assert invalid.status_code == 422
+    assert invalid.json()["error"]["code"] == "request.invalid"
+    assert invalid.json()["error"]["field"] == "count"
+    missing = client.get(f"{PREFIX}/no-such-route")
+    assert missing.status_code == 404
+    assert set(missing.json()) == {"error"}
+    assert missing.json()["error"]["code"] == "request.not_found"
+    wrong_method = client.delete(f"{PREFIX}/version")
+    assert wrong_method.json()["error"]["code"] == "request.method"
+
+
+def test_version(client: TestClient) -> None:
+    got = client.get(f"{PREFIX}/version")
+    assert got.status_code == 200
+    assert got.json() == {"application": "ROM-Sync", "version": "2.0.0.dev0", "api": "v1"}

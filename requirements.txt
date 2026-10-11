@@ -2,8 +2,10 @@
 #   pywebview provides the desktop window over the local server. On Windows it
 #   renders with the Microsoft Edge WebView2 runtime, which must be installed;
 #   it already is on most Windows 11 machines.
-#   Everything else the application uses is in the standard library.
+#   FastAPI and uvicorn serve the engine's HTTP API on loopback.
 pywebview>=5.0
+fastapi>=0.115
+uvicorn>=0.30
 
 # Agent framework (Legal Framework / Common Law) only. The application does not
 # import it. scripts/memory.py parses and writes OKF frontmatter with it, so

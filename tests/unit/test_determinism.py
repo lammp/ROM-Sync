@@ -32,6 +32,15 @@ def test_socket_guard() -> None:
         socket.socket()
 
 
+def test_a_socket_pair_is_allowed_and_the_guard_returns() -> None:
+    """An event loop's self-pipe never leaves the process; nothing else gets through."""
+    a, b = socket.socketpair()
+    a.close()
+    b.close()
+    with pytest.raises(NetworkInTest):
+        socket.socket()
+
+
 def test_socket_guard_covers_resolution() -> None:
     with pytest.raises(NetworkInTest):
         socket.getaddrinfo("example.invalid", 443)

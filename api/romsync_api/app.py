@@ -1,0 +1,43 @@
+"""The application factory (F10-S1).
+
+`create_app` is handed an engine built by the composition root and returns the
+HTTP application: every router under `/api/v1`, every body a declared model,
+every failure one envelope. It holds no state of its own beyond what it is
+given, so a test builds one per case.
+"""
+
+from __future__ import annotations
+
+from fastapi import APIRouter, FastAPI
+
+from romsync import __version__
+from romsync.compose import Engine
+from romsync_api import errors
+from romsync_api.models import ErrorEnvelope
+from romsync_api.routes import meta
+
+PREFIX = "/api/v1"
+
+#: Declared on every route, so the document says what a failure looks like.
+ERROR_RESPONSES: dict[int | str, dict[str, object]] = {
+    status: {"model": ErrorEnvelope} for status in (400, 403, 404, 409, 422, 502, 503)
+}
+
+
+#: Every router, in the order the document lists them.
+ROUTERS: tuple[APIRouter, ...] = (meta.router,)
+
+
+def create_app(engine: Engine) -> FastAPI:
+    app = FastAPI(
+        title="ROM-Sync",
+        version=__version__,
+        openapi_url=f"{PREFIX}/openapi.json",
+        docs_url=None,
+        redoc_url=None,
+    )
+    app.state.engine = engine
+    errors.install(app)
+    for router in ROUTERS:
+        app.include_router(router, prefix=PREFIX, responses=ERROR_RESPONSES)
+    return app
