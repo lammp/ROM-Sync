@@ -316,3 +316,8 @@ class OpenLink(Model):
 
 class ShellDone(Model):
     done: bool
+
+
+class Rematch(Model):
+    #: A metadata id, a slug, or the service's link to the game.
+    ref: str

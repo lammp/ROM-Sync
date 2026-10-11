@@ -17,6 +17,7 @@ from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from pathlib import Path
 
+from romsync.adapters.artwork_libretro.libretro import LibretroArtwork
 from romsync.adapters.db_sqlite.compact import SqliteCompactor
 from romsync.adapters.db_sqlite.connect import connect
 from romsync.adapters.db_sqlite.migrations import migrate
@@ -29,6 +30,7 @@ from romsync.adapters.metadata_igdb.client import (
     Transport,
     UrllibTransport,
 )
+from romsync.adapters.metadata_igdb.covers import IgdbCovers, urllib_get
 from romsync.adapters.metadata_igdb.throttle import Throttle
 from romsync.adapters.shell_win.windows import WindowsShell
 from romsync.adapters.store_fs.scanner import FsStore
@@ -37,6 +39,7 @@ from romsync.app.connection_check import ConnectionCheck
 from romsync.app.devices import Devices, Probe
 from romsync.app.library import Library
 from romsync.app.maintenance import Maintenance
+from romsync.app.passes import Passes
 from romsync.app.plans import Plans
 from romsync.app.selection import Selections
 from romsync.app.settings import Settings
@@ -48,6 +51,7 @@ from romsync.jobs.registry import Context, JobRecord, Jobs, Runner, Work, thread
 from romsync.jobs.sync_job import Syncs
 from romsync.ports.clock import ClockPort, IdPort
 from romsync.ports.dest import Dest
+from romsync.ports.metadata import MetadataPort
 from romsync.ports.shell import ShellPort
 
 DATABASE = "romsync.db"
@@ -73,6 +77,7 @@ class Engine:
     syncs: Syncs
     maintenance: Maintenance
     shell: Shell
+    passes: Passes
     data: Path
 
 
@@ -94,6 +99,8 @@ def build(
     probe: Probe | None = None,
     runner: Runner = threaded,
     shell: ShellPort | None = None,
+    metadata: Callable[[], MetadataPort] | None = None,
+    fetch: Callable[[str], bytes] | None = None,
     metadata_transport: Transport | None = None,
     sleep: Callable[[float], None] = time.sleep,
 ) -> Engine:
@@ -139,6 +146,15 @@ def build(
 
     write_marker = bool(settings.value("device.write_marker_after_sync"))
 
+    covers_folder = data / "covers"
+    get = fetch or urllib_get
+    igdb_covers = IgdbCovers(covers_folder, get)
+    artwork = LibretroArtwork(data / "cache" / "libretro", covers_folder, clock, get)
+
+    def metadata_port() -> MetadataPort:
+        """The metadata service, with the credentials saved at the moment a pass starts."""
+        return metadata() if metadata is not None else metadata_client(*saved_credentials())
+
     def open_store() -> FsStore | None:
         root = str(settings.value("store.root") or "")
         return FsStore(Path(root)) if root else None
@@ -170,6 +186,7 @@ def build(
             FsDataFolder(data), SqliteCompactor(conn, db), stores.games, retention
         ),
         shell=Shell(shell or WindowsShell(), roots),
+        passes=Passes(stores.games, metadata_port, igdb_covers, artwork, settings.value),
         data=data,
     )
 
@@ -195,5 +212,40 @@ def scan_job(library: Library) -> Work:
             "systems": result.systems,
             "unreadable": len(result.unreadable),
         }
+
+    return work
+
+
+def match_job(passes: Passes) -> Work:
+    def work(ctx: Context) -> dict[str, int]:
+        r = passes.match(ctx, ctx.cancel.is_set)
+        return {
+            "games": r.games,
+            "matched": r.matched,
+            "unmatched": r.unmatched,
+            "errors": r.errors,
+        }
+
+    return work
+
+
+def covers_job(passes: Passes) -> Work:
+    def work(ctx: Context) -> dict[str, int]:
+        r = passes.covers(ctx, ctx.cancel.is_set)
+        return {
+            "games": r.games,
+            "filled": r.filled,
+            "not_found": r.not_found,
+            "failed": r.failed,
+            "no_source": r.no_source,
+        }
+
+    return work
+
+
+def rematch_job(passes: Passes, game_id: int, ref: str) -> Work:
+    def work(ctx: Context) -> dict[str, int]:
+        passes.rematch(game_id, ref)
+        return {"game": game_id}
 
     return work
