@@ -89,6 +89,12 @@ class NothingIndexed(RomSyncError):
     code = "store.nothing_indexed"
 
 
+class WouldOverwrite(RomSyncError):
+    """Placing a file in the store would replace one already there."""
+
+    code = "store.would_overwrite"
+
+
 # --- destinations ------------------------------------------------------------
 
 

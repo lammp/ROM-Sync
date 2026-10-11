@@ -40,6 +40,21 @@ def require(dest: Dest, port: type) -> Any:
     return dest
 
 
+def marker_for(
+    profile: DeviceProfile, devices: DeviceRepo, selections: SelectionRepo
+) -> Marker:
+    """The marker a device carries: who it is, what it selects, what it holds."""
+    selection = selections.get(profile.id)
+    systems = tuple(s for s, m in selection.modes.items() if m is Mode.ALL)
+    inventory = tuple(
+        MarkerEntry(f"{i.system}{SEP}{i.name}", i.kind, i.size, None, i.sent_size, i.sent_mtime)
+        for i in devices.inventory(profile.id)
+    )
+    return Marker(
+        profile.id, profile.name, profile.first_seen, tuple(sorted(systems)), inventory
+    )
+
+
 @dataclass(frozen=True, slots=True)
 class Attached:
     """One attached destination as the last probe saw it."""
@@ -115,17 +130,7 @@ class Devices:
     # --- profiles -----------------------------------------------------------------------
 
     def _marker_for(self, profile: DeviceProfile) -> Marker:
-        selection = self._selections.get(profile.id)
-        systems = tuple(s for s, m in selection.modes.items() if m is Mode.ALL)
-        inventory = tuple(
-            MarkerEntry(
-                f"{i.system}{SEP}{i.name}", i.kind, i.size, None, i.sent_size, i.sent_mtime
-            )
-            for i in self._devices.inventory(profile.id)
-        )
-        return Marker(
-            profile.id, profile.name, profile.first_seen, tuple(sorted(systems)), inventory
-        )
+        return marker_for(profile, self._devices, self._selections)
 
     def create(self, ref: str, name: str, write_marker: bool = True) -> DeviceProfile:
         """A new profile for an attached device, and its marker written to it."""

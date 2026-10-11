@@ -308,6 +308,41 @@ class SqliteDevices:
             )
         return tuple(items)
 
+    def record(self, device_id: str, item: DeviceItem, digest: str | None, at: str) -> None:
+        self._c.execute(
+            "INSERT INTO device_files(device_id, rel_path, kind, size, hash, sent_size, "
+            "sent_mtime, last_confirmed, missing_since) VALUES(?, ?, ?, ?, ?, ?, ?, ?, NULL) "
+            "ON CONFLICT(device_id, rel_path) DO UPDATE SET kind = excluded.kind, "
+            "size = excluded.size, hash = excluded.hash, sent_size = excluded.sent_size, "
+            "sent_mtime = excluded.sent_mtime, last_confirmed = excluded.last_confirmed, "
+            "missing_since = NULL",
+            (
+                device_id,
+                f"{item.system}{SEP}{item.name}",
+                item.kind,
+                item.size,
+                digest,
+                item.sent_size,
+                item.sent_mtime,
+                at,
+            ),
+        )
+        _commit(self._c)
+
+    def forget(self, device_id: str, system: str, name: str) -> None:
+        self._c.execute(
+            "DELETE FROM device_files WHERE device_id = ? AND rel_path = ?",
+            (device_id, f"{system}{SEP}{name}"),
+        )
+        _commit(self._c)
+
+    def digest(self, device_id: str, system: str, name: str) -> str | None:
+        r = self._c.execute(
+            "SELECT hash FROM device_files WHERE device_id = ? AND rel_path = ?",
+            (device_id, f"{system}{SEP}{name}"),
+        ).fetchone()
+        return None if r is None else r["hash"]
+
     def put_inventory(self, device_id: str, items: Sequence[DeviceItem], at: str) -> None:
         """Replace what is recorded as on the device, keeping when each item was sent."""
         self._c.execute(
