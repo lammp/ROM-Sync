@@ -13,6 +13,7 @@ from fastapi import APIRouter, FastAPI
 from romsync import __version__
 from romsync.compose import Engine
 from romsync_api import errors
+from romsync_api.binding import Binding, binding_of
 from romsync_api.models import ErrorEnvelope
 from romsync_api.routes import meta
 
@@ -28,7 +29,7 @@ ERROR_RESPONSES: dict[int | str, dict[str, object]] = {
 ROUTERS: tuple[APIRouter, ...] = (meta.router,)
 
 
-def create_app(engine: Engine | None) -> FastAPI:
+def create_app(engine: Engine | None, binding: Binding | None = None) -> FastAPI:
     """The application over `engine`. `None` builds one that can describe itself
     (the OpenAPI document) but answers every engine route with an error."""
     app = FastAPI(
@@ -39,6 +40,7 @@ def create_app(engine: Engine | None) -> FastAPI:
         redoc_url=None,
     )
     app.state.engine = engine
+    app.state.binding = binding or (binding_of(engine) if engine is not None else Binding())
     errors.install(app)
     for router in ROUTERS:
         app.include_router(router, prefix=PREFIX, responses=ERROR_RESPONSES)
