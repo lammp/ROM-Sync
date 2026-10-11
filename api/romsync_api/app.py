@@ -30,6 +30,7 @@ from romsync_api.routes import (
     session,
     shell,
     sync,
+    tags,
 )
 
 PREFIX = "/api/v1"
@@ -53,6 +54,7 @@ ROUTERS: tuple[APIRouter, ...] = (
     shell.router,
     scan.router,
     passes.router,
+    tags.router,
 )
 
 

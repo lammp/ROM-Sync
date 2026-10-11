@@ -321,3 +321,31 @@ class ShellDone(Model):
 class Rematch(Model):
     #: A metadata id, a slug, or the service's link to the game.
     ref: str
+
+
+class TagView(Model):
+    tag: str
+    kind: str
+    state: str
+    source: str | None
+
+
+class TagList(Model):
+    game_id: int
+    tags: list[TagView]
+
+
+class TagAdd(Model):
+    tag: str
+    kind: str = "user"
+
+
+class TagRef(Model):
+    tag: str
+    kind: str
+
+
+class TagDecision(Model):
+    tag: str
+    kind: str
+    accept: bool

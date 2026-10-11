@@ -45,6 +45,7 @@ from romsync.app.selection import Selections
 from romsync.app.settings import Settings
 from romsync.app.shell import Shell
 from romsync.app.sync import Sync
+from romsync.app.tags import Tagging
 from romsync.config.registry import REGISTRY, Registry
 from romsync.domain.paths import StoreRoot
 from romsync.jobs.registry import Context, JobRecord, Jobs, Runner, Work, threaded
@@ -78,6 +79,7 @@ class Engine:
     maintenance: Maintenance
     shell: Shell
     passes: Passes
+    tags: Tagging
     data: Path
 
 
@@ -187,6 +189,7 @@ def build(
         ),
         shell=Shell(shell or WindowsShell(), roots),
         passes=Passes(stores.games, metadata_port, igdb_covers, artwork, settings.value),
+        tags=Tagging(stores.games, stores.tags),
         data=data,
     )
 
@@ -247,5 +250,13 @@ def rematch_job(passes: Passes, game_id: int, ref: str) -> Work:
     def work(ctx: Context) -> dict[str, int]:
         passes.rematch(game_id, ref)
         return {"game": game_id}
+
+    return work
+
+
+def franchise_job(tags: Tagging) -> Work:
+    def work(ctx: Context) -> dict[str, int]:
+        r = tags.propose()
+        return {"proposed": r.proposed, "without_franchise": r.without_franchise}
 
     return work
