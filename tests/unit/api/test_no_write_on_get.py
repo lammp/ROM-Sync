@@ -21,10 +21,11 @@ from romsync_api.app import PREFIX, ROUTERS, create_app
 from romsync_api.deps import engine as engine_of
 from romsync_api.models import Version
 from tests.helpers.fakes import FrozenClock
+from tests.unit.api import seed
 from tests.unit.api.conftest import BASE
 
 #: A value for every path parameter a GET takes.
-SAMPLES: dict[str, str] = {}
+SAMPLES: dict[str, str] = {"game_id": "1"}
 
 
 def snapshot(data: Path) -> tuple[list[str], list[tuple[str, int, int]]]:
@@ -67,6 +68,7 @@ def writes(app: FastAPI, data: Path, routers: tuple[APIRouter, ...]) -> list[str
 def test_no_write_on_get(tmp_path: Path) -> None:
     data = tmp_path / "data"
     app = create_app(build(data, clock=FrozenClock()))
+    seed.library(data)
     assert gets(ROUTERS)
     assert writes(app, data, ROUTERS) == []
 

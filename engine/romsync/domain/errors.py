@@ -83,6 +83,12 @@ class SystemFileUnreadable(RomSyncError):
     code = "store.system_file_unreadable"
 
 
+class GameNotFound(RomSyncError):
+    """No game has that id."""
+
+    code = "game.not_found"
+
+
 class NothingIndexed(RomSyncError):
     """A scan indexed no systems, so a prune would delete everything."""
 

@@ -145,12 +145,21 @@ class SqliteGames:
 
     def meta(self, game_id: int) -> GameMeta | None:
         row = self._c.execute(
-            "SELECT scrape_state, confidence, igdb_id, igdb_name, summary, release_date, "
+            "SELECT id, scrape_state, confidence, igdb_id, igdb_name, summary, release_date, "
             "rating, rating_count, genres, cover_file FROM games WHERE id = ?",
             (game_id,),
         ).fetchone()
-        if row is None:
-            return None
+        return None if row is None else self._meta(row)
+
+    def metas(self) -> Mapping[int, GameMeta]:
+        rows = self._c.execute(
+            "SELECT id, scrape_state, confidence, igdb_id, igdb_name, summary, release_date, "
+            "rating, rating_count, genres, cover_file FROM games"
+        )
+        return {r["id"]: self._meta(r) for r in rows}
+
+    @staticmethod
+    def _meta(row: sqlite3.Row) -> GameMeta:
         genres = _load(row["genres"]) or []
         return GameMeta(
             state=row["scrape_state"],

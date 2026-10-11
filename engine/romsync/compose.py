@@ -20,6 +20,7 @@ from romsync.adapters.db_sqlite.connect import connect
 from romsync.adapters.db_sqlite.migrations import migrate
 from romsync.adapters.db_sqlite.repos import repos
 from romsync.adapters.system.clock import SystemClock
+from romsync.app.library import Library
 from romsync.app.settings import Settings
 from romsync.config.registry import REGISTRY, Registry
 from romsync.ports.clock import ClockPort
@@ -33,6 +34,7 @@ class Engine:
 
     registry: Registry
     settings: Settings
+    library: Library
     data: Path
 
 
@@ -67,4 +69,9 @@ def build(
     conn = connect(db, busy, shared=True)
     stores = repos(conn)
     settings = Settings(REGISTRY, stores.config, clock, checked)
-    return Engine(registry=REGISTRY, settings=settings, data=data)
+    return Engine(
+        registry=REGISTRY,
+        settings=settings,
+        library=Library(stores.games, stores.tags),
+        data=data,
+    )
