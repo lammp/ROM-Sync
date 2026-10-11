@@ -116,6 +116,12 @@ class DestinationRootMissing(RomSyncError):
     code = "dest.root_missing"
 
 
+class ProfileNotFound(RomSyncError):
+    """No device profile has that id."""
+
+    code = "profile.not_found"
+
+
 class BadDeviceRef(RomSyncError):
     """Text that is not the canonical reference of any device."""
 

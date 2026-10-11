@@ -18,7 +18,7 @@ from romsync.compose import Engine
 from romsync_api import errors, security, static
 from romsync_api.binding import Binding, binding_of
 from romsync_api.models import ErrorEnvelope
-from romsync_api.routes import igdb, library, meta, session
+from romsync_api.routes import devices, igdb, library, meta, session
 
 PREFIX = "/api/v1"
 
@@ -29,7 +29,13 @@ ERROR_RESPONSES: dict[int | str, dict[str, object]] = {
 
 
 #: Every router, in the order the document lists them.
-ROUTERS: tuple[APIRouter, ...] = (meta.router, session.router, library.router, igdb.router)
+ROUTERS: tuple[APIRouter, ...] = (
+    meta.router,
+    session.router,
+    library.router,
+    igdb.router,
+    devices.router,
+)
 
 
 def create_app(

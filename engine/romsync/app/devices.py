@@ -26,7 +26,8 @@ from romsync.domain.models import Marker, MarkerEntry, Mode
 from romsync.domain.refs import decode, encode
 from romsync.ports.clock import ClockPort, IdPort
 from romsync.ports.dest import Capacity, Dest, DestCapacity, DestIdentity, Identity
-from romsync.ports.repo import DeviceProfile, DeviceRepo, SelectionRepo
+from romsync.ports.repo import DeviceProfile as DeviceProfile
+from romsync.ports.repo import DeviceRepo, SelectionRepo
 
 Probe = Callable[[], Sequence[Dest]]
 SEP = "\\"
@@ -64,6 +65,7 @@ class Attached:
     identity: Identity
     marker: Marker | None
     profile: DeviceProfile | None
+    description: str = ""
 
 
 class Devices:
@@ -108,10 +110,16 @@ class Devices:
                 unreachable += 1
                 continue
             ref = encode(identity.ref)
-            found[ref] = Attached(ref, dest, identity, marker, self.recognise(marker, identity))
+            found[ref] = Attached(
+                ref, dest, identity, marker, self.recognise(marker, identity), port.describe()
+            )
         self._seen = found
         self.unreachable = unreachable
         return tuple(found[r] for r in sorted(found))
+
+    def profiles(self) -> tuple[DeviceProfile, ...]:
+        """Every device this computer has a profile for, attached or not."""
+        return self._devices.all()
 
     def find(self, ref: str) -> Attached:
         """The attached device a reference names, probing again only if it is not known."""

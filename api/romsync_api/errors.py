@@ -29,6 +29,7 @@ STATUS: Final[Mapping[str, int]] = {
     "job.not_found": 404,
     "run.not_found": 404,
     "game.not_found": 404,
+    "profile.not_found": 404,
     "job.conflict": 409,
     "guard.refused": 409,
     "dest.capability_unsupported": 409,

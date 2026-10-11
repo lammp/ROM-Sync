@@ -6,6 +6,8 @@ model, and `tests/unit/api/test_contracts.py` holds the route table to it.
 
 from __future__ import annotations
 
+from typing import Literal
+
 from pydantic import BaseModel, ConfigDict
 
 
@@ -141,3 +143,68 @@ class CredentialResult(Model):
     ok: bool
     failed_at: str | None
     stages: list[CredentialStage]
+
+
+class Profile(Model):
+    """A device this computer has a profile for, attached or not."""
+
+    id: str
+    name: str
+    kind: str
+    roms_root: str
+    first_seen: str
+    last_seen: str
+    capacity: int | None
+    free: int | None
+    #: The stable reference of the transport it was last seen on, if known.
+    ref: str | None
+
+
+class Profiles(Model):
+    profiles: list[Profile]
+
+
+class AttachedDevice(Model):
+    """One attached destination, named by its stable reference."""
+
+    ref: str
+    kind: str
+    description: str
+    has_marker: bool
+    profile: Profile | None
+
+
+class AttachedDevices(Model):
+    devices: list[AttachedDevice]
+    unreachable: int
+
+
+class CapacityView(Model):
+    total: int
+    free: int
+
+
+class NewProfile(Model):
+    name: str
+    write_marker: bool = True
+
+
+class SelectionView(Model):
+    device_id: str
+    modes: dict[str, str]
+    overrides: dict[str, bool]
+
+
+class ModeChange(Model):
+    system: str
+    mode: Literal["all", "none", "off"]
+
+
+class GamesChange(Model):
+    game_ids: list[int]
+    include: bool
+
+
+class GamesChanged(Model):
+    selection: SelectionView
+    changed: int

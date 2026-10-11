@@ -27,14 +27,22 @@ from romsync.adapters.metadata_igdb.client import (
     UrllibTransport,
 )
 from romsync.adapters.metadata_igdb.throttle import Throttle
-from romsync.adapters.system.clock import SystemClock
+from romsync.adapters.system.clock import RandomIds, SystemClock
 from romsync.app.connection_check import ConnectionCheck
+from romsync.app.devices import Devices, Probe
 from romsync.app.library import Library
+from romsync.app.selection import Selections
 from romsync.app.settings import Settings
 from romsync.config.registry import REGISTRY, Registry
-from romsync.ports.clock import ClockPort
+from romsync.ports.clock import ClockPort, IdPort
+from romsync.ports.dest import Dest
 
 DATABASE = "romsync.db"
+
+
+def no_discovery() -> tuple[Dest, ...]:
+    """No transport can list its devices yet (PENDING ACTION 7): finds nothing."""
+    return ()
 
 
 @dataclass(frozen=True, slots=True)
@@ -45,6 +53,8 @@ class Engine:
     settings: Settings
     library: Library
     connection: ConnectionCheck
+    devices: Devices
+    selections: Selections
     data: Path
 
 
@@ -62,6 +72,8 @@ def build(
     overrides: Mapping[str, object] | None = None,
     *,
     clock: ClockPort | None = None,
+    ids: IdPort | None = None,
+    probe: Probe | None = None,
     metadata_transport: Transport | None = None,
     sleep: Callable[[float], None] = time.sleep,
 ) -> Engine:
@@ -73,6 +85,7 @@ def build(
     """
     checked = REGISTRY.validate_all(dict(overrides or {}))
     clock = clock or SystemClock()
+    ids = ids or RandomIds()
     data.mkdir(parents=True, exist_ok=True)
     db = data / DATABASE
     prepare_database(db, clock)
@@ -99,5 +112,7 @@ def build(
         settings=settings,
         library=Library(stores.games, stores.tags),
         connection=ConnectionCheck(metadata_client, saved_credentials),
+        devices=Devices(probe or no_discovery, stores.devices, stores.selections, clock, ids),
+        selections=Selections(stores.selections, stores.games, stores.devices),
         data=data,
     )
