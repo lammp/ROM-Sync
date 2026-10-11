@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { Button } from '../../../components/atoms/Button/Button'
 import { Muted } from '../../../components/atoms/Muted/Muted'
+import { LoadError } from '../../../components/molecules/LoadError/LoadError'
 import {
   DeviceCard,
   type DeviceCardProps,
@@ -41,7 +42,8 @@ function spaceOf(profile: Profile, live: { total: number; free: number } | undef
 export function DevicesView() {
   const router = useRouter()
   const attached = useAttached()
-  const profiles = useProfiles().data ?? []
+  const profileQuery = useProfiles()
+  const profiles = profileQuery.data ?? []
   const games = useLibrary().data?.games ?? []
   const ids = profiles.map((p) => p.id)
   const selections = useSelections(ids)
@@ -141,9 +143,25 @@ export function DevicesView() {
         </>
       }
     >
+      {profileQuery.isError && (
+        <LoadError
+          what="the device profiles"
+          message={profileQuery.error.message}
+          retrying={profileQuery.isFetching}
+          onRetry={() => void profileQuery.refetch()}
+        />
+      )}
+      {attached.isError && (
+        <LoadError
+          what="what is plugged in"
+          message={attached.error.message}
+          retrying={attached.isFetching}
+          onRetry={() => void attached.refetch()}
+        />
+      )}
       {cards.length === 0 ? (
         <Muted>
-          {attached.isPending
+          {attached.isPending || profileQuery.isPending
             ? 'looking…'
             : 'No profiles, and nothing plugged in that could be a destination.'}
         </Muted>

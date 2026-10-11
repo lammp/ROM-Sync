@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation'
 import { useCallback, useDeferredValue, useMemo, useState } from 'react'
 import { GameRow } from '../../../components/molecules/GameRow/GameRow'
+import { LoadError } from '../../../components/molecules/LoadError/LoadError'
 import { GameTile } from '../../../components/molecules/GameTile/GameTile'
 import { JobLine, type JobState } from '../../../components/molecules/JobLine/JobLine'
 import { CapacityMeter } from '../../../components/molecules/CapacityMeter/CapacityMeter'
@@ -434,11 +435,18 @@ export function LibraryView() {
           layoutKey={`${values.query}|${f.sort}|${shown.length}`}
           label={`Games, ${shown.length.toLocaleString()} shown`}
           empty={
-            library.isPending
-              ? 'Reading the library…'
-              : library.isError
-                ? 'The library could not be read.'
-                : 'Nothing matches these filters.'
+            library.isPending ? (
+              'Reading the library…'
+            ) : library.isError ? (
+              <LoadError
+                what="the library"
+                message={library.error.message}
+                retrying={library.isFetching}
+                onRetry={() => void library.refetch()}
+              />
+            ) : (
+              'Nothing matches these filters.'
+            )
           }
           renderItem={(g) =>
             layout === 'grid' ? (

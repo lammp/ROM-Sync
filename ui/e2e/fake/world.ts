@@ -59,6 +59,8 @@ export type World = {
   >
   /** Maintenance actions run, whose dry runs now find nothing. */
   maintained: string[]
+  /** Reads that fail, by path prefix, as an engine that does not answer would. */
+  failing: string[]
   /** Files in the store's folders the library has not read yet, by system and name. */
   unread: { system: string; name: string; size: number }[]
   nextRun: number
@@ -650,6 +652,7 @@ export function freshWorld(): World {
     syncs: {},
     sysfiles: {},
     maintained: [],
+    failing: [],
     unread: [],
     nextRun: 1,
   }
@@ -1392,6 +1395,8 @@ const ROUTES: Route[] = [
 
 /** The API's answer to one request, changing the world as the engine would. */
 export function answer(w: World, method: string, path: string, body: unknown): Answer {
+  if (method === 'GET' && w.failing.some((p) => path.startsWith(p)))
+    return error(503, 'dest.unavailable', 'The engine did not answer.')
   for (const r of ROUTES) {
     if (r.method !== method) continue
     const m = r.pattern.exec(path)

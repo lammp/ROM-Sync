@@ -7,6 +7,7 @@ import { Button } from '../../../components/atoms/Button/Button'
 import { Muted } from '../../../components/atoms/Muted/Muted'
 import { Pill } from '../../../components/atoms/Pill/Pill'
 import { JobLine, type JobState } from '../../../components/molecules/JobLine/JobLine'
+import { LoadError } from '../../../components/molecules/LoadError/LoadError'
 import { PlanDetailList } from '../../../components/molecules/PlanDetailList/PlanDetailList'
 import { PlanLine } from '../../../components/molecules/PlanLine/PlanLine'
 import { SyncControl, type SyncState } from '../../../components/molecules/SyncControl/SyncControl'
@@ -88,7 +89,8 @@ export function DeviceView({ id }: { id: string }) {
   const inventory = useInventory(id).data
   const runs = useRuns(id).data ?? []
   const plan = usePlan(ref)
-  const sysfiles = useSysReport(ref).data
+  const sysQuery = useSysReport(ref)
+  const sysfiles = sysQuery.data
   const live = useCapacity(ref).data
   const refresh = useRefreshCapacity(ref)
   const setMode = useSetMode(id)
@@ -141,6 +143,17 @@ export function DeviceView({ id }: { id: string }) {
             All devices
           </Button>
         </p>
+      </PageLayout>
+    )
+  if (profiles.isError)
+    return (
+      <PageLayout heading="Device">
+        <LoadError
+          what="the device profiles"
+          message={profiles.error.message}
+          retrying={profiles.isFetching}
+          onRetry={() => void profiles.refetch()}
+        />
       </PageLayout>
     )
   if (!profile) return <Muted>loading…</Muted>
@@ -273,7 +286,12 @@ export function DeviceView({ id }: { id: string }) {
           }
         />
       ) : plan.isError ? (
-        <Pill tone="bad">{plan.error.message}</Pill>
+        <LoadError
+          what="what a sync would do"
+          message={plan.error.message}
+          retrying={plan.isFetching}
+          onRetry={() => void plan.refetch()}
+        />
       ) : (
         <Muted>loading…</Muted>
       )}
@@ -284,17 +302,26 @@ export function DeviceView({ id }: { id: string }) {
           Open System files
         </Button>
       </h2>
-      <SysfilesLine
-        connected={connected}
-        line={
-          sysfiles
-            ? readinessLine(
-                sysfiles.systems,
-                Object.fromEntries(systems.map((x) => [x.key, x.label])),
-              )
-            : null
-        }
-      />
+      {sysQuery.isError ? (
+        <LoadError
+          what="this device's system files"
+          message={sysQuery.error.message}
+          retrying={sysQuery.isFetching}
+          onRetry={() => void sysQuery.refetch()}
+        />
+      ) : (
+        <SysfilesLine
+          connected={connected}
+          line={
+            sysfiles
+              ? readinessLine(
+                  sysfiles.systems,
+                  Object.fromEntries(systems.map((x) => [x.key, x.label])),
+                )
+              : null
+          }
+        />
+      )}
 
       <h2 className={styles.section}>History</h2>
       <RunHistory

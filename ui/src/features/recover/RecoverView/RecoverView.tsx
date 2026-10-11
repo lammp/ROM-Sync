@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Muted } from '../../../components/atoms/Muted/Muted'
 import { JobLine, type JobState } from '../../../components/molecules/JobLine/JobLine'
+import { LoadError } from '../../../components/molecules/LoadError/LoadError'
 import {
   RecoverTable,
   orphanKey,
@@ -133,7 +134,12 @@ export function RecoverView() {
           <section key={d.ref} aria-labelledby={`recover-${i}`}>
             <h2 id={`recover-${i}`}>{name}</h2>
             {list?.isError ? (
-              <Muted>{list.error.message}</Muted>
+              <LoadError
+                what={`what ${name} holds`}
+                message={list.error.message}
+                retrying={list.isFetching}
+                onRetry={() => void list.refetch()}
+              />
             ) : list?.data ? (
               <DeviceRecover
                 name={name}

@@ -5,6 +5,7 @@ import { Button } from '../../../components/atoms/Button/Button'
 import { Muted } from '../../../components/atoms/Muted/Muted'
 import { DataTable } from '../../../components/molecules/DataTable/DataTable'
 import { JobLine, type JobState } from '../../../components/molecules/JobLine/JobLine'
+import { LoadError } from '../../../components/molecules/LoadError/LoadError'
 import { SettingControl } from '../../../components/molecules/SettingControl/SettingControl'
 import { ConfirmDialog } from '../../../components/organisms/ConfirmDialog/ConfirmDialog'
 import {
@@ -329,12 +330,12 @@ export function SettingsView() {
   if (settings.isError)
     return (
       <PageLayout heading="Settings">
-        <p>
-          The settings could not be read: {settings.error.message}{' '}
-          <Button small onClick={() => void settings.refetch()}>
-            Retry
-          </Button>
-        </p>
+        <LoadError
+          what="the settings"
+          message={settings.error.message}
+          retrying={settings.isFetching}
+          onRetry={() => void settings.refetch()}
+        />
       </PageLayout>
     )
   if (!settings.data) return <Muted>loading…</Muted>

@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { Button } from '../../../components/atoms/Button/Button'
 import { Muted } from '../../../components/atoms/Muted/Muted'
 import { JobLine, type JobState } from '../../../components/molecules/JobLine/JobLine'
+import { LoadError } from '../../../components/molecules/LoadError/LoadError'
 import { ConfirmDialog } from '../../../components/organisms/ConfirmDialog/ConfirmDialog'
 import { SysfilesDetail } from '../../../components/organisms/SysfilesDetail/SysfilesDetail'
 import { OTHERS, SysfilesList } from '../../../components/organisms/SysfilesList/SysfilesList'
@@ -120,7 +121,14 @@ export function SystemFilesView() {
             The app checks and places these files; it never generates them.
           </Muted>
         </p>
-        {store.isPending ? (
+        {store.isError ? (
+          <LoadError
+            what="the store's system files"
+            message={store.error.message}
+            retrying={store.isFetching}
+            onRetry={() => void store.refetch()}
+          />
+        ) : store.isPending ? (
           <Muted>checking…</Muted>
         ) : (
           <SysfilesStore
@@ -177,7 +185,12 @@ export function SystemFilesView() {
       {report.isPending ? (
         <Muted>checking…</Muted>
       ) : report.isError ? (
-        <Muted>{report.error.message}</Muted>
+        <LoadError
+          what="this device's system files"
+          message={report.error.message}
+          retrying={report.isFetching}
+          onRetry={() => void report.refetch()}
+        />
       ) : (
         <SplitPane
           listLabel="Systems"
