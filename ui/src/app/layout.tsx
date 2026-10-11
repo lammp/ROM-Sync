@@ -5,6 +5,7 @@ import '../design/base/base.css'
 import { AppShell } from '../components/templates/AppShell/AppShell'
 import { HeaderBar } from '../features/shell/HeaderBar/HeaderBar'
 import { Providers } from '../features/shell/Providers/Providers'
+import { SyncWatcher } from '../features/shell/SyncWatcher/SyncWatcher'
 import { Toasts } from '../features/shell/Toasts/Toasts'
 
 export const metadata: Metadata = {
@@ -17,6 +18,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     <html lang="en">
       <body>
         <Providers>
+          <SyncWatcher />
           <AppShell header={<HeaderBar />} toasts={<Toasts />}>
             {children}
           </AppShell>

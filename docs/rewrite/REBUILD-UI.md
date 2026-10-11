@@ -308,6 +308,9 @@ Parity is the constraint, so every departure is listed here or it is a defect.
 | A click outside a dialog no longer closes it; Escape and the dialog's Cancel do | a pointer-only dismissal has no control of its own, which SPEC section 10 forbids |
 | Text on an active system-file row is full white, not 80 per cent white | at 80 per cent it measures 3.46:1 on `--accent-solid`, below 4.5 |
 | Facet values at zero and systems with no games on the device are muted text, not faded to 35 and 60 per cent | faded, they fell below readable contrast; the count of 0 and "no games" say the same in words |
+| Sync in the library's selection summary opens the device's page, where the plan and the sync dialog are; version 1 opened the dialog over the library | one place starts a sync, with the plan in view; while one runs, the summary shows its progress as version 1's did |
+| A new profile's ROMs folder is shown, not edited | the destination decides its own roots (F10-S23); a typed folder could not be held to them |
+| Each system's selection has a third mode, "left alone" | v2's selection has an unmanaged mode that sync neither sends to nor removes from; version 1 could not return a system to it |
 
 ## 11. Recover is routed in
 

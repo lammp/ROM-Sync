@@ -3,7 +3,7 @@ import type { ReactNode } from 'react'
 import { describe, expect, it } from 'vitest'
 import { fakeFetch, freshWorld } from '../../../e2e/fake/world'
 import { EngineProvider, createEngine } from '../engine/engine'
-import { catalogue, coverUrl, useGame, useLibrary, useRematch } from './library'
+import { catalogue, coverUrl, useGame, useLibrary, useRematch, useSystems } from './library'
 
 function harness() {
   const world = freshWorld()
@@ -51,5 +51,12 @@ describe('library queries', () => {
       job = (await result.current.mutateAsync('igdb:42')).id
     })
     expect(job).toMatch(/^job-/)
+  })
+
+  it('reads the store’s systems with their counts and sizes', async () => {
+    const { wrapper } = harness()
+    const { result } = renderHook(() => useSystems(), { wrapper })
+    await waitFor(() => expect(result.current.data).toHaveLength(4))
+    expect(result.current.data?.[0]).toMatchObject({ key: 'snes', games: 10 })
   })
 })

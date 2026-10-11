@@ -67,6 +67,7 @@ export function LibraryView() {
   const { layout, tile, current } = useAppStore((s) => s.library)
   const twinOpen = useAppStore((s) => s.ui.twin)
   const deviceId = useAppStore((s) => s.selection.device)
+  const running = useAppStore((s) => s.sync.running)
   const profile = (useProfiles().data ?? []).find((p) => p.id === deviceId) ?? null
   const attached =
     (useAttached().data?.devices ?? []).find((d) => d.ref !== null && d.ref === profile?.ref) ??
@@ -403,13 +404,15 @@ export function LibraryView() {
                 sync={
                   <SyncControl
                     state={
-                      ref
-                        ? {
-                            kind: 'idle',
-                            onSync: () =>
-                              router.push(`/devices?id=${encodeURIComponent(profile.id)}`),
-                          }
-                        : { kind: 'disabled', reason: 'Plug the device in to sync' }
+                      running !== null && running.device === profile.id
+                        ? { kind: 'running', reading: running.reading }
+                        : ref
+                          ? {
+                              kind: 'idle',
+                              onSync: () =>
+                                router.push(`/devices?id=${encodeURIComponent(profile.id)}`),
+                            }
+                          : { kind: 'disabled', reason: 'Plug the device in to sync' }
                     }
                   />
                 }

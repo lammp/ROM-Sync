@@ -211,3 +211,53 @@ export function useAdopt() {
     onSuccess: after,
   })
 }
+
+/** A device's sync runs, newest first. */
+export function useRuns(deviceId: string | null) {
+  const { api } = useEngine()
+  return useQuery({
+    queryKey: ['runs', deviceId ?? ''],
+    enabled: deviceId !== null,
+    queryFn: async ({ signal }) =>
+      unwrap(
+        await api.GET('/api/v1/profiles/{device_id}/runs', {
+          params: { path: { device_id: deviceId ?? '' } },
+          signal,
+        }),
+      ).runs,
+  })
+}
+
+/** A profile's new name; the device keeps the old one until its marker is written. */
+export function useRename(deviceId: string) {
+  const { api } = useEngine()
+  const after = useAfterProfile()
+  return useMutation({
+    mutationFn: async (name: string) =>
+      unwrap(
+        await api.POST('/api/v1/profiles/{device_id}/rename', {
+          params: { path: { device_id: deviceId } },
+          body: { name },
+        }),
+      ),
+    onSuccess: after,
+  })
+}
+
+/** Reads the device's games into its inventory, read-only, as a job on the device. */
+export function useScan(ref: string) {
+  const { api } = useEngine()
+  return useMutation({
+    mutationFn: async () =>
+      unwrap(await api.POST('/api/v1/devices/{ref}/scan', { params: { path: { ref } } })),
+  })
+}
+
+/** Writes the profile's marker to the device again, as a job on the device. */
+export function useWriteMarker(ref: string) {
+  const { api } = useEngine()
+  return useMutation({
+    mutationFn: async () =>
+      unwrap(await api.POST('/api/v1/devices/{ref}/marker', { params: { path: { ref } } })),
+  })
+}

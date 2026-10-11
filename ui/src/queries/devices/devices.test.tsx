@@ -6,6 +6,10 @@ import { EngineProvider, createEngine } from '../engine/engine'
 import {
   PROBE_MS,
   useAdopt,
+  useRename,
+  useRuns,
+  useScan,
+  useWriteMarker,
   useCapacities,
   useCreateProfile,
   useInventories,
@@ -165,6 +169,34 @@ describe('device queries', () => {
     const { result } = renderHook(() => useAdopt(), { wrapper })
     await expect(result.current.mutateAsync(CARD_REF)).rejects.toMatchObject({
       code: 'dest.marker_untrusted',
+    })
+  })
+
+  it('reads a device’s runs, renames it, and starts its scan and marker jobs', async () => {
+    const { wrapper, engine, world } = harness()
+    world.runs['dev-1'] = [
+      { id: 3, started: 'x', finished: 'y', state: 'done', counts: {}, bytes_moved: 1 },
+    ]
+    engine.client.setQueryData(['profiles'], [])
+    const { result } = renderHook(
+      () => ({
+        runs: useRuns('dev-1'),
+        none: useRuns(null),
+        rename: useRename('dev-1'),
+        scan: useScan(THOR_REF),
+        marker: useWriteMarker(THOR_REF),
+      }),
+      { wrapper },
+    )
+    await waitFor(() => expect(result.current.runs.data?.map((r) => r.id)).toEqual([3]))
+    expect(result.current.none.fetchStatus).toBe('idle')
+    await act(async () => {
+      expect((await result.current.rename.mutateAsync('AYN Thor')).name).toBe('AYN Thor')
+    })
+    expect(engine.client.getQueryState(['profiles'])?.isInvalidated).toBe(true)
+    await act(async () => {
+      expect((await result.current.scan.mutateAsync()).result).toEqual({ games: 1 })
+      expect((await result.current.marker.mutateAsync()).result).toEqual({ written: 1 })
     })
   })
 })

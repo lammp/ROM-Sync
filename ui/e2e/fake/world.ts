@@ -47,6 +47,9 @@ export type World = {
   capacity: Record<string, { total: number; free: number }>
   jobs: Json[]
   nextJob: number
+  /** A sync per device reference; each status read moves it on one step. */
+  syncs: Record<string, { job: Json; run: Json; step: number; plan: Json; id: string }>
+  nextRun: number
 }
 
 const MB = 1 << 20
@@ -224,6 +227,8 @@ export function freshWorld(): World {
     },
     jobs: [],
     nextJob: 1,
+    syncs: {},
+    nextRun: 1,
   }
 }
 
@@ -242,6 +247,110 @@ function selected(w: World, deviceId: string, g: Game): boolean {
   if (!s) return false
   const o = s.overrides[String(g.id)]
   return o !== undefined ? o : s.modes[g.system] === 'all'
+}
+
+type PlanOp = { system: string; name: string; kind: string; size: number }
+
+/** The engine's threshold for asking a removal count to be confirmed (sync.confirm_remove_threshold). */
+const CONFIRM_REMOVALS = 25
+
+function startSync(w: World, ref: string, confirm: unknown): Answer {
+  const planned = plan(w, ref)
+  if (planned.status !== 200) return planned
+  const body = planned.body as Json & { send: PlanOp[]; remove: PlanOp[]; bytes: Json }
+  const running = w.syncs[ref]
+  if (running && running.job.state === 'running')
+    return error(409, 'job.conflict', 'a sync job is already running on that target', 'kind')
+  if (body.bytes.fits === false)
+    return error(
+      409,
+      'plan.does_not_fit',
+      "the plan's peak use is more than the device's free space",
+    )
+  const removals = body.remove.length
+  if (removals && removals >= CONFIRM_REMOVALS && confirm !== removals)
+    return error(
+      409,
+      'sync.confirm_removals',
+      `this sync removes ${removals} games; confirm that number to start it`,
+      'confirm_removals',
+    )
+  const id = String(body.device_id)
+  const total = body.send.length + body.remove.length
+  const job: Json = {
+    id: `job-${w.nextJob++}`,
+    kind: 'sync',
+    target: ref,
+    state: 'running',
+    progress: {
+      phase: 'send',
+      done: 0,
+      total,
+      current: body.send[0]?.name ?? null,
+      detail: { bytes_done: 0, bytes_removed: 0, sent: 0, removed: 0 },
+    },
+    result: null,
+    error_code: null,
+    error_message: null,
+    started: '2026-10-11T12:00:00',
+    finished: null,
+  }
+  const run: Json = {
+    id: w.nextRun++,
+    started: '2026-10-11T12:00:00',
+    finished: null,
+    state: 'running',
+    counts: null,
+    bytes_moved: null,
+  }
+  w.jobs.push(job)
+  ;(w.runs[id] ??= []).unshift(run)
+  w.syncs[ref] = { job, run, step: 0, plan: body, id }
+  return { status: 200, body: job }
+}
+
+/** One status read: half way on the first, finished on the second, as the engine would report it. */
+function syncStatus(w: World, ref: string): Answer {
+  const s = w.syncs[ref]
+  if (!s) return { status: 200, body: { job: null, run: null } }
+  const { job, run, plan: p, id } = s
+  const send = p.send as PlanOp[]
+  const remove = p.remove as PlanOp[]
+  if (job.state === 'running') {
+    s.step++
+    const sent = s.step === 1 ? Math.floor(send.length / 2) : send.length
+    const bytes = send.slice(0, sent).reduce((a, o) => a + o.size, 0)
+    const removed = s.step === 1 ? 0 : remove.length
+    job.progress = {
+      phase: s.step === 1 ? 'send' : 'remove',
+      done: sent + removed,
+      total: send.length + remove.length,
+      current: send[sent]?.name ?? null,
+      detail: {
+        bytes_done: bytes,
+        bytes_removed: remove.slice(0, removed).reduce((a, o) => a + o.size, 0),
+        sent,
+        removed,
+      },
+    }
+    if (s.step >= 2) {
+      const gone = new Set(remove.map((o) => `${o.system}\\${o.name}`))
+      const held = (w.inventory[id] ?? []).filter((i) => !gone.has(`${i.system}\\${i.name}`))
+      held.push(
+        ...send.map((o) => ({ system: o.system, name: o.name, kind: o.kind, size: o.size })),
+      )
+      w.inventory[id] = held
+      const counts = { done: send.length + remove.length, send: send.length, remove: remove.length }
+      job.state = 'done'
+      job.finished = '2026-10-11T12:01:00'
+      job.result = { run: Number(run.id), ...counts }
+      run.state = 'done'
+      run.finished = '2026-10-11T12:01:00'
+      run.counts = counts
+      run.bytes_moved = bytes
+    }
+  }
+  return { status: 200, body: { job, run } }
 }
 
 function plan(w: World, ref: string): Answer {
@@ -517,6 +626,20 @@ const ROUTES: Route[] = [
     return { status: 200, body: makeProfile(w, found, 'dev-elsewhere', 'Retroid') }
   }),
   route('GET', '/api/v1/devices/{ref}/plan', (w, [ref]) => plan(w, String(ref))),
+  route('POST', '/api/v1/devices/{ref}/sync', (w, [ref], b) =>
+    startSync(w, String(ref), b.confirm_removals),
+  ),
+  route('GET', '/api/v1/devices/{ref}/sync', (w, [ref]) => syncStatus(w, String(ref))),
+  route('POST', '/api/v1/devices/{ref}/sync/cancel', (w, [ref]) => {
+    const s = w.syncs[String(ref)]
+    if (!s) return error(404, 'job.not_found', 'no sync has run on this device', 'device')
+    if (s.job.state === 'running') {
+      s.job.state = 'cancelled'
+      s.run.state = 'cancelled'
+      s.job.result = { run: Number(s.run.id), done: 0, skipped: 1 }
+    }
+    return { status: 200, body: s.job }
+  }),
   route('GET', '/api/v1/devices/{ref}/capacity', (w, [ref]) => {
     const c = w.capacity[String(ref)]
     return c

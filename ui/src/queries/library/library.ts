@@ -46,6 +46,15 @@ export function useLibrary() {
   })
 }
 
+/** The store's systems with their game counts and sizes. */
+export function useSystems() {
+  const { api } = useEngine()
+  return useQuery({
+    queryKey: ['systems'],
+    queryFn: async ({ signal }) => unwrap(await api.GET('/api/v1/systems', { signal })).systems,
+  })
+}
+
 export function useGame(id: number | null) {
   const { api } = useEngine()
   return useQuery({

@@ -1,0 +1,7 @@
+.section {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: var(--text-lg);
+  margin: 22px 0 8px;
+}
