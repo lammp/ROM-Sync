@@ -13,6 +13,7 @@ import { readFixture } from '../../../parity/fixture/fixture.ts'
 import { asListed, syntheticLibrary } from '../../../parity/library/library.ts'
 import { prepare } from '../game/game'
 import { parseQuery } from '../search/search'
+import { sorted } from '../sort/sort'
 import { FACETS, entries, filter, fold, type Chosen, type Facet, type Ranges } from './facets'
 
 type State = {
@@ -30,7 +31,10 @@ type Case = { state: State; shown: number[]; facets: Record<Facet, Row[]> }
 
 const cases = readFixture(join(import.meta.dirname, '__fixtures__/facets.v1.json')).cases as Case[]
 const { systems, games } = syntheticLibrary()
-const library = games.map((g) => prepare(asListed(g), systems))
+const library = sorted(
+  games.map((g) => prepare(asListed(g), systems)),
+  'title',
+)
 const none = { isSelected: () => false, onDevice: () => false }
 
 function rangesOf(r: State['ranges'] = {}): Ranges {
@@ -83,13 +87,8 @@ describe('facets parity', () => {
     expect(cases).toHaveLength(18)
   })
 
-  it('shows the same games in every state', () => {
-    // Order is the sort's (F11-S16); here the set is what the filter decides.
-    for (const c of cases)
-      expect(
-        [...draw(c.state).shown].sort((a, b) => a - b),
-        c.state.name,
-      ).toEqual([...c.shown].sort((a, b) => a - b))
+  it('shows the same games, in the same order, in every state', () => {
+    for (const c of cases) expect(draw(c.state).shown, c.state.name).toEqual(c.shown)
   })
 
   it('draws every facet as version 1 did', () => {

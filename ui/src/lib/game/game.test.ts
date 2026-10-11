@@ -61,4 +61,12 @@ describe('prepare', () => {
       'super metroid | super metroid (japan, usa) (en,ja) | snes | snes',
     )
   })
+  it('carries the sort keys', () => {
+    const g = prepare({ ...base, title: 'The Legend of Zelda 2' }, { snes: 'Super Nintendo' })
+    expect([g.sortTitle, g.sortKey, g.sysKey]).toEqual([
+      'legend of zelda 2',
+      'legend of zelda 00000002',
+      'super nintendo',
+    ])
+  })
 })
