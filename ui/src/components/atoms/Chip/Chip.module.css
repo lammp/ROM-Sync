@@ -3,6 +3,7 @@
   align-items: center;
   gap: 4px;
   background: var(--chip);
+  color: var(--fg);
   border-radius: var(--radius-12);
   padding: 2px 8px;
   font-size: var(--text-base-sm);

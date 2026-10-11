@@ -1,0 +1,52 @@
+.detail {
+  position: relative;
+}
+
+.close {
+  float: right;
+}
+
+.title {
+  margin: 12px 0 4px;
+  font-size: var(--text-2xl);
+}
+
+.meta {
+  color: var(--muted);
+  font-size: var(--text-body-sm);
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.rating {
+  font-weight: 700;
+  color: var(--ok);
+}
+
+.select {
+  margin: 10px 0;
+}
+
+.summary {
+  font-size: var(--text-body-sm);
+  line-height: 1.5;
+  margin: 10px 0;
+  color: var(--fg-soft);
+}
+
+.rematch {
+  display: flex;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.rematch > span {
+  flex: 1;
+}
+
+.rematch input {
+  width: 100%;
+  padding: 4px 8px;
+}
