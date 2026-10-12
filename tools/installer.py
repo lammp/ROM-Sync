@@ -275,8 +275,52 @@ def inno_script(version: str, dist: Path) -> str:
     )
 
 
+#: What the interface's build may hold: web assets and nothing else (F13-S5).
+INTERFACE_TYPES: Final = frozenset(
+    {".html", ".css", ".js", ".json", ".txt", ".svg", ".ico", ".woff", ".woff2", ".map"}
+)
+#: What no artefact may hold, whatever else it carries: keys, firmware, game
+#: images and archives, and a person's database.
+CONTENT: Final = frozenset(
+    {
+        # keys and firmware
+        ".keys", ".nca", ".nso",
+        # game images and their containers
+        ".nsp", ".xci", ".iso", ".cue", ".chd", ".cso", ".rvz", ".wbfs", ".pbp",
+        ".3ds", ".cia", ".nds", ".gba", ".gbc", ".gb", ".sfc", ".smc", ".nes",
+        ".n64", ".z64", ".v64", ".gen", ".sms", ".pce", ".7z", ".rar",
+        # a library's state
+        ".db", ".sqlite", ".sqlite3",
+    }
+)  # fmt: skip
+
+
 class NotBuilt(RuntimeError):
     """The interface has not been built, so there is nothing to freeze with the engine."""
+
+
+class HoldsContent(RuntimeError):
+    """A folder headed for the artefact holds something that must never ship."""
+
+
+def stray(folder: Path, allowed: frozenset[str] | None = None) -> list[Path]:
+    """Files under `folder` that must not ship: content always, and anything
+    outside `allowed` when it is given. Sorted, relative to `folder`."""
+    found = []
+    for path in folder.rglob("*"):
+        suffix = path.suffix.casefold()
+        if path.is_file() and (
+            suffix in CONTENT or (allowed is not None and suffix not in allowed)
+        ):
+            found.append(path.relative_to(folder))
+    return sorted(found)
+
+
+def refuse_content(folder: Path, allowed: frozenset[str] | None = None) -> None:
+    found = stray(folder, allowed)
+    if found:
+        listed = ", ".join(str(p) for p in found[:5])
+        raise HoldsContent(f"{folder} holds {len(found)} file(s) that must not ship: {listed}")
 
 
 def pyinstaller_args(
@@ -286,6 +330,7 @@ def pyinstaller_args(
     interface = root / bundle.data[0][0]
     if not (interface / MANIFEST).is_file():
         raise NotBuilt(f"build the interface first: {interface / MANIFEST} is missing")
+    refuse_content(interface, INTERFACE_TYPES)
     args = [
         str(root / bundle.entry),
         "--name",
@@ -324,6 +369,7 @@ def main(argv: Sequence[str] | None = None) -> int:  # pragma: no cover - runs t
         freeze = importlib.import_module("PyInstaller.__main__").run
         freeze(pyinstaller_args(BUNDLE, ROOT, dist=out / "dist", work=out / "work"))
         return 0
+    refuse_content(out / "dist" / APP)
     script = out / f"{APP}.iss"
     script.parent.mkdir(parents=True, exist_ok=True)
     script.write_text(inno_script(args.version, out / "dist"), encoding="utf-8")

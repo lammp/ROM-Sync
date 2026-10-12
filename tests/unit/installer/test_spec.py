@@ -2,17 +2,21 @@
 desktop shell with the built interface, and nothing a person keeps. What the
 computer must provide, checked before the window opens (F13-S2). The
 installer, which keeps the data apart from the application (F13-S3), and the
-uninstaller, which leaves it (F13-S4)."""
+uninstaller, which leaves it (F13-S4). No content in any of it, and no default
+path to any (F13-S5)."""
 
 from __future__ import annotations
 
+import io
 import re
 import sys
+import tokenize
 from collections.abc import Sequence
 from pathlib import Path, PureWindowsPath
 
 import pytest
 
+from romsync.config.registry import REGISTRY
 from romsync_desktop.__main__ import default_bundle
 from romsync_desktop.checks import (
     MIN_WINDOWS_BUILD,
@@ -31,10 +35,15 @@ from tools.installer import (
     DATA_DIR,
     INSTALL_DIR,
     INTERFACE,
+    INTERFACE_TYPES,
     MANIFEST,
+    ROOT,
+    HoldsContent,
     NotBuilt,
     inno_script,
     pyinstaller_args,
+    refuse_content,
+    stray,
 )
 
 
@@ -253,3 +262,58 @@ def test_uninstall_keeps_data(tmp_path: Path) -> None:
     said = code[code.index("procedure CurUninstallStepChanged") :]
     assert "usPostUninstall" in said and "was kept in ' + Kept" in said
     assert "Kept := Recorded(ExpandConstant('" + DATA_DIR + "'))" in code
+
+
+def test_no_content_bundled(tmp_path: Path) -> None:
+    """The interface is the only non-code file; it may hold web assets only, and no
+    folder that heads for the artefact may hold a key, firmware, a game or a database."""
+    assert BUNDLE.data == (INTERFACE,)
+    root = built(tmp_path / "repo")
+    interface = root / INTERFACE[0]
+    (interface / "_next").mkdir()
+    (interface / "_next" / "app.js").write_text("", encoding="utf-8")
+    assert stray(interface, INTERFACE_TYPES) == []
+    pyinstaller_args(BUNDLE, root, tmp_path / "dist", tmp_path / "work")
+
+    for planted in ("prod.keys", "bios/Firmware.NCA", "Super Game.sfc", "romsync.db"):
+        (interface / planted).parent.mkdir(parents=True, exist_ok=True)
+        (interface / planted).write_text("", encoding="utf-8")
+    (interface / "cover.png").write_text("", encoding="utf-8")
+    with pytest.raises(HoldsContent, match="5 file"):
+        pyinstaller_args(BUNDLE, root, tmp_path / "dist", tmp_path / "work")
+    assert stray(interface) == [
+        Path("Super Game.sfc"),
+        Path("bios/Firmware.NCA"),
+        Path("prod.keys"),
+        Path("romsync.db"),
+    ], "content is refused anywhere, whatever the folder's own rule"
+
+    app = tmp_path / "dist" / "ROM-Sync"
+    (app / "_internal").mkdir(parents=True)
+    (app / "_internal" / "base_library.zip").write_text("", encoding="utf-8")
+    refuse_content(app)
+    (app / "_internal" / "title.keys").write_text("", encoding="utf-8")
+    with pytest.raises(HoldsContent, match=r"title\.keys"):
+        refuse_content(app)
+
+    real = ROOT / INTERFACE[0]
+    if (real / MANIFEST).is_file():  # the interface built in this checkout, when it is
+        assert stray(real, INTERFACE_TYPES) == []
+
+
+def test_no_content_default_paths() -> None:
+    """No setting, installer default or line of source names a place content is kept."""
+    for setting in REGISTRY.settings:
+        if setting.kind == "path":
+            assert setting.default in ("", None), setting.key
+    for constant in (INSTALL_DIR, DATA_DIR):
+        assert constant.startswith("{localappdata}\\"), "the person's own folders only"
+    drive = re.compile(r"(?<![A-Za-z])[A-Za-z]:[\\/]")
+    found = []
+    for tree in ("engine", "api", "desktop", "tools"):
+        for source in sorted((ROOT / tree).rglob("*.py")):
+            text = source.read_text(encoding="utf-8")
+            for token in tokenize.generate_tokens(io.StringIO(text).readline):
+                if token.type == tokenize.STRING and drive.search(token.string):
+                    found.append(f"{source.relative_to(ROOT)}:{token.start[0]}")
+    assert found == [], "a drive path in the source is a default path to someone's files"
