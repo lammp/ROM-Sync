@@ -98,6 +98,10 @@ class Stage:
     steps: tuple[Step, ...]
 
 
+#: Every platform the Python is type-checked for, whatever the host: Windows,
+#: where the application runs and CI gates, and Linux, where it is also developed.
+TYPED_PLATFORMS: tuple[str, ...] = ("win32", "linux")
+
 STAGES: tuple[Stage, ...] = (
     Stage(
         "format",
@@ -129,7 +133,9 @@ STAGES: tuple[Stage, ...] = (
         "types",
         "No type error",
         (
-            Step((_py(), "-m", "mypy")),
+            # once per platform: the gate runs on Windows in CI and anywhere locally,
+            # and a type check that depends on the host lets the two disagree
+            *(Step((_py(), "-m", "mypy", "--platform", p)) for p in TYPED_PLATFORMS),
             Step(
                 ("npx", "--no-install", "tsc", "--noEmit", "-p", "."),
                 needs=("ui/tsconfig.json",),

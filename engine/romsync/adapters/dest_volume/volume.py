@@ -361,7 +361,10 @@ def windows_identity(storage: Path) -> VolumeIdentity:  # pragma: no cover - Win
 
     drive = storage.anchor or str(storage)
     serial = ctypes.c_uint32(0)
-    ok = ctypes.windll.kernel32.GetVolumeInformationW(  # type: ignore[attr-defined]
+    # looked up by name: `windll` exists only on Windows, and the type check must
+    # read the same on every platform the gate runs on
+    kernel32 = getattr(ctypes, "windll").kernel32  # noqa: B009
+    ok = kernel32.GetVolumeInformationW(
         drive, None, 0, ctypes.byref(serial), None, None, None, 0
     )
     if not ok:

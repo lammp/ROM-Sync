@@ -182,3 +182,15 @@ def _stages_with_no_missing_inputs() -> Sequence[Stage]:
         )
         for s in STAGES
     )
+
+
+def test_types_are_checked_for_every_platform_whatever_the_host() -> None:
+    """A Windows-only call type-checks differently on Linux, so a gate that checks
+    only the host's platform passes locally and fails in CI. Both are checked."""
+    types = next(s for s in STAGES if s.name == "types")
+    platforms = [
+        step.argv[step.argv.index("--platform") + 1]
+        for step in types.steps
+        if "mypy" in step.argv
+    ]
+    assert platforms == ["win32", "linux"]
