@@ -88,6 +88,8 @@ class Engine:
     sysfiles: Callable[[], SystemFiles]
     recover: Recover
     data: Path
+    #: Shut down: running jobs asked to stop between items, then the database closed.
+    close: Callable[[], None]
 
 
 def prepare_database(db: Path, clock: ClockPort) -> tuple[int, ...]:
@@ -194,6 +196,19 @@ def build(
         return kept
 
     sync = Sync(stores, FsRunFolders(data), clock, store_root, write_marker)
+
+    def close(wait: float = 10.0, step: float = 0.05) -> None:
+        """Ask every running job to stop between items, give them `wait` seconds to
+        do so, then close the database. A job still running past that is left to
+        startup reconciliation, which records it as interrupted (F9-S4)."""
+        for job in jobs.active():
+            jobs.cancel(job.id)
+        for _ in range(int(wait / step)):
+            if not jobs.active():
+                break
+            sleep(step)
+        conn.close()
+
     return Engine(
         registry=REGISTRY,
         settings=settings,
@@ -215,6 +230,7 @@ def build(
         sysfiles=system_files,
         recover=Recover(stores, sync, FsLocalFiles(), LocalRoot(str(data / "pull"))),
         data=data,
+        close=close,
     )
 
 
