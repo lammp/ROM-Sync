@@ -35,6 +35,7 @@ import {
 } from '../../../queries/devices/devices'
 import { EngineError } from '../../../queries/engine/engine'
 import { TERMINAL, useJob } from '../../../queries/job/job'
+import { useAnnounce } from '../../../queries/meta/meta'
 import { useLibrary, useSystems } from '../../../queries/library/library'
 import { useAfterDeviceJob, useCancelSync, useStartSync } from '../../../queries/sync/sync'
 import { useSysReport } from '../../../queries/sysfiles/sysfiles'
@@ -100,6 +101,7 @@ export function DeviceView({ id }: { id: string }) {
   const start = useStartSync(ref ?? '')
   const cancel = useCancelSync(ref ?? '')
   const afterJob = useAfterDeviceJob(id, ref)
+  const announce = useAnnounce()
   const running = useAppStore((s) => s.sync.running)
   const syncing = running !== null && running.device === id
   const [ask, setAsk] = useState<Ask>(null)
@@ -120,14 +122,15 @@ export function DeviceView({ id }: { id: string }) {
   useEffect(() => {
     if (!job || !TERMINAL.has(job.state) || ended.current === job.id) return
     ended.current = job.id
-    if (job.state === 'failed') toast(job.error_message ?? 'The device job failed', true)
+    if (job.state === 'failed') announce(job, job.error_message ?? 'The device job failed', true)
     else if (job.kind === 'device' && job.result?.games !== undefined)
-      toast(
+      announce(
+        job,
         `Read ${job.result.games.toLocaleString()} game${job.result.games === 1 ? '' : 's'} from the device`,
       )
-    else if (job.result?.written) toast('ROM-Sync.json written')
+    else if (job.result?.written) announce(job, 'ROM-Sync.json written')
     afterJob()
-  }, [job, afterJob])
+  }, [job, afterJob, announce])
 
   const systemOf = useMemo(() => new Map((games ?? []).map((g) => [g.id, g.system])), [games])
   const held = inventory ?? []

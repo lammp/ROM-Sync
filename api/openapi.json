@@ -992,6 +992,43 @@
         "title": "NewProfile",
         "type": "object"
       },
+      "Notified": {
+        "additionalProperties": false,
+        "properties": {
+          "delivered": {
+            "title": "Delivered",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "delivered"
+        ],
+        "title": "Notified",
+        "type": "object"
+      },
+      "Notify": {
+        "additionalProperties": false,
+        "description": "A system notification, for a job that ran long (F12-S5).",
+        "properties": {
+          "body": {
+            "maxLength": 400,
+            "title": "Body",
+            "type": "string"
+          },
+          "title": {
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "title",
+          "body"
+        ],
+        "title": "Notify",
+        "type": "object"
+      },
       "OpenLink": {
         "additionalProperties": false,
         "properties": {
@@ -1669,7 +1706,8 @@
               "enum": [
                 "reveal",
                 "pick_folder",
-                "open_url"
+                "open_url",
+                "notify"
               ],
               "type": "string"
             },
@@ -7320,6 +7358,108 @@
         "summary": "Write Settings",
         "tags": [
           "library"
+        ]
+      }
+    },
+    "/api/v1/shell/notify": {
+      "post": {
+        "description": "Never an error: a notification that cannot be shown is `delivered: false`.",
+        "operationId": "notify_api_v1_shell_notify_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Notify"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Notified"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "502": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Gateway"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "summary": "Notify",
+        "tags": [
+          "shell"
         ]
       }
     },

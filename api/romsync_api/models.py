@@ -34,7 +34,7 @@ class Version(Model):
 #: Who hosts the page: the desktop window, or a browser the person opened.
 ShellKind = Literal["desktop", "browser"]
 #: A shell action the page may offer, each one an endpoint under `/shell`.
-Capability = Literal["reveal", "pick_folder", "open_url"]
+Capability = Literal["reveal", "pick_folder", "open_url", "notify"]
 
 
 class Session(Model):
@@ -362,6 +362,18 @@ class OpenLink(Model):
 
 class ShellDone(Model):
     done: bool
+
+
+class Notify(Model):
+    """A system notification, for a job that ran long (F12-S5)."""
+
+    title: Annotated[str, StringConstraints(min_length=1, max_length=120)]
+    body: Annotated[str, StringConstraints(max_length=400)]
+
+
+class Notified(Model):
+    #: False when the system could not show it; the page's toast says the same either way.
+    delivered: bool
 
 
 class Rematch(Model):

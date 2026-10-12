@@ -35,7 +35,13 @@ import {
   useRunMaintenance,
   type Action,
 } from '../../../queries/maintenance/maintenance'
-import { usePickFolder, useReveal, useShell, useVersion } from '../../../queries/meta/meta'
+import {
+  useAnnounce,
+  usePickFolder,
+  useReveal,
+  useShell,
+  useVersion,
+} from '../../../queries/meta/meta'
 import {
   useSettings,
   useTestCredentials,
@@ -62,13 +68,15 @@ const MAINTENANCE: Readonly<Record<Action, readonly [string, string]>> = {
 function useSectionJob(done: () => void) {
   const [id, setId] = useState<string | null>(null)
   const job = useJob(id).data
+  const announce = useAnnounce()
   const ended = useRef<string | null>(null)
   useEffect(() => {
     if (!job || !TERMINAL.has(job.state) || ended.current === job.id) return
     ended.current = job.id
-    if (job.state === 'failed') toast(job.error_message ?? `${job.kind} failed`, true)
+    if (job.state === 'failed') announce(job, job.error_message ?? `${job.kind} failed`, true)
     else
-      toast(
+      announce(
+        job,
         `${job.kind} ${job.state}${
           job.result
             ? `: ${Object.entries(job.result)
@@ -78,7 +86,7 @@ function useSectionJob(done: () => void) {
         }`,
       )
     done()
-  }, [job, done])
+  }, [job, done, announce])
   const line = job ? (
     <JobLine
       state={job.state as JobState}

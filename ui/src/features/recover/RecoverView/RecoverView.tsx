@@ -12,6 +12,7 @@ import {
 import { PageLayout } from '../../../components/templates/PageLayout/PageLayout'
 import { useAttached, useSelections } from '../../../queries/devices/devices'
 import { TERMINAL, useJob } from '../../../queries/job/job'
+import { useAnnounce } from '../../../queries/meta/meta'
 import { useLibraryJob, useSystems } from '../../../queries/library/library'
 import { useAfterRecover, useRecover, useRecoverLists } from '../../../queries/recover/recover'
 import { appStore, useAppStore } from '../../../store/store'
@@ -46,6 +47,7 @@ function DeviceRecover({
   const recover = useRecover(deviceRef)
   const scan = useLibraryJob('/api/v1/library/scan')
   const after = useAfterRecover()
+  const announce = useAnnounce()
   const syncing = useAppStore((s) => s.sync.running?.device === deviceId)
   const [work, setWork] = useState<Work | null>(null)
   const job = useJob(work?.job ?? null).data
@@ -56,11 +58,11 @@ function DeviceRecover({
     ended.current = job.id
     if (job.state !== 'done') {
       if (job.error_code === 'store.would_overwrite') onClash(work.key)
-      toast(job.error_message ?? `${work.name} was not recovered`, true)
+      announce(job, job.error_message ?? `${work.name} was not recovered`, true)
       return
     }
     if (work.stage === 'recover') {
-      toast(`${work.name} placed in the store; reading the store again`)
+      announce(job, `${work.name} placed in the store; reading the store again`)
       // rescan_after_place: the placed game appears in the library without a manual step
       scan.mutate(undefined, {
         onSuccess: (j) => setWork({ ...work, stage: 'scan', job: j.id }),
@@ -71,9 +73,9 @@ function DeviceRecover({
       })
       return
     }
-    toast(`${work.name} is in the library`)
+    announce(job, `${work.name} is in the library`)
     after()
-  }, [work, job, scan, after, onClash])
+  }, [work, job, scan, after, onClash, announce])
 
   return (
     <>

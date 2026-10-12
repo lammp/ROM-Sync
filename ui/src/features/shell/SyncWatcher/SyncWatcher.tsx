@@ -4,6 +4,7 @@ import { useEffect } from 'react'
 import { formatBytes } from '../../../lib/format/format'
 import { useProfiles } from '../../../queries/devices/devices'
 import { TERMINAL } from '../../../queries/job/job'
+import { useAnnounce } from '../../../queries/meta/meta'
 import {
   sampleOf,
   useAfterDeviceJob,
@@ -44,6 +45,7 @@ export function SyncWatcher() {
   const ref = running ? (profile?.ref ?? null) : null
   const status = useSyncStatus(ref, running !== null)
   const after = useAfterDeviceJob(running?.device ?? '', ref)
+  const announce = useAnnounce()
   const data = status.data
 
   useEffect(() => {
@@ -54,9 +56,9 @@ export function SyncWatcher() {
     if (!TERMINAL.has(data.job.state)) return
     now.sync.finish()
     const said = finishedText(profile?.name ?? 'Device', data)
-    now.ui.toast(said.text, said.bad ? 'bad' : 'info')
+    announce(data.job, said.text, said.bad)
     after()
-  }, [data, profile, after])
+  }, [data, profile, after, announce])
 
   return null
 }

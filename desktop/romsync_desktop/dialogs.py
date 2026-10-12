@@ -2,7 +2,8 @@
 
 Folders are chosen through the window's own native dialog, so the picker
 belongs to the window the person is looking at rather than to a hidden
-second toolkit; revealing a folder and opening a link go to the system shell.
+second toolkit; revealing a folder, opening a link and notifying (F12-S5) go
+to the system shell.
 The API still decides whether any of it answers: only while it listens on
 loopback (F10-S15), so a bind off loopback hides the dialogs whatever asks.
 """
@@ -35,3 +36,6 @@ class DesktopShell:
 
     def open_url(self, url: str) -> None:
         self._system.open_url(url)
+
+    def notify(self, title: str, body: str) -> bool:
+        return self._system.notify(title, body)

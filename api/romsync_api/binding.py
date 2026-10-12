@@ -18,10 +18,15 @@ LOOPBACK: Final = frozenset({"127.0.0.1", "::1", "localhost"})
 LOG = logging.getLogger("romsync.api")
 
 #: The shell actions, in the order a page lists them.
-SHELL_ACTIONS: Final[tuple[Capability, ...]] = ("reveal", "pick_folder", "open_url")
+SHELL_ACTIONS: Final[tuple[Capability, ...]] = (
+    "reveal",
+    "pick_folder",
+    "open_url",
+    "notify",
+)
 
 #: What a bind off loopback disables, named in the warning.
-DISABLED: Final = "the shell endpoints (reveal, pick folder, open external)"
+DISABLED: Final = "the shell endpoints (reveal, pick folder, open external, notify)"
 
 
 @dataclass(frozen=True, slots=True)

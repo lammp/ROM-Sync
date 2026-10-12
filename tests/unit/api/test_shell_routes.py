@@ -20,6 +20,7 @@ class RecordingShell:
         self.revealed: list[Path] = []
         self.opened: list[str] = []
         self.picks: list[Path | None] = [None]
+        self.notified: list[tuple[str, str]] = []
 
     def reveal(self, path: Path) -> None:
         self.revealed.append(path)
@@ -29,6 +30,10 @@ class RecordingShell:
 
     def open_url(self, url: str) -> None:
         self.opened.append(url)
+
+    def notify(self, title: str, body: str) -> bool:
+        self.notified.append((title, body))
+        return True
 
 
 def setup(tmp_path: Path, binding: Binding | None = None) -> tuple[TestClient, RecordingShell]:
@@ -115,11 +120,12 @@ def test_off_loopback_the_shell_is_refused(tmp_path: Path) -> None:
         ("reveal", {"root": "store"}),
         ("open", {"url": "https://www.igdb.com/"}),
         ("pick-folder", {"title": "x"}),
+        ("notify", {"title": "x", "body": "y"}),
     ):
         refused = c.post(f"{PREFIX}/shell/{path}", json=body)
         assert refused.status_code == 403
         assert refused.json()["error"]["code"] == "shell.unavailable"
-    assert shell.revealed == [] and shell.opened == []
+    assert shell.revealed == [] and shell.opened == [] and shell.notified == []
     assert c.get(f"{PREFIX}/session").json()["capabilities"] == []
 
 
@@ -127,4 +133,12 @@ def test_a_browser_on_loopback_is_offered_every_action(tmp_path: Path) -> None:
     c, _ = setup(tmp_path)
     got = c.get(f"{PREFIX}/session").json()
     assert got["kind"] == "browser"
-    assert got["capabilities"] == ["reveal", "pick_folder", "open_url"]
+    assert got["capabilities"] == ["reveal", "pick_folder", "open_url", "notify"]
+
+
+def test_notify(tmp_path: Path) -> None:
+    c, shell = setup(tmp_path)
+    sent = c.post(f"{PREFIX}/shell/notify", json={"title": "ROM-Sync", "body": "Scan done"})
+    assert sent.json() == {"delivered": True}
+    assert shell.notified == [("ROM-Sync", "Scan done")]
+    assert c.post(f"{PREFIX}/shell/notify", json={"title": "", "body": "x"}).status_code == 422

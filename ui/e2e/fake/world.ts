@@ -65,7 +65,12 @@ export type World = {
   unread: { system: string; name: string; size: number }[]
   nextRun: number
   /** Who hosts the page: a browser on loopback, as the e2e suite runs, unless a case says otherwise. */
-  shell: { kind: 'desktop' | 'browser'; capabilities: ('reveal' | 'pick_folder' | 'open_url')[] }
+  shell: {
+    kind: 'desktop' | 'browser'
+    capabilities: ('reveal' | 'pick_folder' | 'open_url' | 'notify')[]
+  }
+  /** System notifications the page asked for, by text. */
+  notified: string[]
 }
 
 const MB = 1 << 20
@@ -657,7 +662,8 @@ export function freshWorld(): World {
     failing: [],
     unread: [],
     nextRun: 1,
-    shell: { kind: 'browser', capabilities: ['reveal', 'pick_folder', 'open_url'] },
+    shell: { kind: 'browser', capabilities: ['reveal', 'pick_folder', 'open_url', 'notify'] },
+    notified: [],
   }
 }
 
@@ -1030,6 +1036,10 @@ const ROUTES: Route[] = [
     status: 200,
     body: { token: 'e2e-token', ...w.shell },
   })),
+  route('POST', '/api/v1/shell/notify', (w, _m, body) => {
+    w.notified.push(String((body as { body?: unknown } | null)?.body ?? ''))
+    return { status: 200, body: { delivered: true } }
+  }),
   route('GET', '/api/v1/library', (w) => ({ status: 200, body: { games: w.games } })),
   route('GET', '/api/v1/systems', (w) => ({
     status: 200,

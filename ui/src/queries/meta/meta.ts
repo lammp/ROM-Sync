@@ -1,6 +1,8 @@
 /** What the engine says about itself: its version, and who hosts the page. */
 import { useMutation, useQuery } from '@tanstack/react-query'
-import { shellOf } from '../../lib/platform/platform'
+import { useCallback } from 'react'
+import { BROWSER, can, ranLong, shellOf } from '../../lib/platform/platform'
+import { appStore } from '../../store/store'
 import { unwrap, useEngine } from '../engine/engine'
 
 export function useVersion() {
@@ -40,4 +42,27 @@ export function useReveal() {
         }),
       ),
   })
+}
+
+type Ended = { readonly started: string | null; readonly finished: string | null }
+
+/**
+ * Says how a job ended (F12-S5). The toast is always shown and is the record
+ * of what happened; a job that ran over thirty seconds is also announced as a
+ * system notification where the shell can show one. A notification that
+ * fails, or is not delivered, changes nothing: the toast is already up.
+ */
+export function useAnnounce() {
+  const { api } = useEngine()
+  const shell = useShell().data ?? BROWSER
+  return useCallback(
+    (job: Ended | undefined, text: string, bad = false) => {
+      appStore.getState().ui.toast(text, bad ? 'bad' : 'info')
+      if (!job || !can(shell, 'notify') || !ranLong(job)) return
+      api
+        .POST('/api/v1/shell/notify', { body: { title: 'ROM-Sync', body: text } })
+        .catch(() => undefined)
+    },
+    [api, shell],
+  )
 }

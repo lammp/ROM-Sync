@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { BROWSER, can, hostOf, shellOf } from './platform'
+import { BROWSER, can, hostOf, ranLong, shellOf } from './platform'
 
 describe('platform', () => {
   it('assumes a browser that can ask nothing until the engine answers', () => {
@@ -18,5 +18,14 @@ describe('platform', () => {
   it('keeps the token out of what it describes', () => {
     const session = { token: 't', kind: 'browser' as const, capabilities: [] }
     expect(shellOf(session)).toEqual({ kind: 'browser', capabilities: [] })
+  })
+
+  it('calls a job long only past thirty seconds, and only when it has both ends', () => {
+    const at = (s: number) => new Date(Date.UTC(2026, 9, 12, 10, 0, s)).toISOString()
+    expect(ranLong({ started: at(0), finished: at(31) })).toBe(true)
+    expect(ranLong({ started: at(0), finished: at(30) })).toBe(false)
+    expect(ranLong({ started: at(0), finished: null })).toBe(false)
+    expect(ranLong({ started: null, finished: at(40) })).toBe(false)
+    expect(ranLong({ started: 'garbled', finished: at(40) })).toBe(false)
   })
 })

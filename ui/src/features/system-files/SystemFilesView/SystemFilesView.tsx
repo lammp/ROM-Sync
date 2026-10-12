@@ -18,6 +18,7 @@ import { PageLayout } from '../../../components/templates/PageLayout/PageLayout'
 import { SplitPane } from '../../../components/templates/SplitPane/SplitPane'
 import { useAttached, useInventory, useProfiles } from '../../../queries/devices/devices'
 import { TERMINAL, useJob } from '../../../queries/job/job'
+import { useAnnounce } from '../../../queries/meta/meta'
 import { useSystems } from '../../../queries/library/library'
 import { useSettings } from '../../../queries/settings/settings'
 import {
@@ -72,6 +73,7 @@ export function SystemFilesView() {
   const unstage = useUnstage(ref ?? '')
   const removeOther = useRemoveOther(ref ?? '')
   const after = useAfterSysfiles(ref)
+  const announce = useAnnounce()
   const syncing = useAppStore((s) => s.sync.running?.device === deviceId && deviceId !== null)
   const [work, setWork] = useState<{ job: string; what: string } | null>(null)
   const [asking, setAsking] = useState<Stray | null>(null)
@@ -88,10 +90,10 @@ export function SystemFilesView() {
   useEffect(() => {
     if (!job || !TERMINAL.has(job.state) || ended.current === job.id) return
     ended.current = job.id
-    if (job.state === 'failed') toast(job.error_message ?? 'The job failed', true)
-    else toast(said(job.kind, job.result))
+    if (job.state === 'failed') announce(job, job.error_message ?? 'The job failed', true)
+    else announce(job, said(job.kind, job.result))
     after()
-  }, [job, after])
+  }, [job, after, announce])
 
   const busy = work !== null && (job === undefined || !TERMINAL.has(job.state))
   const start = (

@@ -784,6 +784,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/shell/notify": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Notify
+         * @description Never an error: a notification that cannot be shown is `delivered: false`.
+         */
+        post: operations["notify_api_v1_shell_notify_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/shell/open": {
         parameters: {
             query?: never;
@@ -1187,6 +1207,21 @@ export interface components {
              */
             write_marker: boolean;
         };
+        /** Notified */
+        Notified: {
+            /** Delivered */
+            delivered: boolean;
+        };
+        /**
+         * Notify
+         * @description A system notification, for a job that ran long (F12-S5).
+         */
+        Notify: {
+            /** Body */
+            body: string;
+            /** Title */
+            title: string;
+        };
         /** OpenLink */
         OpenLink: {
             /** Url */
@@ -1395,7 +1430,7 @@ export interface components {
          */
         Session: {
             /** Capabilities */
-            capabilities: ("reveal" | "pick_folder" | "open_url")[];
+            capabilities: ("reveal" | "pick_folder" | "open_url" | "notify")[];
             /**
              * Kind
              * @enum {string}
@@ -5613,6 +5648,93 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SettingsList"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Bad Gateway */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    notify_api_v1_shell_notify_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Notify"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Notified"];
                 };
             };
             /** @description Bad Request */

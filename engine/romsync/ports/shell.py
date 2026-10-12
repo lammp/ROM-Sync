@@ -1,4 +1,5 @@
-"""The desktop's own actions: show a folder, choose one, open a link (F10-S15)."""
+"""The desktop's own actions: show a folder, choose one, open a link (F10-S15),
+and say something outside the window (F12-S5)."""
 
 from __future__ import annotations
 
@@ -16,3 +17,7 @@ class ShellPort(Protocol):
         ...
 
     def open_url(self, url: str) -> None: ...
+
+    def notify(self, title: str, body: str) -> bool:
+        """Show a system notification; False if it could not be shown."""
+        ...

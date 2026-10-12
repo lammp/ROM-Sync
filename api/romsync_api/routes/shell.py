@@ -1,4 +1,4 @@
-"""Shell endpoints: reveal, pick folder, open external (F10-S15).
+"""Shell endpoints: reveal, pick folder, open external (F10-S15), notify (F12-S5).
 
 They answer only while the server listens on loopback; off loopback every one
 is refused, whatever it is asked.
@@ -11,7 +11,15 @@ from fastapi import APIRouter, Depends, Request
 from romsync.compose import Engine
 from romsync.domain.errors import ShellUnavailable
 from romsync_api.deps import engine
-from romsync_api.models import OpenLink, PickedFolder, PickFolder, Reveal, ShellDone
+from romsync_api.models import (
+    Notified,
+    Notify,
+    OpenLink,
+    PickedFolder,
+    PickFolder,
+    Reveal,
+    ShellDone,
+)
 
 router = APIRouter(prefix="/shell", tags=["shell"])
 
@@ -37,3 +45,9 @@ def pick_folder(body: PickFolder, e: Engine = Depends(engine)) -> PickedFolder: 
 def open_link(body: OpenLink, e: Engine = Depends(engine)) -> ShellDone:  # noqa: B008
     e.shell.open_url(body.url)
     return ShellDone(done=True)
+
+
+@router.post("/notify", response_model=Notified, dependencies=[Depends(loopback_only)])
+def notify(body: Notify, e: Engine = Depends(engine)) -> Notified:  # noqa: B008
+    """Never an error: a notification that cannot be shown is `delivered: false`."""
+    return Notified(delivered=e.shell.notify(body.title, body.body))

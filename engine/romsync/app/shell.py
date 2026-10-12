@@ -57,6 +57,18 @@ class Shell:
     def pick_folder(self, title: str) -> Path | None:
         return self._port.pick_folder(title)
 
+    def notify(self, title: str, body: str) -> bool:
+        """Whether a system notification was shown (F12-S5).
+
+        A notification is a courtesy: the page's toast already says the same
+        thing, so a notification that cannot be shown is reported as not
+        delivered and never raised.
+        """
+        try:
+            return bool(self._port.notify(title, body))
+        except Exception:  # a notification can never fail the request that asked for it
+            return False
+
     def open_url(self, url: str) -> str:
         parts = urlsplit(url)
         if (

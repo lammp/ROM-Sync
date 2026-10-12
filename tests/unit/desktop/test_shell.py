@@ -1,4 +1,4 @@
-"""The desktop shell (F12-S1 to S4): the engine in-process, its API served, a
+"""The desktop shell (F12-S1 to S5): the engine in-process, its API served, a
 window onto it that is told it is the desktop and answers folder requests with
 its own dialog, and a clean shutdown when the window closes."""
 
@@ -93,6 +93,9 @@ class Unused:
 
     def open_url(self, url: str) -> None:
         raise AssertionError("opened a link")
+
+    def notify(self, title: str, body: str) -> bool:
+        raise AssertionError("notified")
 
 
 def engine_at(
@@ -207,7 +210,7 @@ def test_shell_reported(tmp_path: Path) -> None:
     run(tmp_path / "data", window=window, server=server, engine_factory=engine_at())
     assert window.session is not None
     assert window.session["kind"] == "desktop"
-    assert window.session["capabilities"] == ["reveal", "pick_folder", "open_url"]
+    assert window.session["capabilities"] == ["reveal", "pick_folder", "open_url", "notify"]
 
 
 def test_dialogs_gated(tmp_path: Path) -> None:
@@ -222,7 +225,7 @@ def test_dialogs_gated(tmp_path: Path) -> None:
         system=Unused(),
     )
     assert window.session is not None
-    assert window.session["capabilities"] == ["reveal", "pick_folder", "open_url"]
+    assert window.session["capabilities"] == ["reveal", "pick_folder", "open_url", "notify"]
     assert window.picked == {"path": "E:\\ROMs"}
     assert window.asked == ["Choose the store folder"]
 
@@ -254,13 +257,18 @@ def test_the_system_shell_reveals_and_opens_and_the_window_picks(tmp_path: Path)
         def open_url(self, url: str) -> None:
             self.done.append(url)
 
+        def notify(self, title: str, body: str) -> bool:
+            self.done.append(title)
+            return True
+
     system = System()
     window = FakeWindow(FakeServer(), picks=[])
     shell = DesktopShell(window, system)
     shell.reveal(tmp_path)
     shell.open_url("https://www.igdb.com/")
+    assert shell.notify("ROM-Sync", "Scan done") is True
     assert shell.pick_folder("Choose") is None, "a cancelled dialog picks nothing"
-    assert system.done == [tmp_path, "https://www.igdb.com/"]
+    assert system.done == [tmp_path, "https://www.igdb.com/", "ROM-Sync"]
     assert window.asked == ["Choose"]
 
 
@@ -272,3 +280,57 @@ def test_the_desktop_engine_is_handed_the_desktop_shell(tmp_path: Path) -> None:
     finally:
         engine.close()
     assert window.asked == ["Choose"]
+
+
+class Failing:
+    """A system shell whose notifications cannot be shown, one way or another."""
+
+    def __init__(self, how: str) -> None:
+        self.how = how
+        self.tried = 0
+
+    def reveal(self, path: Path) -> None:
+        raise AssertionError("revealed a folder")
+
+    def pick_folder(self, title: str) -> Path | None:
+        raise AssertionError("the system shell was asked for a folder")
+
+    def open_url(self, url: str) -> None:
+        raise AssertionError("opened a link")
+
+    def notify(self, title: str, body: str) -> bool:
+        self.tried += 1
+        if self.how == "raises":
+            raise OSError("no notification service")
+        return False
+
+
+@pytest.mark.parametrize("how", ["raises", "refuses"])
+def test_notify_falls_back(tmp_path: Path, how: str) -> None:
+    """A notification that cannot be shown answers `delivered: false`, never an error,
+    so the page keeps its toast as the record of what happened."""
+    system = Failing(how)
+    answers: list[object] = []
+
+    class Notifying(FakeWindow):
+        def show(self, options: WindowOptions) -> None:
+            super().show(options)
+            assert self.session is not None
+            base = options.url.rstrip("/")
+            sent = TestClient(self.server.app, base_url=base).post(  # type: ignore[arg-type]
+                f"{PREFIX}/shell/notify",
+                json={"title": "ROM-Sync", "body": "Scan done"},
+                headers={"Origin": base, TOKEN_HEADER: str(self.session["token"])},
+            )
+            answers.append((sent.status_code, sent.json()))
+
+    server = FakeServer()
+    run(
+        tmp_path / "data",
+        window=Notifying(server),
+        server=server,
+        engine_factory=engine_at(),
+        system=system,
+    )
+    assert answers == [(200, {"delivered": False})]
+    assert system.tried == 1

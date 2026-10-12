@@ -58,7 +58,7 @@ export const FirstRun: Story = {
 /** In the desktop window (F12-S3): the page says so, and offers Browse and Reveal. */
 export const InTheDesktop: Story = {
   parameters: {
-    shell: { kind: 'desktop', capabilities: ['reveal', 'pick_folder', 'open_url'] },
+    shell: { kind: 'desktop', capabilities: ['reveal', 'pick_folder', 'open_url', 'notify'] },
   },
   play: async ({ canvas }) => {
     const diagnostics = await canvas.findByRole('region', { name: /^Diagnostics/ })
