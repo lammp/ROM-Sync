@@ -8,10 +8,18 @@ from pathlib import Path
 
 import pytest
 
+from romsync.adapters.db_sqlite import schema
 from romsync.adapters.db_sqlite.migrations import HEAD, version_of
 from tests.fixtures import v1_db
 from tests.helpers.fakes import FrozenClock
-from tools.import_v1 import GROUPS, NotVersionOne, carry, read_v1
+from tools.import_v1 import (
+    GROUPS,
+    NotVersionOne,
+    TargetNotEmpty,
+    carry,
+    occupied,
+    read_v1,
+)
 
 
 def fingerprint(folder: Path) -> dict[str, tuple[str, int]]:
@@ -79,3 +87,30 @@ def test_counts_reconcile(tmp_path: Path) -> None:
         )
         for left_behind in ("sync_runs", "config", "secrets"):
             assert conn.execute(f"SELECT COUNT(*) FROM {left_behind}").fetchone() == (0,)
+
+
+def test_refuses_non_empty_target(tmp_path: Path) -> None:
+    """Into a database that already holds a library, nothing is written."""
+    copy = read_v1(
+        v1_db.build(tmp_path / "v1" / "romsync.db"), tmp_path / "work", FrozenClock()
+    )
+    target = tmp_path / "data" / "romsync.db"
+    assert occupied(target) == {}, "no database yet: empty"
+    carry(copy, target, FrozenClock())
+    before = fingerprint(target.parent)
+    with pytest.raises(
+        TargetNotEmpty, match=r"already holds library data \(systems 2, games 3"
+    ):
+        carry(copy, target, FrozenClock())
+    assert fingerprint(target.parent) == before, "a refusal writes nothing"
+
+    settled = tmp_path / "fresh" / "romsync.db"
+    settled.parent.mkdir()
+    with sqlite3.connect(settled) as conn:
+        conn.executescript(schema.V1 + schema.V2_TABLES)
+        conn.execute("PRAGMA user_version = 2")
+        conn.execute(
+            "INSERT INTO config(key, value, updated_at) VALUES('log.level', '\"debug\"', 'x')"
+        )
+    assert occupied(settled) == {}, "settings alone are not a library"
+    assert carry(copy, settled, FrozenClock()).reconciles

@@ -76,6 +76,33 @@ class NotVersionOne(ValueError):
     """The database given is not one version 1 wrote."""
 
 
+class TargetNotEmpty(ValueError):
+    """The version 2 database already holds library data: importing would mix two."""
+
+
+def occupied(target: Path) -> dict[str, int]:
+    """The tables in the version 2 database at `target` that already hold rows.
+
+    A database that does not exist yet, or one the application made at first
+    run and has filled only with settings, holds none. It is read without
+    being written.
+    """
+    if not target.is_file():
+        return {}
+    with closing(sqlite3.connect(f"{target.resolve().as_uri()}?mode=ro", uri=True)) as conn:
+        if version_of(conn) == 0:
+            return {}
+        return {t: n for t, n in _counts(conn).items() if n}
+
+
+def _refuse(full: dict[str, int], target: Path) -> None:
+    if full:
+        held = ", ".join(f"{t} {n}" for t, n in full.items())
+        raise TargetNotEmpty(
+            f"{target} already holds library data ({held}); import into a new data folder"
+        )
+
+
 def read_v1(source: Path, work: Path, clock: ClockPort) -> Path:
     """A copy of the version 1 database at `source`, at version 2's schema, in `work`.
 
@@ -142,7 +169,10 @@ def _counts(conn: sqlite3.Connection) -> dict[str, int]:
 
 def carry(copy: Path, target: Path, clock: ClockPort) -> Report:
     """The four groups from the migrated `copy` into the version 2 database at
-    `target`, in one transaction, with every table's rows counted on both sides."""
+    `target`, in one transaction, with every table's rows counted on both sides.
+    A target that already holds library data is refused before anything is
+    written, and checked again inside the transaction (F14-S3)."""
+    _refuse(occupied(target), target)
     with closing(sqlite3.connect(copy)) as old:
         found = _counts(old)
     target.parent.mkdir(parents=True, exist_ok=True)
@@ -153,6 +183,8 @@ def carry(copy: Path, target: Path, clock: ClockPort) -> Report:
         conn.execute("ATTACH DATABASE ? AS old", (str(copy),))
         conn.execute("BEGIN IMMEDIATE")
         try:
+            # asked again inside the write: nothing may have arrived since it was checked
+            _refuse({t: n for t, n in _counts(conn).items() if n}, target)
             for table in TABLES:
                 conn.execute(CARRY[table])
             conn.execute("COMMIT")
