@@ -7,10 +7,12 @@ path to any (F13-S5)."""
 
 from __future__ import annotations
 
+import hashlib
 import io
 import re
 import sys
 import tokenize
+import zipfile
 from collections.abc import Sequence
 from pathlib import Path, PureWindowsPath
 
@@ -41,8 +43,11 @@ from tools.installer import (
     HoldsContent,
     NotBuilt,
     inno_script,
+    iscc,
+    package,
     pyinstaller_args,
     refuse_content,
+    release_version,
     stray,
 )
 
@@ -317,3 +322,49 @@ def test_no_content_default_paths() -> None:
                 if token.type == tokenize.STRING and drive.search(token.string):
                     found.append(f"{source.relative_to(ROOT)}:{token.start[0]}")
     assert found == [], "a drive path in the source is a default path to someone's files"
+
+
+def test_release_artefacts_are_packaged_with_checksums(tmp_path: Path) -> None:
+    out = tmp_path / "release"
+    app = out / "dist" / "ROM-Sync"
+    (app / "_internal" / "ui").mkdir(parents=True)
+    (app / "ROM-Sync.exe").write_bytes(b"exe")
+    (app / "_internal" / "ui" / "index.html").write_text("<html>", encoding="utf-8")
+    artefacts = out / "artefacts"
+    artefacts.mkdir()
+    (artefacts / "ROM-Sync-0.1.0-setup.exe").write_bytes(b"setup")
+    made = package(out, release_version("v0.1.0"))
+    assert [p.name for p in made] == [
+        "ROM-Sync-0.1.0-portable.zip",
+        "ROM-Sync-0.1.0-setup.exe",
+        "SHA256SUMS.txt",
+    ]
+    with zipfile.ZipFile(made[0]) as archive:
+        assert sorted(archive.namelist()) == [
+            "ROM-Sync/ROM-Sync.exe",
+            "ROM-Sync/_internal/ui/index.html",
+        ]
+    sums = (artefacts / "SHA256SUMS.txt").read_text(encoding="utf-8").splitlines()
+    assert sums[1] == f"{hashlib.sha256(b'setup').hexdigest()}  ROM-Sync-0.1.0-setup.exe"
+    assert [line.split("  ")[1] for line in sums] == [p.name for p in made[:2]]
+    assert release_version("0.1.0") == "0.1.0"
+
+    (app / "_internal" / "prod.keys").write_text("", encoding="utf-8")
+    with pytest.raises(HoldsContent):
+        package(out, "0.1.0")
+
+
+def test_the_compiler_is_found_where_inno_setup_installs_it(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    assert iscc(lambda name: "X:/bin/iscc.exe" if name == "iscc" else None) == Path(
+        "X:/bin/iscc.exe"
+    )
+    for base in ("ProgramFiles(x86)", "ProgramFiles", "LOCALAPPDATA"):
+        monkeypatch.delenv(base, raising=False)
+    assert iscc(lambda name: None) is None
+    installed = tmp_path / "Program Files (x86)" / "Inno Setup 6"
+    installed.mkdir(parents=True)
+    (installed / "ISCC.exe").write_bytes(b"")
+    monkeypatch.setenv("ProgramFiles(x86)", str(tmp_path / "Program Files (x86)"))
+    assert iscc(lambda name: None) == installed / "ISCC.exe"

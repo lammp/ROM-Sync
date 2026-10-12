@@ -4,6 +4,7 @@ that builds it.
 
     python tools/installer.py build        on Windows, after `npm run bundle` in ui/
     python tools/installer.py installer    then: the Inno Setup script, compiled
+    python tools/installer.py package      then: the portable zip, and checksums
 
 The frozen build is a PyInstaller one-folder application: the interpreter,
 the engine, the API and the desktop shell, with the built interface beside
@@ -19,12 +20,14 @@ decision, so it lives here until he makes it.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import importlib
 import os
 import shutil
 import subprocess
 import sys
-from collections.abc import Sequence
+import zipfile
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from pathlib import Path
 from string import Template
@@ -357,27 +360,88 @@ def pyinstaller_args(
     return args
 
 
+def release_version(tag: str) -> str:
+    """The version a release tag names: `v0.1.0` is 0.1.0 (F13-S7)."""
+    return tag[1:] if tag[:1] in ("v", "V") else tag
+
+
+def checksums(files: Sequence[Path]) -> str:
+    """SHA-256 sums in the form `sha256sum --check` reads, one file per line by name."""
+    lines = []
+    for path in sorted(files, key=lambda p: p.name):
+        digest = hashlib.sha256()
+        with open(path, "rb") as f:
+            for chunk in iter(lambda: f.read(1024 * 1024), b""):
+                digest.update(chunk)
+        lines.append(f"{digest.hexdigest()}  {path.name}\n")
+    return "".join(lines)
+
+
+#: The release's checksum file, beside the artefacts it covers.
+SUMS: Final = "SHA256SUMS.txt"
+
+
+def package(out: Path, version: str) -> list[Path]:
+    """The portable zip of the frozen application, and the checksums of every
+    artefact in `out/artefacts` (the installer is compiled there first)."""
+    app = out / "dist" / APP
+    refuse_content(app)
+    artefacts = out / "artefacts"
+    artefacts.mkdir(parents=True, exist_ok=True)
+    portable = artefacts / f"{APP}-{version}-portable.zip"
+    with zipfile.ZipFile(portable, "w", zipfile.ZIP_DEFLATED) as archive:
+        for path in sorted(app.rglob("*")):
+            if path.is_file():
+                archive.write(path, Path(APP) / path.relative_to(app))
+    shipped = sorted(p for p in artefacts.iterdir() if p.is_file() and p.name != SUMS)
+    (artefacts / SUMS).write_text(checksums(shipped), encoding="utf-8")
+    return [*shipped, artefacts / SUMS]
+
+
+def iscc(which: Callable[[str], str | None] = shutil.which) -> Path | None:
+    """Inno Setup's compiler: on the PATH, or where its installer puts it."""
+    found = which("iscc") or which("ISCC")
+    if found:
+        return Path(found)
+    for base in ("ProgramFiles(x86)", "ProgramFiles", "LOCALAPPDATA"):
+        root = os.environ.get(base)
+        if root:
+            programs = Path(root) / ("Programs" if base == "LOCALAPPDATA" else "")
+            candidate = programs / "Inno Setup 6" / "ISCC.exe"
+            if candidate.is_file():
+                return candidate
+    return None
+
+
 def main(argv: Sequence[str] | None = None) -> int:  # pragma: no cover - runs the build tools
     parser = argparse.ArgumentParser(prog="installer")
-    parser.add_argument("command", choices=["build", "installer"])
+    parser.add_argument("command", choices=["build", "installer", "package"])
     parser.add_argument("--out", type=Path, default=ROOT / "reports" / "release")
-    parser.add_argument("--version", default=_version())
+    parser.add_argument("--version", default=_version(), help="a version, or a v-tag")
     args = parser.parse_args(argv)
     out: Path = args.out
+    version = release_version(args.version)
     if args.command == "build":
         # PyInstaller is a build tool (the `build` extra), not something the engine imports
         freeze = importlib.import_module("PyInstaller.__main__").run
         freeze(pyinstaller_args(BUNDLE, ROOT, dist=out / "dist", work=out / "work"))
         return 0
+    if args.command == "package":
+        for made in package(out, version):
+            print(made)
+        return 0
     refuse_content(out / "dist" / APP)
     script = out / f"{APP}.iss"
     script.parent.mkdir(parents=True, exist_ok=True)
-    script.write_text(inno_script(args.version, out / "dist"), encoding="utf-8")
-    compiler = shutil.which("iscc") or shutil.which("ISCC")
+    script.write_text(inno_script(version, out / "dist"), encoding="utf-8")
+    compiler = iscc()
     if compiler is None:
-        print(f"wrote {script}; Inno Setup's ISCC is not on PATH, so it was not compiled")
+        print(f"wrote {script}; Inno Setup's ISCC was not found, so it was not compiled")
         return 1
-    return subprocess.run([compiler, str(script)], check=False).returncode
+    artefacts = out / "artefacts"
+    return subprocess.run(
+        [str(compiler), f"/O{artefacts}", str(script)], check=False
+    ).returncode
 
 
 def _version() -> str:  # pragma: no cover - read by the command line only

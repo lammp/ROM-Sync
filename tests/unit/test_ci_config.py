@@ -57,10 +57,37 @@ def test_nightly_workflow_randomises_the_test_order() -> None:
     assert "-p randomly" in text or "--randomly-seed" in text
 
 
-@pytest.mark.parametrize("name", ["gate.yml", "nightly.yml"])
+@pytest.mark.parametrize("name", ["gate.yml", "nightly.yml", "release.yml"])
 def test_workflows_pin_their_actions(name: str) -> None:
     """An unpinned action is a dependency that can change under us."""
     for line in _text(name).splitlines():
         stripped = line.strip()
         if stripped.startswith("- uses:"):
             assert "@" in stripped, f"{name}: {stripped} is not pinned"
+
+
+def test_release_workflow() -> None:
+    """A version tag produces a release with checksums (F13-S7), built only after
+    the gate passes on that commit, and from nothing but the repository."""
+    text = _text("release.yml")
+    assert 'tags: ["v*"]' in text and "pull_request" not in text, "tags only"
+    assert "windows-" in text
+    order = [
+        "python tools/verify.py",
+        "npm run bundle --prefix ui",
+        "python tools/installer.py build",
+        "python tools/installer.py installer",
+        "python tools/installer.py package",
+        "gh release create",
+    ]
+    places = [text.index(step) for step in order]
+    assert places == sorted(places), "gate, interface, freeze, installer, sums, release"
+    assert "reports/release/artefacts/*" in text, "every artefact, the sums among them"
+    assert "--generate-notes" in text and "--verify-tag" in text
+    assert "secrets." not in text, "the run's own token, nothing stored"
+    assert "contents: write" in text
+
+
+def test_only_the_release_may_write() -> None:
+    for name in ("gate.yml", "nightly.yml"):
+        assert "contents: write" not in _text(name)
