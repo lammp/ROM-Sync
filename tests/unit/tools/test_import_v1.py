@@ -19,6 +19,7 @@ from tools.import_v1 import (
     carry,
     occupied,
     read_v1,
+    run,
 )
 
 
@@ -114,3 +115,25 @@ def test_refuses_non_empty_target(tmp_path: Path) -> None:
         )
     assert occupied(settled) == {}, "settings alone are not a library"
     assert carry(copy, settled, FrozenClock()).reconciles
+
+
+def test_dry_run_writes_nothing(tmp_path: Path) -> None:
+    """A dry run says what an import would carry, and the data folder stays as it was."""
+    source = v1_db.build(tmp_path / "v1" / "romsync.db")
+    data = tmp_path / "data"
+    report = run(source, data, tmp_path / "work", FrozenClock(), dry_run=True)
+    assert not data.exists(), "not even the folder is made"
+    assert {r.table: r.found for r in report.rows} == v1_db.ROWS
+    assert report.lines()[0] == (
+        "games: would import 8 rows (systems 2, games 3, game_files 2, game_media 1)"
+    )
+    assert report.lines()[-1] == "dry run: nothing was written"
+    assert not report.reconciles, "a dry run reconciles nothing"
+
+    data.mkdir()
+    (data / "notes.txt").write_text("the person's", encoding="utf-8")
+    before = fingerprint(data)
+    run(source, data, tmp_path / "work", FrozenClock(), dry_run=True)
+    assert fingerprint(data) == before
+    real = run(source, data, tmp_path / "work", FrozenClock())
+    assert real.reconciles and real.lines()[-1] == "reconciled"

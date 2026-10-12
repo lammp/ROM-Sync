@@ -24,6 +24,7 @@ for _tree in ("engine",):
         sys.path.insert(0, str(ROOT / _tree))
 
 from romsync.adapters.db_sqlite.migrations import migrate, version_of  # noqa: E402
+from romsync.compose import DATABASE  # noqa: E402
 from romsync.ports.clock import ClockPort  # noqa: E402
 
 #: The migrated copy, inside the working folder the caller gives.
@@ -144,22 +145,33 @@ class Carried:
 @dataclass(frozen=True, slots=True)
 class Report:
     rows: tuple[Carried, ...]
+    #: A dry run counts what would be imported and writes nothing (F14-S4).
+    dry_run: bool = False
 
     @property
     def reconciles(self) -> bool:
         """Every row found was written, no more and no fewer."""
-        return all(r.found == r.written for r in self.rows)
+        return not self.dry_run and all(r.found == r.written for r in self.rows)
 
     def lines(self) -> list[str]:
-        """What was carried over, by group, in words."""
+        """What was carried over, or would be, by group, in words."""
         by_table = {r.table: r for r in self.rows}
         said = []
         for group, tables in GROUPS:
             found = sum(by_table[t].found for t in tables)
+            if self.dry_run:
+                parts = ", ".join(f"{t} {by_table[t].found}" for t in tables)
+                said.append(f"{group}: would import {found} rows ({parts})")
+                continue
             written = sum(by_table[t].written for t in tables)
             parts = ", ".join(f"{t} {by_table[t].written}/{by_table[t].found}" for t in tables)
             said.append(f"{group}: {written} of {found} rows ({parts})")
-        said.append("reconciled" if self.reconciles else "NOT reconciled: see the counts above")
+        if self.dry_run:
+            said.append("dry run: nothing was written")
+        else:
+            said.append(
+                "reconciled" if self.reconciles else "NOT reconciled: see the counts above"
+            )
         return said
 
 
@@ -196,3 +208,22 @@ def carry(copy: Path, target: Path, clock: ClockPort) -> Report:
     finally:
         conn.close()
     return Report(tuple(Carried(t, found[t], written[t]) for t in TABLES))
+
+
+def run(
+    source: Path, data: Path, work: Path, clock: ClockPort, *, dry_run: bool = False
+) -> Report:
+    """Import the version 1 database at `source` into the data folder `data`.
+
+    `work` holds the migrated copy; the caller makes and removes it. A dry run
+    reads the source and the target and reports what an import would carry,
+    and writes nothing in `data`.
+    """
+    target = data / DATABASE
+    _refuse(occupied(target), target)
+    copy = read_v1(source, work, clock)
+    if dry_run:
+        with closing(sqlite3.connect(copy)) as conn:
+            found = _counts(conn)
+        return Report(tuple(Carried(t, found[t], 0) for t in TABLES), dry_run=True)
+    return carry(copy, target, clock)
