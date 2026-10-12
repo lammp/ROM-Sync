@@ -11,6 +11,7 @@ import importlib.util
 import os
 import socket
 import subprocess
+import sys
 import time
 from pathlib import Path
 
@@ -54,6 +55,11 @@ def test_the_guard_keeps_socket_a_class() -> None:
     finally:
         a.close()
         b.close()
+
+
+def test_imports_during_tests_write_no_bytecode() -> None:
+    """A lazy first import must not trip the write guard on a fresh install."""
+    assert sys.dont_write_bytecode is True
 
 
 def test_socket_guard_covers_resolution() -> None:

@@ -29,7 +29,7 @@ import sys
 import zipfile
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass
-from pathlib import Path
+from pathlib import Path, PurePath
 from string import Template
 from typing import Final
 
@@ -308,7 +308,9 @@ class HoldsContent(RuntimeError):
 
 def stray(folder: Path, allowed: frozenset[str] | None = None) -> list[Path]:
     """Files under `folder` that must not ship: content always, and anything
-    outside `allowed` when it is given. Sorted, relative to `folder`."""
+    outside `allowed` when it is given. Relative to `folder`, sorted by their
+    POSIX spelling so the order is the same on every platform: Windows paths
+    compare without case, so sorting the paths themselves differs by host."""
     found = []
     for path in folder.rglob("*"):
         suffix = path.suffix.casefold()
@@ -316,7 +318,7 @@ def stray(folder: Path, allowed: frozenset[str] | None = None) -> list[Path]:
             suffix in CONTENT or (allowed is not None and suffix not in allowed)
         ):
             found.append(path.relative_to(folder))
-    return sorted(found)
+    return sorted(found, key=PurePath.as_posix)
 
 
 def refuse_content(folder: Path, allowed: frozenset[str] | None = None) -> None:

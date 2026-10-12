@@ -92,6 +92,13 @@ def _entry(**changes: object) -> bytes:
     return _with(inventory=[entry])
 
 
+def _short(data: bytes) -> str:
+    """A case's name, kept short: pytest puts it in an environment variable, and
+    Windows refuses one over 32,767 characters (the 200,000-byte nesting case)."""
+    head = data[:40].decode("utf-8", errors="replace")
+    return head if len(data) <= 40 else f"{head}...({len(data):,} bytes)"
+
+
 @pytest.mark.parametrize(
     "data",
     [
@@ -120,6 +127,7 @@ def _entry(**changes: object) -> bytes:
         _entry(sent_mtime=False),
         b"[" * 100_000 + b"]" * 100_000,
     ],
+    ids=lambda data: _short(data),
 )
 def test_malformed_is_none_never_an_error(data: bytes) -> None:
     assert markers.decode(data) is None

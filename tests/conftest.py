@@ -41,6 +41,13 @@ import pytest
 
 from tests.helpers.fakes import EPOCH, CountingIds, FrozenClock
 
+# The interpreter caches what it imports. During a test that is the test
+# writing outside its sandbox: a module imported lazily for the first time, or
+# rewritten by pytest because it is a plugin (anyio is), lands a .pyc in
+# site-packages, which a fresh CI install has not cached yet. Imports made
+# while tests run write nothing; the write guard stays exactly as strict.
+sys.dont_write_bytecode = True
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 FIXTURES = REPO_ROOT / "tests" / "fixtures"
 SEED = 20261008
