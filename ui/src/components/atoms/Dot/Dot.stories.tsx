@@ -10,7 +10,10 @@ const meta = {
 export default meta
 type Story = StoryObj<typeof meta>
 
-export const Neutral: Story = {}
+/** Unnamed, the dot is decoration: it is only ever drawn beside the word it stands for. */
+export const Neutral: Story = {
+  decorators: [(Story) => <span>{Story()} not scanned</span>],
+}
 export const Ok: Story = {
   args: { tone: 'ok', label: 'Ready' },
   play: async ({ canvas }) => {

@@ -14,7 +14,8 @@ describe('Dot', () => {
   it('is hidden when it only repeats the text beside it', () => {
     const { container } = render(<Neutral />)
     expect(screen.queryByRole('img')).toBeNull()
-    expect(container.querySelector('span')?.getAttribute('aria-hidden')).toBe('true')
+    expect(container.querySelector('[aria-hidden="true"]')).toBeTruthy()
+    expect(container.textContent).toContain('not scanned')
   })
 
   it('names a failure', () => {
