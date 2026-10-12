@@ -91,3 +91,10 @@ def test_release_workflow() -> None:
 def test_only_the_release_may_write() -> None:
     for name in ("gate.yml", "nightly.yml"):
         assert "contents: write" not in _text(name)
+
+
+def test_a_hung_test_fails_with_its_tracebacks() -> None:
+    """A hang must fail the gate where it happens, not run the CI job out of time."""
+    text = (ROOT / "pyproject.toml").read_text(encoding="utf-8")
+    assert "faulthandler_timeout = 300" in text
+    assert "faulthandler_exit_on_timeout = true" in text

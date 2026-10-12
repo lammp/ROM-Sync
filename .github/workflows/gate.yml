@@ -22,7 +22,8 @@ concurrency:
 jobs:
   gate:
     runs-on: windows-2022
-    timeout-minutes: 20
+    # the whole gate on a hosted Windows runner, interface layers included
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
         with:

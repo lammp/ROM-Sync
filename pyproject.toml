@@ -13,7 +13,7 @@ dependencies = [
 dev = [
   "ruff>=0.6",
   "mypy>=1.11",
-  "pytest>=8.0",
+  "pytest>=9.0",
   "pytest-xdist>=3.6",
   "pytest-randomly>=3.15",
   "pytest-cov>=5.0",
@@ -70,6 +70,10 @@ disallow_any_explicit = false
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-q --strict-markers --strict-config"
+# A test that hangs fails, with every thread's traceback, instead of holding
+# the run until the CI runner gives up and reports nothing.
+faulthandler_timeout = 300
+faulthandler_exit_on_timeout = true
 pythonpath = ["engine", "api", "desktop", "."]
 markers = [
   "device: needs a real device; never part of the gate",
