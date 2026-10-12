@@ -9,6 +9,7 @@ const meta = {
     version: 'ROM-Sync 2.0.0.dev0 · API v1',
     host: 'desktop window',
     address: 'http://127.0.0.1:8765/',
+    bundleHref: '/api/v1/diagnostics/bundle',
     dataFolder: 'X:/LocalAppData/ROM-Sync/data',
     logFolder: 'X:/LocalAppData/ROM-Sync/data/logs',
     lastSync: {

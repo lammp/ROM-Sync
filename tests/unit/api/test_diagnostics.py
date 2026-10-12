@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+import io
+import json
+import zipfile
 from pathlib import Path
 
 from fastapi.testclient import TestClient
@@ -14,6 +17,7 @@ from romsync.jobs.registry import Context, inline
 from romsync.ports.repo import DeviceProfile, RunRecord, RunState
 from romsync_api.app import PREFIX, create_app
 from romsync_api.models import Diagnostics, StorageList
+from romsync_api.security import TOKEN_HEADER
 from tests.helpers.fakes import CountingIds, FrozenClock
 from tests.unit.api import seed
 from tests.unit.api.conftest import BASE
@@ -125,3 +129,41 @@ def test_breakdown_matches_fixture(tmp_path: Path) -> None:
     ]
     assert got.total_bytes == sum(r.bytes for r in got.components)
     assert got.reclaimable_bytes == database[2] + 300 + 300 + 30
+
+
+def test_bundle_redacted(tmp_path: Path) -> None:
+    """No secret appears anywhere in the bundle, even where it leaked in."""
+    data = tmp_path / "data"
+    engine = build(data, clock=FrozenClock(), ids=CountingIds("j"), runner=inline)
+    c = TestClient(create_app(engine), base_url=BASE)
+    c.headers.update({"Origin": BASE, TOKEN_HEADER: c.get(f"{PREFIX}/session").json()["token"]})
+    typed = "zzq-bundle-value-0045"
+    c.post(
+        f"{PREFIX}/settings",
+        json={"values": {"igdb.client_id": "client-7", "igdb.client_secret": typed}},
+    )
+
+    def leaky(ctx: Context) -> dict[str, int]:
+        raise StoreUnreadable(f"request failed with {typed} in the URL")
+
+    engine.jobs.submit("scan", None, leaky)
+    plant(data, {})
+    (data / "logs").mkdir()
+    (data / "logs" / "sync.log").write_text(f"sent Contra\nauth {typed}\n", encoding="utf-8")
+
+    got = c.get(f"{PREFIX}/diagnostics/bundle")
+    assert got.status_code == 200 and got.headers["content-type"] == "application/zip"
+    with zipfile.ZipFile(io.BytesIO(got.content)) as z:
+        names = sorted(z.namelist())
+        texts = {n: z.read(n).decode("utf-8") for n in names}
+    assert names == ["jobs.json", "logs/sync.log", "settings.json", "system.json"]
+    for name, text in texts.items():
+        assert typed not in text, f"the secret is in {name}"
+    settings = json.loads(texts["settings.json"])
+    assert settings["igdb.client_secret"] == "[redacted]"
+    assert settings["igdb.client_id"] == "client-7", "only secrets are left out"
+    assert "request failed with [redacted] in the URL" in texts["jobs.json"]
+    assert texts["logs/sync.log"] == "sent Contra\nauth [redacted]\n"
+    assert json.loads(texts["system.json"])["version"] == __version__
+    again = c.get(f"{PREFIX}/diagnostics/bundle")
+    assert again.content == got.content, "the same state makes the same bundle"

@@ -18,6 +18,8 @@ const SAFE = new Set(['GET', 'HEAD', 'OPTIONS'])
 export type Engine = {
   readonly api: Api
   readonly client: QueryClient
+  /** Where the engine answers; empty for this page's own origin. */
+  readonly baseUrl: string
   /** How often a running job is asked for, in milliseconds. */
   readonly pollMs: number
 }
@@ -82,7 +84,7 @@ export function createEngine(options: EngineOptions = {}): Engine {
       mutations: { retry: false },
     },
   })
-  return { api, client, pollMs: options.pollMs ?? 1000 }
+  return { api, client, pollMs: options.pollMs ?? 1000, baseUrl: options.baseUrl ?? '' }
 }
 
 const EngineContext = createContext<Engine | null>(null)

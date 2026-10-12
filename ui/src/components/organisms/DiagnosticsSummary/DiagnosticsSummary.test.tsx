@@ -33,6 +33,13 @@ describe('DiagnosticsSummary', () => {
     )
   })
 
+  it('offers the support bundle as a download', () => {
+    render(<Working />)
+    const link = screen.getByRole('link', { name: 'Export a support bundle' })
+    expect(link.getAttribute('href')).toBe('/api/v1/diagnostics/bundle')
+    expect(link.getAttribute('download')).toBe('romsync-support.zip')
+  })
+
   it('says plainly when nothing has synced or failed yet', () => {
     render(<FirstRun />)
     expect(facts()['Last sync']).toBe('no sync yet')

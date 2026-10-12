@@ -39,6 +39,10 @@ class DataFolder(Protocol):
         """One named part of the data folder, every file below it counted (F15-S2)."""
         ...
 
+    def logs(self, limit: int) -> dict[str, str]:
+        """Each log by name, its last `limit` bytes as text (F15-S3)."""
+        ...
+
 
 class Compactor(Protocol):
     def compact(self) -> tuple[int, int]:

@@ -50,6 +50,12 @@ def start_arguments(options: WindowOptions) -> StartArguments:
     return {"private_mode": False, "storage_path": str(options.storage)}
 
 
+def window_settings() -> dict[str, object]:
+    """pywebview's process-wide settings for the window: a download the page
+    offers (the support bundle, F15-S3) is saved, and no page opens a local file."""
+    return {"ALLOW_DOWNLOADS": True, "ALLOW_FILE_URLS": False}
+
+
 class WebviewWindow:  # pragma: no cover - opens a window
     def __init__(self) -> None:
         self._window: object | None = None
@@ -58,6 +64,7 @@ class WebviewWindow:  # pragma: no cover - opens a window
         import webview
 
         options.storage.mkdir(parents=True, exist_ok=True)
+        webview.settings.update(window_settings())
         self._window = webview.create_window(
             options.title, options.url, width=options.width, height=options.height
         )

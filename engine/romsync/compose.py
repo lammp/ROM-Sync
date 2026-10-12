@@ -51,6 +51,7 @@ from romsync.app.recover import Recover
 from romsync.app.selection import Selections
 from romsync.app.settings import Settings
 from romsync.app.shell import Shell
+from romsync.app.support import bundle as support_bundle
 from romsync.app.sync import Sync
 from romsync.app.sysfiles import SystemFiles
 from romsync.app.tags import Tagging
@@ -64,6 +65,8 @@ from romsync.ports.metadata import MetadataPort
 from romsync.ports.shell import ShellPort
 
 DATABASE = "romsync.db"
+#: The bytes of each log a support bundle carries: the most recent.
+LOG_TAIL = 512 * 1024
 
 
 def no_discovery() -> tuple[Dest, ...]:
@@ -109,6 +112,8 @@ class Engine:
     close: Callable[[], None]
     #: Each transport's state on the last probe; empty when nothing is asked (F13-S8).
     transports: Callable[[], tuple[TransportState, ...]]
+    #: The support bundle, given what the caller knows of the system (F15-S3).
+    support: Callable[[Mapping[str, object]], bytes]
 
 
 def prepare_database(db: Path, clock: ClockPort) -> tuple[int, ...]:
@@ -180,6 +185,7 @@ def build(
     history = settings.value("jobs.history_length")
     assert isinstance(history, int)
     jobs = Jobs(stores.jobs, clock, ids, history, runner)
+    data_folder = FsDataFolder(data)
     jobs.reconcile()
 
     def store_root() -> StoreRoot:
@@ -252,7 +258,7 @@ def build(
         jobs=jobs,
         syncs=Syncs(plans, sync, jobs, stores.runs),
         maintenance=Maintenance(
-            FsDataFolder(data), SqliteCompactor(conn, db), stores.games, retention
+            data_folder, SqliteCompactor(conn, db), stores.games, retention
         ),
         shell=Shell(shell or WindowsShell(), roots),
         passes=Passes(stores.games, metadata_port, igdb_covers, artwork, settings.value),
@@ -262,6 +268,9 @@ def build(
         data=data,
         close=close,
         transports=transports,
+        support=lambda system: support_bundle(
+            system, settings, jobs.all(), data_folder.logs(LOG_TAIL)
+        ),
     )
 
 

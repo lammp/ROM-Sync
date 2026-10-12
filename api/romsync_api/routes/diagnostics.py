@@ -7,7 +7,9 @@ records, and the errors from the job records."""
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, Request
+import sys
+
+from fastapi import APIRouter, Depends, Request, Response
 
 from romsync import __version__
 from romsync.compose import Engine
@@ -79,4 +81,36 @@ def storage(e: Engine = Depends(engine)) -> StorageList:  # noqa: B008
         components=rows,
         total_bytes=sum(r.bytes for r in rows),
         reclaimable_bytes=sum(r.reclaimable for r in rows),
+    )
+
+
+def _platform() -> str:
+    """The operating system, read without starting a process: the `platform`
+    module asks a subprocess on some hosts, Windows among them."""
+    windows = getattr(sys, "getwindowsversion", None)
+    return sys.platform if windows is None else f"{sys.platform} build {windows().build}"
+
+
+@router.get(
+    "/diagnostics/bundle",
+    response_class=Response,
+    responses={200: {"content": {"application/zip": {}}}},
+)
+def support_bundle(request: Request, e: Engine = Depends(engine)) -> Response:  # noqa: B008
+    """A zip for a bug report: the system, the settings with every secret left
+    out, the recent jobs and the logs, each searched for every secret (F15-S3).
+    Built in memory; nothing is written."""
+    state = request.app.state
+    system = {
+        "application": "ROM-Sync",
+        "version": __version__,
+        "python": sys.version.split()[0],
+        "platform": _platform(),
+        "shell": state.shell_kind,
+        "address": str(request.base_url),
+    }
+    return Response(
+        e.support(system),
+        media_type="application/zip",
+        headers={"Content-Disposition": 'attachment; filename="romsync-support.zip"'},
     )

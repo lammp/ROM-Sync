@@ -20,7 +20,13 @@ from romsync_api.security import TOKEN_HEADER
 from romsync_desktop.__main__ import default_bundle, default_data
 from romsync_desktop.dialogs import DesktopShell
 from romsync_desktop.shell import desktop_engine, run
-from romsync_desktop.window import PROFILE, WindowOptions, options_for, start_arguments
+from romsync_desktop.window import (
+    PROFILE,
+    WindowOptions,
+    options_for,
+    start_arguments,
+    window_settings,
+)
 from tests.helpers.fakes import CountingIds, FrozenClock
 
 
@@ -334,3 +340,11 @@ def test_notify_falls_back(tmp_path: Path, how: str) -> None:
     )
     assert answers == [(200, {"delivered": False})]
     assert system.tried == 1
+
+
+def test_the_window_saves_downloads_and_opens_no_local_file() -> None:
+    import webview
+
+    settings = window_settings()
+    assert settings == {"ALLOW_DOWNLOADS": True, "ALLOW_FILE_URLS": False}
+    assert set(settings) <= set(webview.settings), "every key is one pywebview knows"

@@ -28,6 +28,8 @@ export type DiagnosticsSummaryProps = {
   readonly logFolder: string
   readonly lastSync: LastSyncFact | null
   readonly errors: readonly ErrorFact[]
+  /** The support bundle's address (F15-S3): the settings with every secret left out. */
+  readonly bundleHref?: string
 }
 
 const when = (iso: string | null) => (iso ? iso.slice(0, 16).replace('T', ' ') : '')
@@ -60,6 +62,14 @@ export function DiagnosticsSummary(p: DiagnosticsSummaryProps) {
         <dt>Last sync</dt>
         <dd>{p.lastSync ? syncWords(p.lastSync) : <Muted>no sync yet</Muted>}</dd>
       </dl>
+      {p.bundleHref && (
+        <p>
+          <a href={p.bundleHref} download="romsync-support.zip">
+            Export a support bundle
+          </a>{' '}
+          <Muted>settings with every secret left out, recent jobs and the logs</Muted>
+        </p>
+      )}
       <h3>Recent errors</h3>
       {p.errors.length === 0 ? (
         <Muted>No job has failed.</Muted>

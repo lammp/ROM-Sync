@@ -25,7 +25,7 @@ import { formatBytes } from '../../../lib/format/format'
 import { BROWSER, can, hostOf } from '../../../lib/platform/platform'
 import { toText } from '../../../lib/settings/settings'
 import { useAttached } from '../../../queries/devices/devices'
-import { EngineError } from '../../../queries/engine/engine'
+import { EngineError, useEngine } from '../../../queries/engine/engine'
 import { TERMINAL, useCancelJob, useJob, useJobs } from '../../../queries/job/job'
 import {
   useAfterLibraryJob,
@@ -320,6 +320,7 @@ export function SettingsView() {
   const cancelJob = useCancelJob()
   const version = useVersion().data
   const diagnostics = useDiagnostics()
+  const { baseUrl } = useEngine()
   const attached = useAttached()
   const shell = useShell().data ?? BROWSER
   const pick = usePickFolder()
@@ -644,6 +645,7 @@ export function SettingsView() {
                 : null
             }
             errors={diagnostics.data?.recent_errors ?? []}
+            bundleHref={`${baseUrl}/api/v1/diagnostics/bundle`}
           />
         )}
         <JobsTable

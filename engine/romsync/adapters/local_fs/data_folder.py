@@ -72,6 +72,19 @@ class FsDataFolder:
         parts = [_usage(self.data / name) for name in COMPONENTS[component]]
         return Usage(sum(u.files for u in parts), sum(u.bytes for u in parts))
 
+    def logs(self, limit: int) -> dict[str, str]:
+        """Each file directly in `logs/`, its last `limit` bytes decoded as UTF-8."""
+        folder = self.data / "logs"
+        if not folder.is_dir():
+            return {}
+        found = {}
+        for log in sorted(folder.iterdir(), key=lambda p: p.name):
+            if log.is_file() and not log.is_symlink():
+                with open(log, "rb") as f:
+                    f.seek(max(0, log.stat().st_size - limit))
+                    found[log.name] = f.read().decode("utf-8", errors="replace")
+        return found
+
     def remove(self, folder: str, names: Sequence[str]) -> int:
         base = self._folder(folder)
         freed = 0
