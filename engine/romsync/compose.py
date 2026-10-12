@@ -22,6 +22,10 @@ from romsync.adapters.db_sqlite.compact import SqliteCompactor
 from romsync.adapters.db_sqlite.connect import connect
 from romsync.adapters.db_sqlite.migrations import migrate
 from romsync.adapters.db_sqlite.repos import repos
+from romsync.adapters.dest_adb.adb import SubprocessRunner
+from romsync.adapters.dest_mtp.mtp import PowerShellRunner
+from romsync.adapters.dest_volume.volume import windows_identity
+from romsync.adapters.discovery import Discovery
 from romsync.adapters.local_fs.covers import FsCoverFiles
 from romsync.adapters.local_fs.data_folder import FsDataFolder
 from romsync.adapters.local_fs.runs import FsLocalFiles, FsRunFolders
@@ -63,8 +67,21 @@ DATABASE = "romsync.db"
 
 
 def no_discovery() -> tuple[Dest, ...]:
-    """No transport can list its devices yet (PENDING ACTION 7): finds nothing."""
+    """Finds nothing: the probe of an engine built without a computer to ask."""
     return ()
+
+
+Discover = Callable[[Callable[[str], object], Path], Probe]
+
+
+def windows_discovery(
+    setting: Callable[[str], object], data: Path
+) -> Probe:  # pragma: no cover - asks Windows and adb for real; the gate never does
+    """Drives, portable devices and ADB devices on this computer (F10-S26, added)."""
+    scratch = LocalRoot(str(data / "tmp"))
+    return Discovery(
+        setting, PowerShellRunner(scratch), SubprocessRunner(), scratch, windows_identity
+    )
 
 
 @dataclass(frozen=True, slots=True)
@@ -108,6 +125,7 @@ def build(
     clock: ClockPort | None = None,
     ids: IdPort | None = None,
     probe: Probe | None = None,
+    discover: Discover | None = None,
     runner: Runner = threaded,
     shell: ShellPort | None = None,
     metadata: Callable[[], MetadataPort] | None = None,
@@ -116,6 +134,10 @@ def build(
     sleep: Callable[[float], None] = time.sleep,
 ) -> Engine:
     """Build an engine over the data folder `data`.
+
+    Devices are found by `probe` when one is given, else by `discover` over
+    the settings and the data folder (the desktop passes `windows_discovery`),
+    else not at all.
 
     `overrides` is validated against the registry before anything is
     constructed, so a bad value fails at the boundary rather than halfway
@@ -145,7 +167,9 @@ def build(
     def saved_credentials() -> tuple[str, str]:
         return str(settings.value("igdb.client_id")), str(settings.value("igdb.client_secret"))
 
-    devices = Devices(probe or no_discovery, stores.devices, stores.selections, clock, ids)
+    # a probe handed in wins; otherwise the computer is asked when a discovery is given
+    asked = probe or (discover(settings.value, data) if discover else no_discovery)
+    devices = Devices(asked, stores.devices, stores.selections, clock, ids)
     plans = Plans(stores, devices, settings.value)
     history = settings.value("jobs.history_length")
     assert isinstance(history, int)

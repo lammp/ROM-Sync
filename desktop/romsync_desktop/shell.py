@@ -14,7 +14,7 @@ from collections.abc import Callable
 from pathlib import Path
 
 from romsync.adapters.shell_win.windows import WindowsShell
-from romsync.compose import Engine, build, launch
+from romsync.compose import Engine, build, launch, windows_discovery
 from romsync.ports.shell import ShellPort
 from romsync_api.app import create_app
 from romsync_api.binding import binding_of
@@ -24,7 +24,8 @@ from romsync_desktop.window import Window, options_for
 
 
 def desktop_engine(data: Path, shell: ShellPort) -> Engine:
-    return build(data, shell=shell)
+    """The engine as the desktop runs it: this computer's shell and its devices."""
+    return build(data, shell=shell, discover=windows_discovery)
 
 
 def run(
