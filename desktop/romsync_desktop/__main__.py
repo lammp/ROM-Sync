@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import argparse
 import os
+import sys
 from pathlib import Path
 
 from romsync_desktop.server import UvicornServer
@@ -22,7 +23,13 @@ def default_data() -> Path:
 
 
 def default_bundle() -> Path | None:
-    built = Path(__file__).resolve().parents[2] / "ui" / "out"
+    """The built interface: inside the frozen application (F13-S1), or ui/out here."""
+    frozen = getattr(sys, "_MEIPASS", None) if getattr(sys, "frozen", False) else None
+    built = (
+        Path(frozen) / "ui"
+        if frozen is not None
+        else Path(__file__).resolve().parents[2] / "ui" / "out"
+    )
     return built if (built / "manifest.json").is_file() else None
 
 
