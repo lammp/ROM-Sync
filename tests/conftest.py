@@ -31,6 +31,7 @@ import os
 import socket
 import subprocess
 import sys
+import threading
 import time
 from collections.abc import Iterator
 from pathlib import Path
@@ -131,18 +132,31 @@ def _no_network(monkeypatch: pytest.MonkeyPatch) -> None:
 
     real_socket = socket.socket
     real_socketpair = socket.socketpair
+    permit = threading.local()
+
+    class Guarded(real_socket):  # type: ignore[misc, valid-type]
+        """Still a socket class, so `isinstance(s, socket.socket)` keeps working:
+        Windows' proactor event loop asks exactly that of its self-pipe, and a
+        guard that replaced the class with a function broke the check and left
+        every in-process API test waiting forever. Constructing one is refused
+        except inside `socketpair`."""
+
+        def __init__(self, *args: Any, **kwargs: Any) -> None:
+            if not getattr(permit, "on", False):
+                refuse()
+            super().__init__(*args, **kwargs)
 
     def socketpair(*args: Any, **kwargs: Any) -> Any:
         """An event loop wakes itself through a connected pair that never leaves
-        the process, so an in-process API test needs one. The real socket class
-        is back only for this call."""
-        socket.socket = real_socket  # type: ignore[misc]
+        the process, so an in-process API test needs one. Sockets may be made
+        only for this call, on this thread."""
+        permit.on = True
         try:
             return real_socketpair(*args, **kwargs)
         finally:
-            socket.socket = refuse  # type: ignore[misc]
+            permit.on = False
 
-    monkeypatch.setattr(socket, "socket", refuse)
+    monkeypatch.setattr(socket, "socket", Guarded)
     monkeypatch.setattr(socket, "socketpair", socketpair)
     monkeypatch.setattr(socket, "create_connection", refuse)
     monkeypatch.setattr(socket, "getaddrinfo", refuse)

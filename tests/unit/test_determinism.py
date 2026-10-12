@@ -41,6 +41,21 @@ def test_a_socket_pair_is_allowed_and_the_guard_returns() -> None:
         socket.socket()
 
 
+def test_the_guard_keeps_socket_a_class() -> None:
+    """Windows' proactor event loop asks `isinstance(conn, socket.socket)` of its
+    self-pipe on every wake-up. With the guard in place that question must still
+    have an answer, or every in-process API test waits forever on Windows."""
+    a, b = socket.socketpair()
+    try:
+        assert isinstance(socket.socket, type)
+        assert isinstance(a, socket.socket) and isinstance(b, socket.socket)
+        a.send(b"\0")
+        assert b.recv(1) == b"\0"
+    finally:
+        a.close()
+        b.close()
+
+
 def test_socket_guard_covers_resolution() -> None:
     with pytest.raises(NetworkInTest):
         socket.getaddrinfo("example.invalid", 443)
