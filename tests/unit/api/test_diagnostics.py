@@ -149,7 +149,9 @@ def test_bundle_redacted(tmp_path: Path) -> None:
     engine.jobs.submit("scan", None, leaky)
     plant(data, {})
     (data / "logs").mkdir()
-    (data / "logs" / "sync.log").write_text(f"sent Contra\nauth {typed}\n", encoding="utf-8")
+    # bytes, not text: text mode would write CRLF on Windows and the bundle keeps
+    # a log's bytes exactly as they are
+    (data / "logs" / "sync.log").write_bytes(f"sent Contra\nauth {typed}\n".encode())
 
     got = c.get(f"{PREFIX}/diagnostics/bundle")
     assert got.status_code == 200 and got.headers["content-type"] == "application/zip"
