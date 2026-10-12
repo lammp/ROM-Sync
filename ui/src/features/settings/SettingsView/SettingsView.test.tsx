@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest'
 import { appStore } from '../../../store/store'
 import * as stories from './SettingsView.stories'
 
-const { FirstRun } = composeStories(stories)
+const { FirstRun, InTheDesktop, OffLoopback } = composeStories(stories)
 
 const region = (name: RegExp) => screen.getByRole('region', { name })
 const toast = () => appStore.getState().ui.toasts.at(-1)?.text
@@ -16,6 +16,26 @@ async function page() {
 }
 
 describe('SettingsView', () => {
+  it('test_shell_reported: upgrades from browser to desktop mode when the engine says so', async () => {
+    render(<InTheDesktop />)
+    const diagnostics = await screen.findByRole('region', { name: /^Diagnostics/ })
+    await waitFor(() => expect(diagnostics.textContent).toContain('· desktop window'))
+    const library = region(/^Library/)
+    expect(within(library).getByRole('button', { name: 'Browse…' })).toBeTruthy()
+    expect(within(library).getByRole('button', { name: 'Reveal' })).toBeTruthy()
+    expect(
+      within(region(/^Data and storage/)).getByRole('button', { name: 'Reveal the data folder' }),
+    ).toBeTruthy()
+  })
+
+  it('offers no shell action where the engine says none answers', async () => {
+    render(<OffLoopback />)
+    await waitFor(() => expect(region(/^Library/).textContent).toContain('4 systems · 40 games'))
+    expect(region(/^Diagnostics/).textContent).toContain('· browser')
+    expect(screen.queryByRole('button', { name: 'Browse…' })).toBeNull()
+    expect(screen.queryByRole('button', { name: /^Reveal/ })).toBeNull()
+  })
+
   it('setup_steps: shows the steps in first-run order while one is left, and says which', async () => {
     await page()
     const steps = within(screen.getByRole('list', { name: 'Setup' })).getAllByRole('listitem')

@@ -1,5 +1,6 @@
-/** What the engine says about itself: its version, and whether the shell answers. */
+/** What the engine says about itself: its version, and who hosts the page. */
 import { useMutation, useQuery } from '@tanstack/react-query'
+import { shellOf } from '../../lib/platform/platform'
 import { unwrap, useEngine } from '../engine/engine'
 
 export function useVersion() {
@@ -10,12 +11,12 @@ export function useVersion() {
   })
 }
 
-/** Whether the desktop shell's actions (browse, reveal) answer here. */
+/** Who hosts the page and which shell actions (browse, reveal, open) answer here (F12-S3). */
 export function useShell() {
   const { api } = useEngine()
   return useQuery({
     queryKey: ['session'],
-    queryFn: async ({ signal }) => unwrap(await api.GET('/api/v1/session', { signal })).shell,
+    queryFn: async ({ signal }) => shellOf(unwrap(await api.GET('/api/v1/session', { signal }))),
   })
 }
 

@@ -19,6 +19,7 @@ import { SettingsSection } from '../../../components/organisms/SettingsSection/S
 import { SetupSteps } from '../../../components/organisms/SetupSteps/SetupSteps'
 import { PageLayout } from '../../../components/templates/PageLayout/PageLayout'
 import { formatBytes } from '../../../lib/format/format'
+import { BROWSER, can, hostOf } from '../../../lib/platform/platform'
 import { toText } from '../../../lib/settings/settings'
 import { EngineError } from '../../../queries/engine/engine'
 import { TERMINAL, useCancelJob, useJob, useJobs } from '../../../queries/job/job'
@@ -304,7 +305,7 @@ export function SettingsView() {
   const jobs = useJobs()
   const cancelJob = useCancelJob()
   const version = useVersion().data
-  const shell = useShell().data ?? false
+  const shell = useShell().data ?? BROWSER
   const pick = usePickFolder()
   const reveal = useReveal()
   const reports = useMaintenanceReports()
@@ -436,7 +437,7 @@ export function SettingsView() {
         {(onDraft) => (
           <>
             <p>
-              {shell && (
+              {can(shell, 'pick_folder') && (
                 <Button
                   small
                   onClick={() =>
@@ -450,7 +451,7 @@ export function SettingsView() {
                   Browse…
                 </Button>
               )}{' '}
-              {shell && storeRoot && (
+              {can(shell, 'reveal') && storeRoot && (
                 <Button small onClick={() => reveal.mutate({ root: 'store' })}>
                   Reveal
                 </Button>
@@ -546,7 +547,7 @@ export function SettingsView() {
       <PlainSection section={section('sync')} byKey={byKey} />
 
       <PlainSection section={section('data')} byKey={byKey}>
-        {shell && (
+        {can(shell, 'reveal') && (
           <p>
             <Button small onClick={() => reveal.mutate({ root: 'data' })}>
               Reveal the data folder
@@ -589,7 +590,7 @@ export function SettingsView() {
         <p>
           <Muted>
             {version ? `${version.application} ${version.version} · API ${version.api}` : ''}
-            {shell ? ' · desktop window' : ' · browser'}
+            {` · ${hostOf(shell)}`}
           </Muted>
         </p>
         <JobsTable

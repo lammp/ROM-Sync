@@ -1,5 +1,6 @@
-"""The desktop shell (F12-S1, S2): the engine in-process, its API served, a
-window onto it, and a clean shutdown when the window closes."""
+"""The desktop shell (F12-S1, S2, S3): the engine in-process, its API served, a
+window onto it that is told it is the desktop, and a clean shutdown when the
+window closes."""
 
 from __future__ import annotations
 
@@ -41,12 +42,14 @@ class FakeWindow:
         self.fail = fail
         self.options: WindowOptions | None = None
         self.answered: dict[str, str] | None = None
+        self.session: dict[str, object] | None = None
 
     def show(self, options: WindowOptions) -> None:
         self.options = options
         assert self.server.app is not None and not self.server.stopped
         client = TestClient(self.server.app, base_url="http://127.0.0.1:8765")
         self.answered = client.get(f"{PREFIX}/version").json()
+        self.session = client.get(f"{PREFIX}/session").json()
         if self.fail:
             raise RuntimeError("the window crashed")
 
@@ -152,3 +155,13 @@ def test_defaults_put_data_outside_the_application(monkeypatch: pytest.MonkeyPat
     assert default_data() == Path("X:/LocalAppData/ROM-Sync/data")
     bundle = default_bundle()
     assert bundle is None or (bundle / "manifest.json").is_file()
+
+
+def test_shell_reported(tmp_path: Path) -> None:
+    """The page in the desktop window learns it is there, with every shell action."""
+    server = FakeServer()
+    window = FakeWindow(server)
+    run(tmp_path / "data", window=window, server=server, engine_factory=engine_at())
+    assert window.session is not None
+    assert window.session["kind"] == "desktop"
+    assert window.session["capabilities"] == ["reveal", "pick_folder", "open_url"]

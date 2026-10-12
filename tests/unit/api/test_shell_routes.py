@@ -120,4 +120,11 @@ def test_off_loopback_the_shell_is_refused(tmp_path: Path) -> None:
         assert refused.status_code == 403
         assert refused.json()["error"]["code"] == "shell.unavailable"
     assert shell.revealed == [] and shell.opened == []
-    assert c.get(f"{PREFIX}/session").json()["shell"] is False
+    assert c.get(f"{PREFIX}/session").json()["capabilities"] == []
+
+
+def test_a_browser_on_loopback_is_offered_every_action(tmp_path: Path) -> None:
+    c, _ = setup(tmp_path)
+    got = c.get(f"{PREFIX}/session").json()
+    assert got["kind"] == "browser"
+    assert got["capabilities"] == ["reveal", "pick_folder", "open_url"]

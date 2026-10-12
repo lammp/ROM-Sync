@@ -12,9 +12,13 @@ from dataclasses import dataclass
 from typing import Final
 
 from romsync.compose import Engine
+from romsync_api.models import Capability
 
 LOOPBACK: Final = frozenset({"127.0.0.1", "::1", "localhost"})
 LOG = logging.getLogger("romsync.api")
+
+#: The shell actions, in the order a page lists them.
+SHELL_ACTIONS: Final[tuple[Capability, ...]] = ("reveal", "pick_folder", "open_url")
 
 #: What a bind off loopback disables, named in the warning.
 DISABLED: Final = "the shell endpoints (reveal, pick folder, open external)"
@@ -32,6 +36,11 @@ class Binding:
     @property
     def shell_enabled(self) -> bool:
         return self.loopback
+
+    @property
+    def capabilities(self) -> tuple[Capability, ...]:
+        """The shell actions a page may offer: every one on loopback, none off it."""
+        return SHELL_ACTIONS if self.shell_enabled else ()
 
 
 def binding_of(engine: Engine) -> Binding:

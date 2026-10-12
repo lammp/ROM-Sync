@@ -64,6 +64,8 @@ export type World = {
   /** Files in the store's folders the library has not read yet, by system and name. */
   unread: { system: string; name: string; size: number }[]
   nextRun: number
+  /** Who hosts the page: a browser on loopback, as the e2e suite runs, unless a case says otherwise. */
+  shell: { kind: 'desktop' | 'browser'; capabilities: ('reveal' | 'pick_folder' | 'open_url')[] }
 }
 
 const MB = 1 << 20
@@ -655,6 +657,7 @@ export function freshWorld(): World {
     failing: [],
     unread: [],
     nextRun: 1,
+    shell: { kind: 'browser', capabilities: ['reveal', 'pick_folder', 'open_url'] },
   }
 }
 
@@ -1023,9 +1026,9 @@ const ROUTES: Route[] = [
     status: 200,
     body: { application: 'ROM-Sync', version: '2.0.0.dev0', api: 'v1' },
   })),
-  route('GET', '/api/v1/session', () => ({
+  route('GET', '/api/v1/session', (w) => ({
     status: 200,
-    body: { token: 'e2e-token', shell: true },
+    body: { token: 'e2e-token', ...w.shell },
   })),
   route('GET', '/api/v1/library', (w) => ({ status: 200, body: { games: w.games } })),
   route('GET', '/api/v1/systems', (w) => ({

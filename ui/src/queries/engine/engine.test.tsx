@@ -23,7 +23,7 @@ function fakeEngine(sessions: string[] = ['tok-1']) {
     if (request.url.endsWith('/api/v1/session')) {
       const token = sessions.shift()
       return token
-        ? Response.json({ token, shell: false })
+        ? Response.json({ token, kind: 'browser', capabilities: [] })
         : Response.json({ error: { code: 'request.refused', message: 'no' } }, { status: 403 })
     }
     return Response.json({ id: 'j1', kind: 'scan', state: 'cancelling' })

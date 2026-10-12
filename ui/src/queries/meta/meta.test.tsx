@@ -28,10 +28,15 @@ function harness() {
 }
 
 describe('engine facts and shell actions', () => {
-  it('reads the version and whether the shell answers', async () => {
+  it('reads the version, who hosts the page and what the shell answers', async () => {
     const { wrapper } = harness()
     const { result } = renderHook(() => ({ version: useVersion(), shell: useShell() }), { wrapper })
-    await waitFor(() => expect(result.current.shell.data).toBe(true))
+    await waitFor(() =>
+      expect(result.current.shell.data).toEqual({
+        kind: 'browser',
+        capabilities: ['reveal', 'pick_folder', 'open_url'],
+      }),
+    )
     expect(result.current.version.data?.version).toBe('2.0.0.dev0')
   })
 

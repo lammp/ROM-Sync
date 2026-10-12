@@ -1391,11 +1391,16 @@ export interface components {
         };
         /**
          * Session
-         * @description What a page needs before it can change anything.
+         * @description What a page needs before it can change anything, and what it may offer (F12-S3).
          */
         Session: {
-            /** Shell */
-            shell: boolean;
+            /** Capabilities */
+            capabilities: ("reveal" | "pick_folder" | "open_url")[];
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "desktop" | "browser";
             /** Token */
             token: string;
         };

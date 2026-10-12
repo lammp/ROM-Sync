@@ -25,7 +25,7 @@ function scripted(states: (string | 'hang')[]) {
   const fetch = (request: Request) => {
     calls.push({ url: new URL(request.url).pathname, signal: request.signal })
     if (request.url.endsWith('/session'))
-      return Promise.resolve(Response.json({ token: 't', shell: false }))
+      return Promise.resolve(Response.json({ token: 't', kind: 'browser', capabilities: [] }))
     const state = states.length > 1 ? states.shift() : states[0]
     if (state === 'hang')
       return new Promise<Response>((_, reject) =>

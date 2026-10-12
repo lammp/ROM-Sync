@@ -1,7 +1,8 @@
 """The desktop shell's one entry point (F12-S1).
 
 It builds the engine in this process, serves the API and the interface on
-the bind the settings ask for, opens the window, and when the window closes
+the bind the settings ask for, tells the page it is in the desktop window
+(F12-S3), opens the window, and when the window closes
 stops the server and shuts the engine down: running jobs are asked to stop
 between items and the database is closed. Whatever goes wrong on the way,
 the server is stopped and the engine closed.
@@ -30,7 +31,7 @@ def run(
     engine = engine_factory(data)
     try:
         binding = binding_of(engine)
-        app = create_app(engine, binding, bundle)
+        app = create_app(engine, binding, bundle, shell="desktop")
         url = server.start(app, binding.host, binding.port)
         try:
             launch(engine)

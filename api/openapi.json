@@ -1662,11 +1662,27 @@
       },
       "Session": {
         "additionalProperties": false,
-        "description": "What a page needs before it can change anything.",
+        "description": "What a page needs before it can change anything, and what it may offer (F12-S3).",
         "properties": {
-          "shell": {
-            "title": "Shell",
-            "type": "boolean"
+          "capabilities": {
+            "items": {
+              "enum": [
+                "reveal",
+                "pick_folder",
+                "open_url"
+              ],
+              "type": "string"
+            },
+            "title": "Capabilities",
+            "type": "array"
+          },
+          "kind": {
+            "enum": [
+              "desktop",
+              "browser"
+            ],
+            "title": "Kind",
+            "type": "string"
           },
           "token": {
             "title": "Token",
@@ -1675,7 +1691,8 @@
         },
         "required": [
           "token",
-          "shell"
+          "kind",
+          "capabilities"
         ],
         "title": "Session",
         "type": "object"

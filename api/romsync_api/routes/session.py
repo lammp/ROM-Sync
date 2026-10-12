@@ -1,4 +1,5 @@
-"""The page's token, readable only by a page on this origin (F10-S5)."""
+"""The page's token, readable only by a page on this origin (F10-S5), and who
+hosts the page with what it may offer (F12-S3)."""
 
 from __future__ import annotations
 
@@ -11,6 +12,9 @@ router = APIRouter(tags=["session"])
 
 @router.get("/session", response_model=Session)
 def session(request: Request) -> Session:
+    state = request.app.state
     return Session(
-        token=request.app.state.page_token, shell=request.app.state.binding.shell_enabled
+        token=state.page_token,
+        kind=state.shell_kind,
+        capabilities=list(state.binding.capabilities),
     )

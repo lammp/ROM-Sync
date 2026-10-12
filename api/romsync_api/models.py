@@ -31,12 +31,19 @@ class Version(Model):
     api: str
 
 
+#: Who hosts the page: the desktop window, or a browser the person opened.
+ShellKind = Literal["desktop", "browser"]
+#: A shell action the page may offer, each one an endpoint under `/shell`.
+Capability = Literal["reveal", "pick_folder", "open_url"]
+
+
 class Session(Model):
-    """What a page needs before it can change anything."""
+    """What a page needs before it can change anything, and what it may offer (F12-S3)."""
 
     token: str
-    #: Whether the shell endpoints answer: only while the bind is loopback.
-    shell: bool
+    kind: ShellKind
+    #: The shell actions that answer here; none while the bind is off loopback.
+    capabilities: list[Capability]
 
 
 class Member(Model):
