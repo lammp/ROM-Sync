@@ -1,10 +1,11 @@
-"""The desktop shell (F12-S1, S2, S3): the engine in-process, its API served, a
-window onto it that is told it is the desktop, and a clean shutdown when the
-window closes."""
+"""The desktop shell (F12-S1 to S4): the engine in-process, its API served, a
+window onto it that is told it is the desktop and answers folder requests with
+its own dialog, and a clean shutdown when the window closes."""
 
 from __future__ import annotations
 
 import sqlite3
+from collections.abc import Callable
 from pathlib import Path
 
 import pytest
@@ -13,9 +14,12 @@ from fastapi.testclient import TestClient
 
 from romsync.compose import Engine, build
 from romsync.jobs.registry import Context
+from romsync.ports.shell import ShellPort
 from romsync_api.app import PREFIX
+from romsync_api.security import TOKEN_HEADER
 from romsync_desktop.__main__ import default_bundle, default_data
-from romsync_desktop.shell import run
+from romsync_desktop.dialogs import DesktopShell
+from romsync_desktop.shell import desktop_engine, run
 from romsync_desktop.window import PROFILE, WindowOptions, options_for, start_arguments
 from tests.helpers.fakes import CountingIds, FrozenClock
 
@@ -35,28 +39,67 @@ class FakeServer:
 
 
 class FakeWindow:
-    """Opens, asks the API what it is through the server's application, and is closed."""
+    """Opens, asks the API what it is through the server's application, and is
+    closed. Given `picks`, the page asks for a folder, which the window's own
+    dialog answers with the next one."""
 
-    def __init__(self, server: FakeServer, fail: bool = False) -> None:
+    def __init__(
+        self, server: FakeServer, fail: bool = False, picks: list[str] | None = None
+    ) -> None:
         self.server = server
         self.fail = fail
+        self.picks = picks
         self.options: WindowOptions | None = None
         self.answered: dict[str, str] | None = None
         self.session: dict[str, object] | None = None
+        self.asked: list[str] = []
+        self.picked: dict[str, object] | None = None
+        self.refused: str | None = None
 
     def show(self, options: WindowOptions) -> None:
         self.options = options
         assert self.server.app is not None and not self.server.stopped
-        client = TestClient(self.server.app, base_url="http://127.0.0.1:8765")
+        base = options.url.rstrip("/")
+        client = TestClient(self.server.app, base_url=base)
         self.answered = client.get(f"{PREFIX}/version").json()
         self.session = client.get(f"{PREFIX}/session").json()
+        if self.picks is not None:
+            asked = client.post(
+                f"{PREFIX}/shell/pick-folder",
+                json={"title": "Choose the store folder"},
+                headers={"Origin": base, TOKEN_HEADER: str(self.session["token"])},
+            )
+            if asked.status_code == 200:
+                self.picked = asked.json()
+            else:
+                self.refused = asked.json()["error"]["code"]
         if self.fail:
             raise RuntimeError("the window crashed")
 
+    def pick_folder(self, title: str) -> str | None:
+        self.asked.append(title)
+        assert self.picks is not None
+        return self.picks.pop(0) if self.picks else None
 
-def engine_at(**kw: object) -> object:
-    def factory(data: Path) -> Engine:
-        return build(data, clock=FrozenClock(), ids=CountingIds("x"), **kw)  # type: ignore[arg-type]
+
+class Unused:
+    """The system shell, which no test here may reach."""
+
+    def reveal(self, path: Path) -> None:
+        raise AssertionError("revealed a folder")
+
+    def pick_folder(self, title: str) -> Path | None:
+        raise AssertionError("the system shell was asked for a folder, not the window")
+
+    def open_url(self, url: str) -> None:
+        raise AssertionError("opened a link")
+
+
+def engine_at(
+    overrides: dict[str, object] | None = None,
+) -> Callable[[Path, ShellPort], Engine]:
+    def factory(data: Path, shell: ShellPort) -> Engine:
+        return build(data, overrides, clock=FrozenClock(), ids=CountingIds("x"), shell=shell)
 
     return factory
 
@@ -74,8 +117,8 @@ def test_clean_shutdown(tmp_path: Path) -> None:
     window = FakeWindow(server)
     built: list[Engine] = []
 
-    def factory(data: Path) -> Engine:
-        built.append(engine_at()(data))  # type: ignore[operator]
+    def factory(data: Path, shell: ShellPort) -> Engine:
+        built.append(engine_at()(data, shell))
         return built[-1]
 
     run(tmp_path / "data", window=window, server=server, engine_factory=factory)
@@ -90,8 +133,8 @@ def test_a_crashing_window_still_shuts_everything_down(tmp_path: Path) -> None:
     server = FakeServer()
     built: list[Engine] = []
 
-    def factory(data: Path) -> Engine:
-        built.append(engine_at()(data))  # type: ignore[operator]
+    def factory(data: Path, shell: ShellPort) -> Engine:
+        built.append(engine_at()(data, shell))
         return built[-1]
 
     with pytest.raises(RuntimeError, match="the window crashed"):
@@ -145,7 +188,7 @@ def test_profile_location(tmp_path: Path) -> None:
 def test_the_window_gets_the_profile_in_the_data_directory(tmp_path: Path) -> None:
     server = FakeServer()
     window = FakeWindow(server)
-    run(tmp_path / "data", window=window, server=server, engine_factory=engine_at())  # type: ignore[arg-type]
+    run(tmp_path / "data", window=window, server=server, engine_factory=engine_at())
     assert window.options is not None
     assert window.options.storage == tmp_path / "data" / PROFILE
 
@@ -165,3 +208,67 @@ def test_shell_reported(tmp_path: Path) -> None:
     assert window.session is not None
     assert window.session["kind"] == "desktop"
     assert window.session["capabilities"] == ["reveal", "pick_folder", "open_url"]
+
+
+def test_dialogs_gated(tmp_path: Path) -> None:
+    """On loopback the window's own folder dialog answers; off it, nothing is asked."""
+    server = FakeServer()
+    window = FakeWindow(server, picks=["E:\\ROMs"])
+    run(
+        tmp_path / "home",
+        window=window,
+        server=server,
+        engine_factory=engine_at(),
+        system=Unused(),
+    )
+    assert window.session is not None
+    assert window.session["capabilities"] == ["reveal", "pick_folder", "open_url"]
+    assert window.picked == {"path": "E:\\ROMs"}
+    assert window.asked == ["Choose the store folder"]
+
+    server = FakeServer()
+    window = FakeWindow(server, picks=["E:\\ROMs"])
+    run(
+        tmp_path / "lan",
+        window=window,
+        server=server,
+        engine_factory=engine_at({"server.bind_host": "0.0.0.0"}),
+        system=Unused(),
+    )
+    assert window.session is not None and window.session["capabilities"] == []
+    assert window.refused == "shell.unavailable"
+    assert window.asked == [], "a bind off loopback never opens the dialog"
+
+
+def test_the_system_shell_reveals_and_opens_and_the_window_picks(tmp_path: Path) -> None:
+    class System:
+        def __init__(self) -> None:
+            self.done: list[object] = []
+
+        def reveal(self, path: Path) -> None:
+            self.done.append(path)
+
+        def pick_folder(self, title: str) -> Path | None:
+            raise AssertionError("folders are picked in the window")
+
+        def open_url(self, url: str) -> None:
+            self.done.append(url)
+
+    system = System()
+    window = FakeWindow(FakeServer(), picks=[])
+    shell = DesktopShell(window, system)
+    shell.reveal(tmp_path)
+    shell.open_url("https://www.igdb.com/")
+    assert shell.pick_folder("Choose") is None, "a cancelled dialog picks nothing"
+    assert system.done == [tmp_path, "https://www.igdb.com/"]
+    assert window.asked == ["Choose"]
+
+
+def test_the_desktop_engine_is_handed_the_desktop_shell(tmp_path: Path) -> None:
+    window = FakeWindow(FakeServer(), picks=["E:\\ROMs"])
+    engine = desktop_engine(tmp_path / "data", DesktopShell(window, Unused()))
+    try:
+        assert engine.shell.pick_folder("Choose") == Path("E:\\ROMs")
+    finally:
+        engine.close()
+    assert window.asked == ["Choose"]

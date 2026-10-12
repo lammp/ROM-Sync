@@ -1,4 +1,4 @@
-"""The window onto the interface (F12-S1, S2).
+"""The window onto the interface (F12-S1, S2, S4).
 
 The embedded browser keeps its profile (cookies, storage, cache) in the data
 directory, never in the person's own profile, so uninstalling the application
@@ -31,6 +31,10 @@ class Window(Protocol):
         """Open the window and return when the person closes it."""
         ...
 
+    def pick_folder(self, title: str) -> str | None:
+        """The window's native folder dialog (F12-S4); None if cancelled or not open."""
+        ...
+
 
 def options_for(data: Path, url: str) -> WindowOptions:
     return WindowOptions(title="ROM-Sync", url=url, storage=data / PROFILE)
@@ -47,14 +51,28 @@ def start_arguments(options: WindowOptions) -> StartArguments:
 
 
 class WebviewWindow:  # pragma: no cover - opens a window
+    def __init__(self) -> None:
+        self._window: object | None = None
+
     def show(self, options: WindowOptions) -> None:
         import webview
 
         options.storage.mkdir(parents=True, exist_ok=True)
-        webview.create_window(
+        self._window = webview.create_window(
             options.title, options.url, width=options.width, height=options.height
         )
         started = start_arguments(options)
         webview.start(
             private_mode=started["private_mode"], storage_path=started["storage_path"]
         )
+        self._window = None
+
+    def pick_folder(self, title: str) -> str | None:
+        # pywebview's dialog has no title; it is modal to this window, which says enough.
+        import webview
+
+        window = self._window
+        if window is None:
+            return None
+        chosen = window.create_file_dialog(webview.FileDialog.FOLDER)  # type: ignore[attr-defined]
+        return str(chosen[0]) if chosen else None
