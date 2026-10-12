@@ -12,25 +12,15 @@ from __future__ import annotations
 import io
 import json
 import zipfile
-from collections.abc import Iterable, Mapping, Sequence
+from collections.abc import Mapping, Sequence
 from typing import Final
 
 from romsync.app.settings import Settings
+from romsync.domain.redaction import REDACTED, redact
 from romsync.ports.repo import JobRecord
 
-#: What a secret's value becomes wherever it is found.
-REDACTED: Final = "[redacted]"
-#: A secret shorter than this is not searched for: it would match ordinary text.
-SHORTEST: Final = 4
 #: Every entry carries this date, so the same inputs make the same bundle.
 STAMP: Final = (1980, 1, 1, 0, 0, 0)
-
-
-def redact(text: str, secrets: Iterable[str]) -> str:
-    """`text` with every secret's value replaced, longest first."""
-    for secret in sorted({s for s in secrets if len(s) >= SHORTEST}, key=len, reverse=True):
-        text = text.replace(secret, REDACTED)
-    return text
 
 
 def _job(j: JobRecord) -> dict[str, object]:
@@ -54,7 +44,7 @@ def bundle(
     logs: Mapping[str, str],
 ) -> bytes:
     secret_keys = [s.key for s in settings.registry.settings if s.secret]
-    secrets = [str(settings.value(k)) for k in secret_keys]
+    secrets = settings.secrets()
     shown: dict[str, object] = dict(settings.values())
     for key in secret_keys:
         shown[key] = REDACTED if settings.value(key) else None

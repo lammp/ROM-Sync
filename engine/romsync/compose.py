@@ -28,6 +28,8 @@ from romsync.adapters.dest_volume.volume import windows_identity
 from romsync.adapters.discovery import Discovery
 from romsync.adapters.local_fs.covers import FsCoverFiles
 from romsync.adapters.local_fs.data_folder import FsDataFolder
+from romsync.adapters.local_fs.logs import AppLog
+from romsync.adapters.local_fs.logs import configure as configure_log
 from romsync.adapters.local_fs.runs import FsLocalFiles, FsRunFolders
 from romsync.adapters.local_fs.sysfiles import FsSysfileStore
 from romsync.adapters.metadata_igdb.client import (
@@ -75,6 +77,12 @@ def no_discovery() -> tuple[Dest, ...]:
 
 
 Discover = Callable[[Callable[[str], object], Path], Probe]
+
+
+def start_log(engine: Engine) -> AppLog:
+    """The application's log, at the level Settings chooses, secrets left out (F15-S4)."""
+    level = str(engine.settings.value("log.level"))
+    return configure_log(engine.data, level, engine.settings.secrets)
 
 
 def windows_discovery(

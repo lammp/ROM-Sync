@@ -1,8 +1,8 @@
-"""The support bundle's redaction (F15-S3)."""
+"""Redaction, for the support bundle and the log (F15-S3, S4)."""
 
 from __future__ import annotations
 
-from romsync.app.support import REDACTED, redact
+from romsync.domain.redaction import REDACTED, redact
 
 
 def test_every_secret_is_replaced_longest_first() -> None:

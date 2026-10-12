@@ -100,6 +100,12 @@ class Settings:
         values = self._repo.values()
         return values.get(key, setting.default)
 
+    def secrets(self) -> tuple[str, ...]:
+        """Every secret's value that is set, for leaving it out of what is written
+        for people: logs and the support bundle (F15-S3, S4). For the engine only."""
+        found = (str(self.value(s.key)) for s in self.registry.settings if s.secret)
+        return tuple(v for v in found if v)
+
     def values(self) -> dict[str, object]:
         """Every value that is not a secret."""
         stored = self._repo.values()
