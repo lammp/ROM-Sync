@@ -12,6 +12,7 @@ import os
 import sys
 from pathlib import Path
 
+from romsync_desktop.checks import SystemProbe, native_report, preflight
 from romsync_desktop.server import UvicornServer
 from romsync_desktop.shell import run
 from romsync_desktop.window import WebviewWindow
@@ -38,6 +39,9 @@ def main(argv: list[str] | None = None) -> None:  # pragma: no cover - opens a w
     parser.add_argument("--data", type=Path, default=default_data())
     parser.add_argument("--bundle", type=Path, default=default_bundle())
     args = parser.parse_args(argv)
+    # every unmet need is said before the window opens; one that blocks stops the start
+    if not preflight(SystemProbe(), args.data, native_report):
+        sys.exit(1)
     run(args.data, window=WebviewWindow(), server=UvicornServer(), bundle=args.bundle)
 
 

@@ -1,14 +1,26 @@
 """The frozen build (F13-S1): the interpreter, the engine, the API and the
-desktop shell with the built interface, and nothing a person keeps."""
+desktop shell with the built interface, and nothing a person keeps. What the
+computer must provide, checked before the window opens (F13-S2)."""
 
 from __future__ import annotations
 
 import sys
+from collections.abc import Sequence
 from pathlib import Path
 
 import pytest
 
 from romsync_desktop.__main__ import default_bundle
+from romsync_desktop.checks import (
+    MIN_WINDOWS_BUILD,
+    WEBVIEW2_BOOTSTRAPPER,
+    Check,
+    SystemProbe,
+    checks,
+    nearest,
+    preflight,
+    words,
+)
 from tools.installer import BUNDLE, INTERFACE, MANIFEST, NotBuilt, pyinstaller_args
 
 
@@ -55,3 +67,89 @@ def test_the_frozen_application_finds_its_interface_inside_itself(
     assert default_bundle() is None, "no manifest, no interface"
     (inside / "ui" / MANIFEST).write_text("{}", encoding="utf-8")
     assert default_bundle() == inside / "ui"
+
+
+class Machine:
+    """A computer stated in full: Windows build, WebView2 version, free space, access."""
+
+    def __init__(
+        self,
+        build: int | None = 22631,
+        runtime: str | None = "130.0.2849.80",
+        free: int = 50 * 1024**3,
+        writable: bool = True,
+    ) -> None:
+        self.build, self.runtime, self.free, self.can_write = build, runtime, free, writable
+        self.judged: list[Path] = []
+
+    def windows_build(self) -> int | None:
+        return self.build
+
+    def webview2(self) -> str | None:
+        return self.runtime
+
+    def free_bytes(self, folder: Path) -> int:
+        self.judged.append(folder)
+        return self.free
+
+    def writable(self, folder: Path) -> bool:
+        return self.can_write
+
+
+def test_checks_reported(tmp_path: Path) -> None:
+    """Each of the four is checked and said, passing or not."""
+    data = tmp_path / "ROM-Sync" / "data"
+    healthy = Machine()
+    found = checks(healthy, data)
+    assert [(c.name, c.ok) for c in found] == [
+        ("Windows version", True),
+        ("Embedded browser (WebView2)", True),
+        ("Disk space for the data folder", True),
+        ("Data folder writable", True),
+    ]
+    assert healthy.judged == [tmp_path], "space is judged where the data folder will be"
+    said: list[Sequence[Check]] = []
+    assert preflight(healthy, data, said.append) is True and said == []
+
+    poor = Machine(build=17134, free=10 * 1024 * 1024, writable=False)
+    failed = [c for c in checks(poor, data) if not c.ok]
+    assert [c.name for c in failed] == [
+        "Windows version",
+        "Disk space for the data folder",
+        "Data folder writable",
+    ]
+    assert failed[0].detail == f"build 17134; {MIN_WINDOWS_BUILD} or later is needed"
+    assert failed[1].detail == "10 MB free" and not failed[1].blocking
+
+    assert words([failed[1]]) == "Disk space for the data folder: 10 MB free", (
+        "a warning alone does not say the start is stopped"
+    )
+
+    short = Machine(free=10 * 1024 * 1024)
+    assert preflight(short, data, said.append) is True, "short of space warns, never blocks"
+    assert [[c.name for c in r] for r in said] == [["Disk space for the data folder"]]
+
+
+def test_missing_runtime_blocks(tmp_path: Path) -> None:
+    """No WebView2: the start is refused, the reason said, and the download offered."""
+    said: list[Sequence[Check]] = []
+    assert preflight(Machine(runtime=None), tmp_path / "data", said.append) is False
+    (missing,) = said[0]
+    assert missing.blocking and missing.offer == WEBVIEW2_BOOTSTRAPPER
+    assert words(said[0]) == (
+        "Embedded browser (WebView2): the Microsoft Edge WebView2 runtime is missing\n"
+        "ROM-Sync cannot start until this is fixed.\n"
+        f"Get it from {WEBVIEW2_BOOTSTRAPPER}"
+    )
+    assert not checks(Machine(build=None), tmp_path)[0].ok, "off Windows is not Windows"
+
+
+def test_the_system_probe_judges_space_and_access(tmp_path: Path) -> None:
+    probe = SystemProbe()
+    data = tmp_path / "ROM-Sync" / "data"
+    assert probe.free_bytes(nearest(data)) > 0
+    assert probe.writable(data) and data.is_dir()
+    assert list(data.iterdir()) == [], "the access check leaves nothing behind"
+    blocked = tmp_path / "file"
+    blocked.write_text("x", encoding="utf-8")
+    assert probe.writable(blocked / "data") is False, "a folder under a file cannot be made"
