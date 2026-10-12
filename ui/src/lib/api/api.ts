@@ -325,6 +325,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/diagnostics": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Diagnostics */
+        get: operations["diagnostics_api_v1_diagnostics_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/games/{game_id}": {
         parameters: {
             query?: never;
@@ -990,6 +1007,34 @@ export interface components {
             /** Client Secret */
             client_secret?: string | null;
         };
+        /**
+         * Diagnostics
+         * @description What the Diagnostics section shows, each field read from its source (F15-S1).
+         */
+        Diagnostics: {
+            /** Address */
+            address: string;
+            /** Api */
+            api: string;
+            /** Application */
+            application: string;
+            /** Capabilities */
+            capabilities: ("reveal" | "pick_folder" | "open_url" | "notify")[];
+            /** Data Folder */
+            data_folder: string;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "desktop" | "browser";
+            last_sync: components["schemas"]["LastSync"] | null;
+            /** Log Folder */
+            log_folder: string;
+            /** Recent Errors */
+            recent_errors: components["schemas"]["RecentError"][];
+            /** Version */
+            version: string;
+        };
         /** ErrorBody */
         ErrorBody: {
             /** Code */
@@ -1160,6 +1205,17 @@ export interface components {
             state: string;
             /** Target */
             target: string | null;
+        };
+        /**
+         * LastSync
+         * @description The most recent sync to any device, from its run record (F15-S1).
+         */
+        LastSync: {
+            /** Device */
+            device: string;
+            /** Device Id */
+            device_id: string;
+            run: components["schemas"]["RunView"];
         };
         /** Library */
         Library: {
@@ -1332,6 +1388,24 @@ export interface components {
             phase: string;
             /** Total */
             total: number | null;
+        };
+        /**
+         * RecentError
+         * @description A job that failed, with what it said (F15-S1).
+         */
+        RecentError: {
+            /** Code */
+            code: string | null;
+            /** Finished */
+            finished: string | null;
+            /** Job */
+            job: string;
+            /** Kind */
+            kind: string;
+            /** Message */
+            message: string | null;
+            /** Target */
+            target: string | null;
         };
         /** RecoverItem */
         RecoverItem: {
@@ -3264,6 +3338,89 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["JobView"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Bad Gateway */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    diagnostics_api_v1_diagnostics_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Diagnostics"];
                 };
             };
             /** @description Bad Request */

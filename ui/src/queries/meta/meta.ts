@@ -13,6 +13,15 @@ export function useVersion() {
   })
 }
 
+/** What the Diagnostics section shows, read from the engine each time (F15-S1). */
+export function useDiagnostics() {
+  const { api } = useEngine()
+  return useQuery({
+    queryKey: ['diagnostics'],
+    queryFn: async ({ signal }) => unwrap(await api.GET('/api/v1/diagnostics', { signal })),
+  })
+}
+
 /** Who hosts the page and which shell actions (browse, reveal, open) answer here (F12-S3). */
 export function useShell() {
   const { api } = useEngine()

@@ -20,6 +20,7 @@ from romsync_api.binding import Binding, binding_of
 from romsync_api.models import ErrorEnvelope, ShellKind
 from romsync_api.routes import (
     devices,
+    diagnostics,
     igdb,
     jobs,
     library,
@@ -59,6 +60,7 @@ ROUTERS: tuple[APIRouter, ...] = (
     tags.router,
     sysfiles.router,
     recover.router,
+    diagnostics.router,
 )
 
 

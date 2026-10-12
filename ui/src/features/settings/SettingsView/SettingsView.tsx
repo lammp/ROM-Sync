@@ -9,6 +9,7 @@ import { LoadError } from '../../../components/molecules/LoadError/LoadError'
 import { SettingControl } from '../../../components/molecules/SettingControl/SettingControl'
 import { TransportList } from '../../../components/molecules/TransportList/TransportList'
 import { ConfirmDialog } from '../../../components/organisms/ConfirmDialog/ConfirmDialog'
+import { DiagnosticsSummary } from '../../../components/organisms/DiagnosticsSummary/DiagnosticsSummary'
 import {
   CredentialControl,
   type SecretDraft,
@@ -39,6 +40,7 @@ import {
 } from '../../../queries/maintenance/maintenance'
 import {
   useAnnounce,
+  useDiagnostics,
   usePickFolder,
   useReveal,
   useShell,
@@ -315,6 +317,7 @@ export function SettingsView() {
   const jobs = useJobs()
   const cancelJob = useCancelJob()
   const version = useVersion().data
+  const diagnostics = useDiagnostics()
   const attached = useAttached()
   const shell = useShell().data ?? BROWSER
   const pick = usePickFolder()
@@ -600,12 +603,36 @@ export function SettingsView() {
       </PlainSection>
 
       <PlainSection section={section('diagnostics')} byKey={byKey}>
-        <p>
-          <Muted>
-            {version ? `${version.application} ${version.version} · API ${version.api}` : ''}
-            {` · ${hostOf(shell)}`}
-          </Muted>
-        </p>
+        {diagnostics.isError ? (
+          <LoadError
+            what="the diagnostics"
+            message={diagnostics.error.message}
+            retrying={diagnostics.isFetching}
+            onRetry={() => void diagnostics.refetch()}
+          />
+        ) : (
+          <DiagnosticsSummary
+            version={
+              version ? `${version.application} ${version.version} · API ${version.api}` : ''
+            }
+            host={hostOf(shell)}
+            address={diagnostics.data?.address ?? ''}
+            dataFolder={diagnostics.data?.data_folder ?? ''}
+            logFolder={diagnostics.data?.log_folder ?? ''}
+            lastSync={
+              diagnostics.data?.last_sync
+                ? {
+                    device: diagnostics.data.last_sync.device,
+                    started: diagnostics.data.last_sync.run.started,
+                    state: diagnostics.data.last_sync.run.state,
+                    counts: diagnostics.data.last_sync.run.counts ?? {},
+                    bytes: diagnostics.data.last_sync.run.bytes_moved ?? null,
+                  }
+                : null
+            }
+            errors={diagnostics.data?.recent_errors ?? []}
+          />
+        )}
         <JobsTable
           jobs={(jobs.data ?? []).map((j) => ({
             id: j.id,

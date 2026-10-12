@@ -501,3 +501,38 @@ class RecoverList(Model):
 class RecoverOne(Model):
     system: str
     name: str
+
+
+class LastSync(Model):
+    """The most recent sync to any device, from its run record (F15-S1)."""
+
+    device_id: str
+    device: str
+    run: RunView
+
+
+class RecentError(Model):
+    """A job that failed, with what it said (F15-S1)."""
+
+    job: str
+    kind: str
+    target: str | None
+    finished: str | None
+    code: str | None
+    message: str | None
+
+
+class Diagnostics(Model):
+    """What the Diagnostics section shows, each field read from its source (F15-S1)."""
+
+    application: str
+    version: str
+    api: str
+    kind: ShellKind
+    capabilities: list[Capability]
+    #: The address this page reached the engine at.
+    address: str
+    data_folder: str
+    log_folder: str
+    last_sync: LastSync | None
+    recent_errors: list[RecentError]

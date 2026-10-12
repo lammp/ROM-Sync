@@ -236,6 +236,88 @@
         "title": "CredentialTest",
         "type": "object"
       },
+      "Diagnostics": {
+        "additionalProperties": false,
+        "description": "What the Diagnostics section shows, each field read from its source (F15-S1).",
+        "properties": {
+          "address": {
+            "title": "Address",
+            "type": "string"
+          },
+          "api": {
+            "title": "Api",
+            "type": "string"
+          },
+          "application": {
+            "title": "Application",
+            "type": "string"
+          },
+          "capabilities": {
+            "items": {
+              "enum": [
+                "reveal",
+                "pick_folder",
+                "open_url",
+                "notify"
+              ],
+              "type": "string"
+            },
+            "title": "Capabilities",
+            "type": "array"
+          },
+          "data_folder": {
+            "title": "Data Folder",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "desktop",
+              "browser"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "last_sync": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/LastSync"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "log_folder": {
+            "title": "Log Folder",
+            "type": "string"
+          },
+          "recent_errors": {
+            "items": {
+              "$ref": "#/components/schemas/RecentError"
+            },
+            "title": "Recent Errors",
+            "type": "array"
+          },
+          "version": {
+            "title": "Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "application",
+          "version",
+          "api",
+          "kind",
+          "capabilities",
+          "address",
+          "data_folder",
+          "log_folder",
+          "last_sync",
+          "recent_errors"
+        ],
+        "title": "Diagnostics",
+        "type": "object"
+      },
       "ErrorBody": {
         "additionalProperties": false,
         "properties": {
@@ -869,6 +951,30 @@
         "title": "JobView",
         "type": "object"
       },
+      "LastSync": {
+        "additionalProperties": false,
+        "description": "The most recent sync to any device, from its run record (F15-S1).",
+        "properties": {
+          "device": {
+            "title": "Device",
+            "type": "string"
+          },
+          "device_id": {
+            "title": "Device Id",
+            "type": "string"
+          },
+          "run": {
+            "$ref": "#/components/schemas/RunView"
+          }
+        },
+        "required": [
+          "device_id",
+          "device",
+          "run"
+        ],
+        "title": "LastSync",
+        "type": "object"
+      },
       "Library": {
         "additionalProperties": false,
         "properties": {
@@ -1397,6 +1503,74 @@
           "detail"
         ],
         "title": "ProgressView",
+        "type": "object"
+      },
+      "RecentError": {
+        "additionalProperties": false,
+        "description": "A job that failed, with what it said (F15-S1).",
+        "properties": {
+          "code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Code"
+          },
+          "finished": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Finished"
+          },
+          "job": {
+            "title": "Job",
+            "type": "string"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Message"
+          },
+          "target": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Target"
+          }
+        },
+        "required": [
+          "job",
+          "kind",
+          "target",
+          "finished",
+          "code",
+          "message"
+        ],
+        "title": "RecentError",
         "type": "object"
       },
       "RecoverItem": {
@@ -4552,6 +4726,97 @@
         "summary": "Unstage",
         "tags": [
           "sysfiles"
+        ]
+      }
+    },
+    "/api/v1/diagnostics": {
+      "get": {
+        "operationId": "diagnostics_api_v1_diagnostics_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Diagnostics"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "502": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Gateway"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "summary": "Diagnostics",
+        "tags": [
+          "diagnostics"
         ]
       }
     },

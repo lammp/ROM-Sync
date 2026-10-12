@@ -1039,6 +1039,39 @@ const ROUTES: Route[] = [
     status: 200,
     body: { application: 'ROM-Sync', version: '2.0.0.dev0', api: 'v1' },
   })),
+  route('GET', '/api/v1/diagnostics', (w) => {
+    const latest = Object.entries(w.runs)
+      .flatMap(([device, runs]) => runs.map((run) => ({ device, run })))
+      .sort((a, b) => String(b.run.started).localeCompare(String(a.run.started)))[0]
+    const name = (id: string) => String(w.profiles.find((p) => p.id === id)?.name ?? id)
+    return {
+      status: 200,
+      body: {
+        application: 'ROM-Sync',
+        version: '2.0.0.dev0',
+        api: 'v1',
+        ...w.shell,
+        address: 'http://127.0.0.1:8765/',
+        data_folder: 'X:/LocalAppData/ROM-Sync/data',
+        log_folder: 'X:/LocalAppData/ROM-Sync/data/logs',
+        last_sync: latest
+          ? { device_id: latest.device, device: name(latest.device), run: latest.run }
+          : null,
+        recent_errors: w.jobs
+          .filter((j) => j.state === 'failed')
+          .slice(-5)
+          .reverse()
+          .map((j) => ({
+            job: j.id,
+            kind: j.kind,
+            target: j.target ?? null,
+            finished: j.finished ?? null,
+            code: j.error_code ?? null,
+            message: j.error_message ?? null,
+          })),
+      },
+    }
+  }),
   route('GET', '/api/v1/session', (w) => ({
     status: 200,
     body: { token: 'e2e-token', ...w.shell },

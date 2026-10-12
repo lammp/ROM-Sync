@@ -19,7 +19,7 @@ describe('SettingsView', () => {
   it('test_shell_reported: upgrades from browser to desktop mode when the engine says so', async () => {
     render(<InTheDesktop />)
     const diagnostics = await screen.findByRole('region', { name: /^Diagnostics/ })
-    await waitFor(() => expect(diagnostics.textContent).toContain('· desktop window'))
+    await waitFor(() => expect(diagnostics.textContent).toContain('Shelldesktop window'))
     const library = region(/^Library/)
     expect(within(library).getByRole('button', { name: 'Browse…' })).toBeTruthy()
     expect(within(library).getByRole('button', { name: 'Reveal' })).toBeTruthy()
@@ -31,7 +31,7 @@ describe('SettingsView', () => {
   it('offers no shell action where the engine says none answers', async () => {
     render(<OffLoopback />)
     await waitFor(() => expect(region(/^Library/).textContent).toContain('4 systems · 40 games'))
-    expect(region(/^Diagnostics/).textContent).toContain('· browser')
+    expect(region(/^Diagnostics/).textContent).toContain('Shellbrowser')
     expect(screen.queryByRole('button', { name: 'Browse…' })).toBeNull()
     expect(screen.queryByRole('button', { name: /^Reveal/ })).toBeNull()
   })
@@ -45,6 +45,15 @@ describe('SettingsView', () => {
       'to do',
     ])
     expect(region(/^Metadata and artwork/).textContent).toContain('no credentials')
+  })
+
+  it('test_fields: says the address, folders, last sync and recent errors (F15-S1)', async () => {
+    await page()
+    const diagnostics = region(/^Diagnostics/)
+    await waitFor(() => expect(diagnostics.textContent).toContain('Addresshttp://127.0.0.1:8765/'))
+    expect(diagnostics.textContent).toContain('Log folderX:/LocalAppData/ROM-Sync/data/logs')
+    expect(diagnostics.textContent).toContain('Last syncno sync yet')
+    expect(diagnostics.textContent).toContain('No job has failed.')
   })
 
   it('states each detected transport in the transports section (F13-S8)', async () => {
