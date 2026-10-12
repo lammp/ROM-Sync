@@ -1,7 +1,8 @@
 """The frozen build (F13-S1): the interpreter, the engine, the API and the
 desktop shell with the built interface, and nothing a person keeps. What the
 computer must provide, checked before the window opens (F13-S2). The
-installer, which keeps the data apart from the application (F13-S3)."""
+installer, which keeps the data apart from the application (F13-S3), and the
+uninstaller, which leaves it (F13-S4)."""
 
 from __future__ import annotations
 
@@ -236,3 +237,19 @@ def test_the_installer_offers_the_runtime(tmp_path: Path) -> None:
     for hive, key in WEBVIEW2_KEYS:
         assert f"HasRuntime({hive}, '{key}')" in code
     assert WEBVIEW2_BOOTSTRAPPER in code and "Result := False;" in code
+
+
+def test_uninstall_keeps_data(tmp_path: Path) -> None:
+    """The uninstaller removes the application only, keeps where the data is, and says so."""
+    script = sections(inno_script("2.0.0", tmp_path / "dist"))
+    assert entries(script["UninstallDelete"]) == [{"Type": "filesandordirs", "Name": "{app}"}]
+    (recorded,) = entries(script["Registry"])
+    assert recorded["ValueName"] == "DataDir" and "Flags" not in recorded, (
+        "the data folder's record outlives the application, so a reinstall finds it"
+    )
+    code = "\n".join(script["Code"])
+    for removal in ("DelTree", "DeleteFile", "RemoveDir", "RegDeleteKey", "RegDeleteValue"):
+        assert removal not in code, f"the script's own code never calls {removal}"
+    said = code[code.index("procedure CurUninstallStepChanged") :]
+    assert "usPostUninstall" in said and "was kept in ' + Kept" in said
+    assert "Kept := Recorded(ExpandConstant('" + DATA_DIR + "'))" in code

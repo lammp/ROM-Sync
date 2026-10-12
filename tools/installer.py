@@ -157,6 +157,7 @@ Type: filesandordirs; Name: "{app}"
 [Code]
 var
   DataPage: TInputDirWizardPage;
+  Kept: String;
 
 function HasRuntime(Root: Integer; Key: String): Boolean;
 var
@@ -228,6 +229,21 @@ function DataDir(Param: String): String;
 begin
   Result := DataPage.Values[0];
 end;
+
+function InitializeUninstall: Boolean;
+begin
+  { read before anything is removed: the folder the data was kept in }
+  Kept := Recorded(ExpandConstant('${data_dir}'));
+  Result := True;
+end;
+
+procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
+begin
+  if (CurUninstallStep = usPostUninstall) and not UninstallSilent then
+    MsgBox('ROM-Sync has been removed. Your library data was kept in ' + Kept + '.' + #13#10#13#10 +
+           'Installing ROM-Sync again picks it up. Delete that folder yourself if you no longer want it.',
+           mbInformation, MB_OK);
+end;
 '''
 )
 
@@ -238,7 +254,9 @@ def inno_script(version: str, dist: Path) -> str:
     The application goes to its own folder and the data to another: the person
     chooses the data folder, and one inside the application's (or around it) is
     refused. Every file the installer writes or deletes is under `{app}`, so
-    replacing the application cannot touch the data.
+    replacing the application cannot touch the data. The uninstaller removes
+    the application, leaves the data and its recorded folder, and says where
+    the data is (F13-S4).
     """
     keys = "\n".join(
         f"  Result := Result or HasRuntime({hive}, '{key}');" for hive, key in WEBVIEW2_KEYS
