@@ -43,7 +43,8 @@ def interpolated(source: str, name: str) -> list[str]:
 
 def test_no_interpolated_sql() -> None:
     found = []
-    for path in sorted((ROOT / "engine").rglob("*.py")):
+    # the engine, and the tools that write a database (the version 1 import)
+    for path in sorted([*(ROOT / "engine").rglob("*.py"), *(ROOT / "tools").glob("*.py")]):
         found += interpolated(path.read_text(encoding="utf-8"), str(path.relative_to(ROOT)))
     assert found == []
 

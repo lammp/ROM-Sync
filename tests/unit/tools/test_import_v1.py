@@ -11,7 +11,7 @@ import pytest
 from romsync.adapters.db_sqlite.migrations import HEAD, version_of
 from tests.fixtures import v1_db
 from tests.helpers.fakes import FrozenClock
-from tools.import_v1 import NotVersionOne, read_v1
+from tools.import_v1 import GROUPS, NotVersionOne, carry, read_v1
 
 
 def fingerprint(folder: Path) -> dict[str, tuple[str, int]]:
@@ -48,3 +48,34 @@ def test_only_version_one_is_read(tmp_path: Path) -> None:
     sqlite3.connect(empty).close()
     with pytest.raises(NotVersionOne, match="schema version 0"):
         read_v1(empty, tmp_path / "work", FrozenClock())
+
+
+def test_counts_reconcile(tmp_path: Path) -> None:
+    """Games, device profiles, selections and tag decisions arrive, every table's
+    rows counted on both sides; runs, settings and credentials stay behind."""
+    source = v1_db.build(tmp_path / "v1" / "romsync.db")
+    copy = read_v1(source, tmp_path / "work", FrozenClock())
+    target = tmp_path / "data" / "romsync.db"
+    report = carry(copy, target, FrozenClock())
+    assert report.reconciles
+    assert {r.table: (r.found, r.written) for r in report.rows} == {
+        t: (n, n) for t, n in v1_db.ROWS.items()
+    }
+    assert [g for g, _ in GROUPS] == ["games", "device profiles", "selections", "tag decisions"]
+    assert report.lines()[0] == (
+        "games: 8 of 8 rows (systems 2/2, games 3/3, game_files 2/2, game_media 1/1)"
+    )
+    assert report.lines()[-1] == "reconciled"
+    with sqlite3.connect(target) as conn:
+        assert version_of(conn) == HEAD
+        assert conn.execute("SELECT mode FROM selections WHERE system = 'nes'").fetchone() == (
+            "all",
+        )
+        assert conn.execute("SELECT state FROM tags WHERE game_id = 2").fetchone() == (
+            "rejected",
+        ), "a rejected tag stays rejected"
+        assert conn.execute("SELECT adb_serial FROM devices").fetchone() == ("R5CT1234",), (
+            "version 1's crossed identity is put right by the migrations on the way"
+        )
+        for left_behind in ("sync_runs", "config", "secrets"):
+            assert conn.execute(f"SELECT COUNT(*) FROM {left_behind}").fetchone() == (0,)
