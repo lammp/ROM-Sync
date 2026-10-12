@@ -64,6 +64,13 @@
             "title": "Devices",
             "type": "array"
           },
+          "transports": {
+            "items": {
+              "$ref": "#/components/schemas/TransportView"
+            },
+            "title": "Transports",
+            "type": "array"
+          },
           "unreachable": {
             "title": "Unreachable",
             "type": "integer"
@@ -72,7 +79,8 @@
         "required": [
           "devices",
           "blocked",
-          "unreachable"
+          "unreachable",
+          "transports"
         ],
         "title": "AttachedDevices",
         "type": "object"
@@ -2499,6 +2507,31 @@
           "source"
         ],
         "title": "TagView",
+        "type": "object"
+      },
+      "TransportView": {
+        "additionalProperties": false,
+        "description": "A transport on the last probe: asked or not, and what it said (F13-S8).",
+        "properties": {
+          "available": {
+            "title": "Available",
+            "type": "boolean"
+          },
+          "detail": {
+            "title": "Detail",
+            "type": "string"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "available",
+          "detail"
+        ],
+        "title": "TransportView",
         "type": "object"
       },
       "Version": {

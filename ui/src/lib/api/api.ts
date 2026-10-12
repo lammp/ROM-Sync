@@ -936,6 +936,8 @@ export interface components {
             blocked: components["schemas"]["BlockedDevice"][];
             /** Devices */
             devices: components["schemas"]["AttachedDevice"][];
+            /** Transports */
+            transports: components["schemas"]["TransportView"][];
             /** Unreachable */
             unreachable: number;
         };
@@ -1665,6 +1667,18 @@ export interface components {
             state: string;
             /** Tag */
             tag: string;
+        };
+        /**
+         * TransportView
+         * @description A transport on the last probe: asked or not, and what it said (F13-S8).
+         */
+        TransportView: {
+            /** Available */
+            available: boolean;
+            /** Detail */
+            detail: string;
+            /** Kind */
+            kind: string;
         };
         /** Version */
         Version: {

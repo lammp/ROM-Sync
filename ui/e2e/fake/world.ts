@@ -71,6 +71,8 @@ export type World = {
   }
   /** System notifications the page asked for, by text. */
   notified: string[]
+  /** Each transport's state on the last probe, as the engine reports it (F13-S8). */
+  transports: { kind: string; available: boolean; detail: string }[]
 }
 
 const MB = 1 << 20
@@ -664,6 +666,11 @@ export function freshWorld(): World {
     nextRun: 1,
     shell: { kind: 'browser', capabilities: ['reveal', 'pick_folder', 'open_url', 'notify'] },
     notified: [],
+    transports: [
+      { kind: 'volume', available: true, detail: '1 drive(s)' },
+      { kind: 'mtp', available: true, detail: '0 storage(s)' },
+      { kind: 'adb', available: true, detail: '2 device(s)' },
+    ],
   }
 }
 
@@ -1245,6 +1252,7 @@ const ROUTES: Route[] = [
       })),
       blocked: w.blocked,
       unreachable: w.blocked.length,
+      transports: w.transports,
     },
   })),
   // The engine lists profiles by name.

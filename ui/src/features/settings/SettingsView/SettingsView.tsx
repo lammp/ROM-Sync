@@ -7,6 +7,7 @@ import { DataTable } from '../../../components/molecules/DataTable/DataTable'
 import { JobLine, type JobState } from '../../../components/molecules/JobLine/JobLine'
 import { LoadError } from '../../../components/molecules/LoadError/LoadError'
 import { SettingControl } from '../../../components/molecules/SettingControl/SettingControl'
+import { TransportList } from '../../../components/molecules/TransportList/TransportList'
 import { ConfirmDialog } from '../../../components/organisms/ConfirmDialog/ConfirmDialog'
 import {
   CredentialControl,
@@ -21,6 +22,7 @@ import { PageLayout } from '../../../components/templates/PageLayout/PageLayout'
 import { formatBytes } from '../../../lib/format/format'
 import { BROWSER, can, hostOf } from '../../../lib/platform/platform'
 import { toText } from '../../../lib/settings/settings'
+import { useAttached } from '../../../queries/devices/devices'
 import { EngineError } from '../../../queries/engine/engine'
 import { TERMINAL, useCancelJob, useJob, useJobs } from '../../../queries/job/job'
 import {
@@ -313,6 +315,7 @@ export function SettingsView() {
   const jobs = useJobs()
   const cancelJob = useCancelJob()
   const version = useVersion().data
+  const attached = useAttached()
   const shell = useShell().data ?? BROWSER
   const pick = usePickFolder()
   const reveal = useReveal()
@@ -551,7 +554,9 @@ export function SettingsView() {
         {tagJob.line}
       </PlainSection>
 
-      <PlainSection section={section('transports')} byKey={byKey} />
+      <PlainSection section={section('transports')} byKey={byKey}>
+        <TransportList transports={attached.data?.transports ?? []} />
+      </PlainSection>
       <PlainSection section={section('sync')} byKey={byKey} />
 
       <PlainSection section={section('data')} byKey={byKey}>

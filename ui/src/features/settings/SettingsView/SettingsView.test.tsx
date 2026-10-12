@@ -47,6 +47,17 @@ describe('SettingsView', () => {
     expect(region(/^Metadata and artwork/).textContent).toContain('no credentials')
   })
 
+  it('states each detected transport in the transports section (F13-S8)', async () => {
+    await page()
+    const transports = region(/^Transports and tools/)
+    const list = await within(transports).findByRole('list', { name: 'Detected transports' })
+    expect(
+      within(list)
+        .getAllByRole('listitem')
+        .map((li) => li.textContent),
+    ).toEqual(['Drivesavailable1 drive(s)', 'MTPavailable0 storage(s)', 'ADBavailable2 device(s)'])
+  })
+
   it('draws every section in first-run order from the registry, with its fields', async () => {
     await page()
     expect(

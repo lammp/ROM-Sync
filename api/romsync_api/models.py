@@ -191,10 +191,20 @@ class BlockedDevice(Model):
     reason: str
 
 
+class TransportView(Model):
+    """A transport on the last probe: asked or not, and what it said (F13-S8)."""
+
+    kind: str
+    available: bool
+    detail: str
+
+
 class AttachedDevices(Model):
     devices: list[AttachedDevice]
     blocked: list[BlockedDevice]
     unreachable: int
+    #: Each transport's state; a transport turned off or without its tool is one, not an error.
+    transports: list[TransportView]
 
 
 class CapacityView(Model):

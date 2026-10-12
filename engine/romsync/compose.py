@@ -59,7 +59,7 @@ from romsync.domain.paths import LocalRoot, StoreRoot
 from romsync.jobs.registry import Context, JobRecord, Jobs, Runner, Work, threaded
 from romsync.jobs.sync_job import Syncs
 from romsync.ports.clock import ClockPort, IdPort
-from romsync.ports.dest import Dest
+from romsync.ports.dest import Dest, TransportState
 from romsync.ports.metadata import MetadataPort
 from romsync.ports.shell import ShellPort
 
@@ -107,6 +107,8 @@ class Engine:
     data: Path
     #: Shut down: running jobs asked to stop between items, then the database closed.
     close: Callable[[], None]
+    #: Each transport's state on the last probe; empty when nothing is asked (F13-S8).
+    transports: Callable[[], tuple[TransportState, ...]]
 
 
 def prepare_database(db: Path, clock: ClockPort) -> tuple[int, ...]:
@@ -170,6 +172,10 @@ def build(
     # a probe handed in wins; otherwise the computer is asked when a discovery is given
     asked = probe or (discover(settings.value, data) if discover else no_discovery)
     devices = Devices(asked, stores.devices, stores.selections, clock, ids)
+
+    def transports() -> tuple[TransportState, ...]:
+        return asked.transports if isinstance(asked, Discovery) else ()
+
     plans = Plans(stores, devices, settings.value)
     history = settings.value("jobs.history_length")
     assert isinstance(history, int)
@@ -255,6 +261,7 @@ def build(
         recover=Recover(stores, sync, FsLocalFiles(), LocalRoot(str(data / "pull"))),
         data=data,
         close=close,
+        transports=transports,
     )
 
 

@@ -21,7 +21,6 @@ from __future__ import annotations
 import json
 import shutil
 from collections.abc import Callable, Sequence
-from dataclasses import dataclass
 from pathlib import Path
 from typing import ClassVar, Final, NoReturn
 
@@ -34,7 +33,7 @@ from romsync.adapters.dest_volume.volume import Identify, VolumeDest
 from romsync.domain.errors import DestinationToolMissing, DestinationUnavailable
 from romsync.domain.models import DeviceKind
 from romsync.domain.paths import LocalRoot
-from romsync.ports.dest import Dest, DestIdentity
+from romsync.ports.dest import Dest, DestIdentity, TransportState
 
 #: Where every destination found keeps its ROMs, below the top of its storage.
 ROMS: Final = "ROMs"
@@ -72,15 +71,6 @@ WAITING: Final = {
 
 Setting = Callable[[str], object]
 Which = Callable[[str], str | None]
-
-
-@dataclass(frozen=True, slots=True)
-class TransportState:
-    """Whether a transport was asked this time, and in words what it said."""
-
-    kind: str
-    available: bool
-    detail: str
 
 
 class Waiting(Declared):

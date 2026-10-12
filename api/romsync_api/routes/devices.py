@@ -32,6 +32,7 @@ from romsync_api.models import (
     Profiles,
     Rename,
     SelectionView,
+    TransportView,
 )
 from romsync_api.routes.jobs import job_view
 
@@ -74,6 +75,10 @@ def devices(e: Engine = Depends(engine)) -> AttachedDevices:  # noqa: B008
         devices=[attached_of(a, e.devices.roms_root(a)) for a in found],
         blocked=[blocked_of(b) for b in e.devices.blocked],
         unreachable=e.devices.unreachable,
+        transports=[
+            TransportView(kind=t.kind, available=t.available, detail=t.detail)
+            for t in e.transports()
+        ],
     )
 
 

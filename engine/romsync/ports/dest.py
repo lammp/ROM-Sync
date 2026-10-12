@@ -28,6 +28,16 @@ from romsync.ports.sink import ProgressSink
 
 
 @dataclass(frozen=True, slots=True)
+class TransportState:
+    """Whether a transport was asked on the last probe, and in words what it said
+    (F10-S26, F13-S8): turned off, its tool absent and a failing probe are states."""
+
+    kind: str
+    available: bool
+    detail: str
+
+
+@dataclass(frozen=True, slots=True)
 class VolumeIdentity:
     """A drive, by its volume serial number. The letter locates it and is not identity."""
 
