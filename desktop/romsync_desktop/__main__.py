@@ -1,8 +1,9 @@
 """`python -m romsync_desktop [--data DIR] [--bundle DIR]`: the application.
 
 The data directory defaults to ROM-Sync under the person's local application
-data, outside any install directory (SPEC section 11); the installer's
-first-run choice replaces this default (F13-S3).
+data, outside any install directory (SPEC section 11). The installer asks for
+it on the first install and passes it as `--data` from every shortcut
+(F13-S3); a data folder inside the application's own is refused at start.
 """
 
 from __future__ import annotations
@@ -40,7 +41,8 @@ def main(argv: list[str] | None = None) -> None:  # pragma: no cover - opens a w
     parser.add_argument("--bundle", type=Path, default=default_bundle())
     args = parser.parse_args(argv)
     # every unmet need is said before the window opens; one that blocks stops the start
-    if not preflight(SystemProbe(), args.data, native_report):
+    installed = Path(sys.executable).parent if getattr(sys, "frozen", False) else None
+    if not preflight(SystemProbe(), args.data, native_report, installed):
         sys.exit(1)
     run(args.data, window=WebviewWindow(), server=UvicornServer(), bundle=args.bundle)
 

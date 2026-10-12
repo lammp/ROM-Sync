@@ -1,12 +1,14 @@
 """The frozen build (F13-S1): the interpreter, the engine, the API and the
 desktop shell with the built interface, and nothing a person keeps. What the
-computer must provide, checked before the window opens (F13-S2)."""
+computer must provide, checked before the window opens (F13-S2). The
+installer, which keeps the data apart from the application (F13-S3)."""
 
 from __future__ import annotations
 
+import re
 import sys
 from collections.abc import Sequence
-from pathlib import Path
+from pathlib import Path, PureWindowsPath
 
 import pytest
 
@@ -14,14 +16,25 @@ from romsync_desktop.__main__ import default_bundle
 from romsync_desktop.checks import (
     MIN_WINDOWS_BUILD,
     WEBVIEW2_BOOTSTRAPPER,
+    WEBVIEW2_KEYS,
     Check,
     SystemProbe,
     checks,
+    inside,
     nearest,
     preflight,
     words,
 )
-from tools.installer import BUNDLE, INTERFACE, MANIFEST, NotBuilt, pyinstaller_args
+from tools.installer import (
+    BUNDLE,
+    DATA_DIR,
+    INSTALL_DIR,
+    INTERFACE,
+    MANIFEST,
+    NotBuilt,
+    inno_script,
+    pyinstaller_args,
+)
 
 
 def built(root: Path) -> Path:
@@ -153,3 +166,73 @@ def test_the_system_probe_judges_space_and_access(tmp_path: Path) -> None:
     blocked = tmp_path / "file"
     blocked.write_text("x", encoding="utf-8")
     assert probe.writable(blocked / "data") is False, "a folder under a file cannot be made"
+
+
+def sections(script: str) -> dict[str, list[str]]:
+    """The script's sections, each a list of its lines without comments or blanks."""
+    found: dict[str, list[str]] = {}
+    current = ""
+    for line in script.splitlines():
+        if line.startswith("[") and line.endswith("]"):
+            current = line[1:-1]
+            found[current] = []
+        elif current and line.strip() and not line.startswith(";"):
+            found[current].append(line)
+    return found
+
+
+def entries(lines: list[str]) -> list[dict[str, str]]:
+    """An entry section's lines as name/value pairs."""
+    field = re.compile(r'(\w+): ("(?:[^"]|"")*"|[^;]*)')
+    return [
+        {name: value[1:-1] if value.startswith('"') else value for name, value in found}
+        for found in (field.findall(line) for line in lines)
+    ]
+
+
+def setting(lines: list[str], name: str) -> str:
+    return next(line.split("=", 1)[1] for line in lines if line.startswith(f"{name}="))
+
+
+def test_data_outside_install(tmp_path: Path) -> None:
+    """The application has its own folder and the data another; the installer and the
+    application both refuse to put one inside the other, and nothing the installer
+    writes or deletes is outside the application's folder."""
+    script = sections(inno_script("2.0.0", tmp_path / "dist"))
+    install = PureWindowsPath(setting(script["Setup"], "DefaultDirName"))
+    data = PureWindowsPath(DATA_DIR)
+    assert install == PureWindowsPath(INSTALL_DIR)
+    assert not data.is_relative_to(install) and not install.is_relative_to(data)
+    assert setting(script["Setup"], "PrivilegesRequired") == "lowest"
+    assert setting(script["Setup"], "MinVersion") == f"10.0.{MIN_WINDOWS_BUILD}"
+
+    for written in entries(script["Files"]):
+        assert written["DestDir"] == "{app}"
+    for removed in entries(script["InstallDelete"]) + entries(script["UninstallDelete"]):
+        assert removed["Name"].startswith("{app}"), removed
+    for shortcut in entries(script["Icons"]) + entries(script["Run"]):
+        assert shortcut["Filename"] == "{app}\\ROM-Sync.exe"
+        assert '--data ""{code:DataDir}""' in shortcut["Parameters"], (
+            "every start names the chosen data folder"
+        )
+    code = "\n".join(script["Code"])
+    assert "Inside(DataPage.Values[0], WizardDirValue)" in code
+    assert "Inside(WizardDirValue, DataPage.Values[0])" in code
+    assert f"ExpandConstant('{DATA_DIR}')" in code
+
+    # and the installed application refuses a data folder inside its own
+    app = tmp_path / "Programs" / "ROM-Sync"
+    said: list[Sequence[Check]] = []
+    assert preflight(Machine(), app / "data", said.append, installed=app) is False
+    assert [c.name for c in said[0]] == ["Data folder apart from the application"]
+    assert preflight(Machine(), tmp_path / "ROM-Sync" / "data", said.append, installed=app)
+    assert inside(Path("X:/Apps/ROM-Sync/data"), Path("x:/apps/rom-sync")), (
+        "Windows ignores case"
+    )
+
+
+def test_the_installer_offers_the_runtime(tmp_path: Path) -> None:
+    code = "\n".join(sections(inno_script("2.0.0", tmp_path))["Code"])
+    for hive, key in WEBVIEW2_KEYS:
+        assert f"HasRuntime({hive}, '{key}')" in code
+    assert WEBVIEW2_BOOTSTRAPPER in code and "Result := False;" in code

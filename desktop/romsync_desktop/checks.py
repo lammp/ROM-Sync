@@ -1,6 +1,7 @@
 """What the application needs from the computer, checked before the window
 opens (F13-S2): the Windows version, the embedded browser runtime (WebView2),
-space for the data directory, and write access to it.
+space for the data directory, write access to it, and, in the installed
+application, that it sits apart from the application's own folder (F13-S3).
 
 Every failure is reported, none is skipped silently, and a missing runtime is
 offered: the report names Microsoft's bootstrapper, and the installer offers
@@ -71,7 +72,15 @@ def _build_words(build: int) -> str:
     return f"build {build}{short}"
 
 
-def checks(probe: Probe, data: Path) -> list[Check]:
+def inside(child: Path, parent: Path) -> bool:
+    """Whether `child` is `parent` or below it, compared as Windows compares: by case."""
+    a = [part.casefold() for part in child.parts]
+    b = [part.casefold() for part in parent.parts]
+    return a[: len(b)] == b
+
+
+def checks(probe: Probe, data: Path, installed: Path | None = None) -> list[Check]:
+    """`installed` is the application's own folder when it runs frozen (F13-S3)."""
     build = probe.windows_build()
     runtime = probe.webview2()
     free = probe.free_bytes(nearest(data))
@@ -104,15 +113,27 @@ def checks(probe: Probe, data: Path) -> list[Check]:
             str(data) if writable else f"cannot write to {data}",
             blocking=True,
         ),
+        *(
+            []
+            if installed is None
+            else [
+                Check(
+                    "Data folder apart from the application",
+                    not (inside(data, installed) or inside(installed, data)),
+                    f"the application is in {installed}",
+                    blocking=True,
+                )
+            ]
+        ),
     ]
 
 
 Report = Callable[[Sequence[Check]], None]
 
 
-def preflight(probe: Probe, data: Path, report: Report) -> bool:
+def preflight(probe: Probe, data: Path, report: Report, installed: Path | None = None) -> bool:
     """Whether the application may start. Every failure is reported, blocking or not."""
-    found = checks(probe, data)
+    found = checks(probe, data, installed)
     failed = [c for c in found if not c.ok]
     if failed:
         report(failed)
