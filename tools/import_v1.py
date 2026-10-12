@@ -3,16 +3,20 @@
 
     python tools/import_v1.py --from <version 1 database> --data <version 2 data folder>
 
-It is opt-in: nothing in the application calls it, and it reads only the
-database it is given. The source is opened read-only and copied with SQLite's
-own backup, so it is never changed; the copy is brought to version 2's schema
-by the same migrations the application runs.
+It is opt-in: nothing in the application calls it, both paths are required,
+and it reads only the database it is given; it never looks for one (F14-S5).
+The source is opened read-only and copied with SQLite's own backup, so it is
+never changed; the copy is brought to version 2's schema by the same
+migrations the application runs.
 """
 
 from __future__ import annotations
 
+import argparse
 import sqlite3
 import sys
+import tempfile
+from collections.abc import Sequence
 from contextlib import closing
 from dataclasses import dataclass
 from pathlib import Path
@@ -24,6 +28,7 @@ for _tree in ("engine",):
         sys.path.insert(0, str(ROOT / _tree))
 
 from romsync.adapters.db_sqlite.migrations import migrate, version_of  # noqa: E402
+from romsync.adapters.system.clock import SystemClock  # noqa: E402
 from romsync.compose import DATABASE  # noqa: E402
 from romsync.ports.clock import ClockPort  # noqa: E402
 
@@ -227,3 +232,38 @@ def run(
             found = _counts(conn)
         return Report(tuple(Carried(t, found[t], 0) for t in TABLES), dry_run=True)
     return carry(copy, target, clock)
+
+
+def main(argv: Sequence[str] | None = None, clock: ClockPort | None = None) -> int:
+    """The command line. Both paths are required: nothing is looked for, and the
+    application never runs this on its own (F14-S5)."""
+    parser = argparse.ArgumentParser(
+        prog="import_v1",
+        description="Import a ROM-Sync 1 database into a new version 2 data folder. "
+        "Close the application first.",
+    )
+    parser.add_argument(
+        "--from", dest="source", type=Path, required=True, help="version 1's database file"
+    )
+    parser.add_argument(
+        "--data", type=Path, required=True, help="version 2's data folder, new or empty"
+    )
+    parser.add_argument(
+        "--dry-run", action="store_true", help="report what would be imported, write nothing"
+    )
+    args = parser.parse_args(argv)
+    with tempfile.TemporaryDirectory(prefix="romsync-import-") as work:
+        try:
+            report = run(
+                args.source, args.data, Path(work), clock or SystemClock(), dry_run=args.dry_run
+            )
+        except (FileNotFoundError, NotVersionOne, TargetNotEmpty) as e:
+            print(f"not imported: {e}", file=sys.stderr)
+            return 1
+    for line in report.lines():
+        print(line)
+    return 0 if report.dry_run or report.reconciles else 1
+
+
+if __name__ == "__main__":  # pragma: no cover
+    sys.exit(main())

@@ -14,9 +14,11 @@ from tests.fixtures import v1_db
 from tests.helpers.fakes import FrozenClock
 from tools.import_v1 import (
     GROUPS,
+    ROOT,
     NotVersionOne,
     TargetNotEmpty,
     carry,
+    main,
     occupied,
     read_v1,
     run,
@@ -137,3 +139,32 @@ def test_dry_run_writes_nothing(tmp_path: Path) -> None:
     assert fingerprint(data) == before
     real = run(source, data, tmp_path / "work", FrozenClock())
     assert real.reconciles and real.lines()[-1] == "reconciled"
+
+
+def test_no_automatic_discovery(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    """Nothing runs the import but a person, and it reads only the path it is given."""
+    for missing in ([], ["--from", str(tmp_path / "v1.db")], ["--data", str(tmp_path)]):
+        with pytest.raises(SystemExit):
+            main(missing, FrozenClock())
+    source = (ROOT / "tools" / "import_v1.py").read_text(encoding="utf-8")
+    for looking in ("glob(", "iterdir(", "listdir(", "scandir(", "os.walk", "LOCALAPPDATA"):
+        assert looking not in source, f"the import looks for a database: {looking}"
+    for tree in ("engine", "api", "desktop"):
+        for module in (ROOT / tree).rglob("*.py"):
+            assert "import_v1" not in module.read_text(encoding="utf-8"), module
+
+    v1 = v1_db.build(tmp_path / "v1" / "romsync.db")
+    data = tmp_path / "data"
+    assert main(["--from", str(v1), "--data", str(data), "--dry-run"], FrozenClock()) == 0
+    assert not data.exists()
+    assert main(["--from", str(v1), "--data", str(data)], FrozenClock()) == 0
+    assert capsys.readouterr().out.splitlines()[-1] == "reconciled"
+    assert main(["--from", str(v1), "--data", str(data)], FrozenClock()) == 1
+    assert "not imported:" in capsys.readouterr().err
+    assert (
+        main(
+            ["--from", str(tmp_path / "absent.db"), "--data", str(tmp_path / "x")],
+            FrozenClock(),
+        )
+        == 1
+    )
