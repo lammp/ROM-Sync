@@ -40,7 +40,13 @@ export function Toast({
   onDismiss: (id: number) => void
 }) {
   return (
-    <div className={styles.region} role="status" aria-live="polite" aria-relevant="additions text">
+    <div
+      className={styles.region}
+      role="status"
+      aria-label="Notifications"
+      aria-live="polite"
+      aria-relevant="additions text"
+    >
       {toasts.map((t) => (
         <One key={t.id} toast={t} onDismiss={onDismiss} />
       ))}
