@@ -872,6 +872,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/storage": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Storage
+         * @description The data folder by part, every subfolder counted, with what maintenance
+         *     would reclaim from each (F15-S2).
+         */
+        get: operations["storage_api_v1_storage_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/sysfiles/store": {
         parameters: {
             query?: never;
@@ -1570,6 +1591,29 @@ export interface components {
         StartSync: {
             /** Confirm Removals */
             confirm_removals?: number | null;
+        };
+        /** StorageList */
+        StorageList: {
+            /** Components */
+            components: components["schemas"]["StorageRow"][];
+            /** Reclaimable Bytes */
+            reclaimable_bytes: number;
+            /** Total Bytes */
+            total_bytes: number;
+        };
+        /**
+         * StorageRow
+         * @description One part of the data folder (F15-S2).
+         */
+        StorageRow: {
+            /** Bytes */
+            bytes: number;
+            /** Component */
+            component: string;
+            /** Files */
+            files: number;
+            /** Reclaimable */
+            reclaimable: number;
         };
         /** SyncStatusView */
         SyncStatusView: {
@@ -6167,6 +6211,89 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ShellDone"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Bad Gateway */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    storage_api_v1_storage_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StorageList"];
                 };
             };
             /** @description Bad Request */

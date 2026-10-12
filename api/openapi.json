@@ -2130,6 +2130,63 @@
         "title": "StartSync",
         "type": "object"
       },
+      "StorageList": {
+        "additionalProperties": false,
+        "properties": {
+          "components": {
+            "items": {
+              "$ref": "#/components/schemas/StorageRow"
+            },
+            "title": "Components",
+            "type": "array"
+          },
+          "reclaimable_bytes": {
+            "title": "Reclaimable Bytes",
+            "type": "integer"
+          },
+          "total_bytes": {
+            "title": "Total Bytes",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "components",
+          "total_bytes",
+          "reclaimable_bytes"
+        ],
+        "title": "StorageList",
+        "type": "object"
+      },
+      "StorageRow": {
+        "additionalProperties": false,
+        "description": "One part of the data folder (F15-S2).",
+        "properties": {
+          "bytes": {
+            "title": "Bytes",
+            "type": "integer"
+          },
+          "component": {
+            "title": "Component",
+            "type": "string"
+          },
+          "files": {
+            "title": "Files",
+            "type": "integer"
+          },
+          "reclaimable": {
+            "title": "Reclaimable",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "component",
+          "files",
+          "bytes",
+          "reclaimable"
+        ],
+        "title": "StorageRow",
+        "type": "object"
+      },
       "SyncStatusView": {
         "additionalProperties": false,
         "properties": {
@@ -8061,6 +8118,98 @@
         "summary": "Reveal",
         "tags": [
           "shell"
+        ]
+      }
+    },
+    "/api/v1/storage": {
+      "get": {
+        "description": "The data folder by part, every subfolder counted, with what maintenance\nwould reclaim from each (F15-S2).",
+        "operationId": "storage_api_v1_storage_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StorageList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "502": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Gateway"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "summary": "Storage",
+        "tags": [
+          "diagnostics"
         ]
       }
     },

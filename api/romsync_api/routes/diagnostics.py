@@ -1,5 +1,6 @@
 """Diagnostics: what the engine is, where it is, its last sync and its recent
-failures (F15-S1, SETTINGS.md section 7). Every field is read from its source
+failures (F15-S1, SETTINGS.md section 7), and what its data folder holds
+(F15-S2). Every field is read from its source
 when asked: the version, the shell and the bind from the running application,
 the address from the request the page made, the last sync from the run
 records, and the errors from the job records."""
@@ -11,7 +12,7 @@ from fastapi import APIRouter, Depends, Request
 from romsync import __version__
 from romsync.compose import Engine
 from romsync_api.deps import engine
-from romsync_api.models import Diagnostics, LastSync, RecentError
+from romsync_api.models import Diagnostics, LastSync, RecentError, StorageList, StorageRow
 from romsync_api.routes.sync import run_view
 
 router = APIRouter(tags=["diagnostics"])
@@ -61,4 +62,21 @@ def diagnostics(request: Request, e: Engine = Depends(engine)) -> Diagnostics:  
         log_folder=str(e.data / "logs"),
         last_sync=last_sync(e),
         recent_errors=recent_errors(e),
+    )
+
+
+@router.get("/storage", response_model=StorageList)
+def storage(e: Engine = Depends(engine)) -> StorageList:  # noqa: B008
+    """The data folder by part, every subfolder counted, with what maintenance
+    would reclaim from each (F15-S2)."""
+    rows = [
+        StorageRow(
+            component=r.component, files=r.files, bytes=r.bytes, reclaimable=r.reclaimable
+        )
+        for r in e.maintenance.storage()
+    ]
+    return StorageList(
+        components=rows,
+        total_bytes=sum(r.bytes for r in rows),
+        reclaimable_bytes=sum(r.reclaimable for r in rows),
     )

@@ -56,6 +56,16 @@ describe('SettingsView', () => {
     expect(diagnostics.textContent).toContain('No job has failed.')
   })
 
+  it('test_breakdown_matches_fixture: shows the data folder by part (F15-S2)', async () => {
+    await page()
+    const data = region(/^Data and storage/)
+    const table = await within(data).findByRole('table', { name: /^Storage:/ })
+    await waitFor(() => expect(within(table).getAllByRole('row')).toHaveLength(8))
+    expect(within(table).getAllByRole('row').at(-1)?.textContent).toContain(
+      'Embedded browser profile',
+    )
+  })
+
   it('states each detected transport in the transports section (F13-S8)', async () => {
     await page()
     const transports = region(/^Transports and tools/)

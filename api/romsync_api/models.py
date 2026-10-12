@@ -536,3 +536,19 @@ class Diagnostics(Model):
     log_folder: str
     last_sync: LastSync | None
     recent_errors: list[RecentError]
+
+
+class StorageRow(Model):
+    """One part of the data folder (F15-S2)."""
+
+    component: str
+    files: int
+    bytes: int
+    #: What its maintenance action would give back now.
+    reclaimable: int
+
+
+class StorageList(Model):
+    components: list[StorageRow]
+    total_bytes: int
+    reclaimable_bytes: int

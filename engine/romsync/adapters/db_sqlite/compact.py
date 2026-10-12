@@ -25,3 +25,8 @@ class SqliteCompactor:
         self._c.execute("VACUUM")
         self._c.execute("PRAGMA wal_checkpoint(TRUNCATE)")
         return before, self._size()
+
+    def reclaimable(self) -> int:
+        (free,) = self._c.execute("PRAGMA freelist_count").fetchone()
+        (page,) = self._c.execute("PRAGMA page_size").fetchone()
+        return int(free) * int(page)

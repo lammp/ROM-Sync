@@ -18,6 +18,14 @@ class Entry:
     size: int
 
 
+@dataclass(frozen=True, slots=True)
+class Usage:
+    """What one part of the data folder holds, counted through every subfolder."""
+
+    files: int
+    bytes: int
+
+
 class DataFolder(Protocol):
     def entries(self, folder: str) -> tuple[Entry, ...]:
         """The direct contents of one of the data folder's own folders."""
@@ -27,8 +35,16 @@ class DataFolder(Protocol):
         """Remove those entries; the bytes freed."""
         ...
 
+    def usage(self, component: str) -> Usage:
+        """One named part of the data folder, every file below it counted (F15-S2)."""
+        ...
+
 
 class Compactor(Protocol):
     def compact(self) -> tuple[int, int]:
         """Rewrite the database without its free pages: (bytes before, after)."""
+        ...
+
+    def reclaimable(self) -> int:
+        """The bytes compacting would give back: the database's free pages."""
         ...

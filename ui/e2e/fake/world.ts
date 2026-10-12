@@ -1039,6 +1039,26 @@ const ROUTES: Route[] = [
     status: 200,
     body: { application: 'ROM-Sync', version: '2.0.0.dev0', api: 'v1' },
   })),
+  route('GET', '/api/v1/storage', (w) => {
+    const back = (action: string, bytes: number) => (w.maintained.includes(action) ? 0 : bytes)
+    const components = [
+      { component: 'database', files: 2, bytes: 48 * MB, reclaimable: back('compact', 6 * MB) },
+      { component: 'covers', files: 40, bytes: 12 * MB, reclaimable: back('prune-covers', 2 * MB) },
+      { component: 'cache', files: 12, bytes: 9 * MB, reclaimable: back('clear-cache', 9 * MB) },
+      { component: 'logs', files: 1, bytes: MB, reclaimable: 0 },
+      { component: 'runs', files: 6, bytes: 3 * MB, reclaimable: back('prune-runs', MB) },
+      { component: 'working', files: 0, bytes: 0, reclaimable: 0 },
+      { component: 'webview', files: 30, bytes: 20 * MB, reclaimable: 0 },
+    ]
+    return {
+      status: 200,
+      body: {
+        components,
+        total_bytes: components.reduce((n, c) => n + c.bytes, 0),
+        reclaimable_bytes: components.reduce((n, c) => n + c.reclaimable, 0),
+      },
+    }
+  }),
   route('GET', '/api/v1/diagnostics', (w) => {
     const latest = Object.entries(w.runs)
       .flatMap(([device, runs]) => runs.map((run) => ({ device, run })))

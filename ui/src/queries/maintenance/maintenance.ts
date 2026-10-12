@@ -2,7 +2,7 @@
  * The data folder's upkeep (F10-S14): each action's dry run, and running it
  * with the count that dry run found, so a change in between refuses it.
  */
-import { useMutation, useQueries, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { components } from '../../lib/api/api'
 import { unwrap, useEngine } from '../engine/engine'
 
@@ -38,5 +38,17 @@ export function useRunMaintenance() {
         }),
       ),
     onSettled: () => client.invalidateQueries({ queryKey: ['maintenance'] }),
+  })
+}
+
+/**
+ * The data folder by part (F15-S2). Kept under the maintenance key, so whatever
+ * reads the dry runs again after upkeep reads this again with them.
+ */
+export function useStorage() {
+  const { api } = useEngine()
+  return useQuery({
+    queryKey: ['maintenance', 'storage'],
+    queryFn: async ({ signal }) => unwrap(await api.GET('/api/v1/storage', { signal })),
   })
 }

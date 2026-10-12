@@ -19,6 +19,7 @@ import { JobsTable } from '../../../components/organisms/JobsTable/JobsTable'
 import { MaintenanceTable } from '../../../components/organisms/MaintenanceTable/MaintenanceTable'
 import { SettingsSection } from '../../../components/organisms/SettingsSection/SettingsSection'
 import { SetupSteps } from '../../../components/organisms/SetupSteps/SetupSteps'
+import { StorageTable } from '../../../components/organisms/StorageTable/StorageTable'
 import { PageLayout } from '../../../components/templates/PageLayout/PageLayout'
 import { formatBytes } from '../../../lib/format/format'
 import { BROWSER, can, hostOf } from '../../../lib/platform/platform'
@@ -35,6 +36,7 @@ import {
 import {
   ACTIONS,
   useMaintenanceReports,
+  useStorage,
   useRunMaintenance,
   type Action,
 } from '../../../queries/maintenance/maintenance'
@@ -323,6 +325,7 @@ export function SettingsView() {
   const pick = usePickFolder()
   const reveal = useReveal()
   const reports = useMaintenanceReports()
+  const storage = useStorage()
   const runMaintenance = useRunMaintenance()
   const [dismissed, setDismissed] = useState(false)
   const [ask, setAsk] = useState<null | {
@@ -569,6 +572,16 @@ export function SettingsView() {
               Reveal the data folder
             </Button>
           </p>
+        )}
+        {storage.isError ? (
+          <LoadError
+            what="the storage breakdown"
+            message={storage.error.message}
+            retrying={storage.isFetching}
+            onRetry={() => void storage.refetch()}
+          />
+        ) : (
+          <StorageTable parts={storage.data?.components ?? []} />
         )}
         <MaintenanceTable
           busy={runMaintenance.isPending}

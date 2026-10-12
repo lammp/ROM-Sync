@@ -13,7 +13,7 @@ from romsync.domain.models import DeviceKind
 from romsync.jobs.registry import Context, inline
 from romsync.ports.repo import DeviceProfile, RunRecord, RunState
 from romsync_api.app import PREFIX, create_app
-from romsync_api.models import Diagnostics
+from romsync_api.models import Diagnostics, StorageList
 from tests.helpers.fakes import CountingIds, FrozenClock
 from tests.unit.api import seed
 from tests.unit.api.conftest import BASE
@@ -71,3 +71,57 @@ def test_a_new_engine_has_nothing_to_report(tmp_path: Path) -> None:
     got = Diagnostics.model_validate(c.get(f"{PREFIX}/diagnostics").json())
     assert got.last_sync is None and got.recent_errors == []
     assert got.kind == "browser"
+
+
+def plant(root: Path, files: dict[str, int]) -> None:
+    for name, size in files.items():
+        path = root / name
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(b"x" * size)
+
+
+def test_breakdown_matches_fixture(tmp_path: Path) -> None:
+    """Every part of the data folder, counted through its subfolders, with what
+    its maintenance action would reclaim."""
+    data = tmp_path / "data"
+    engine = build(data, {"runs.retention": 1}, clock=FrozenClock())
+    plant(
+        data,
+        {
+            "covers/a.jpg": 100,
+            "covers/igdb/b.jpg": 200,
+            "cache/libretro/nes/c.png": 300,
+            "logs/sync.log": 40,
+            "runs/1/status.json": 10,
+            "runs/2/ops.log": 20,
+            "runs/3/ops.log": 30,
+            "tmp/part": 5,
+            "pull/game.nes": 6,
+            "webview/Default/Cookies": 50,
+        },
+    )
+    c = TestClient(create_app(engine), base_url=BASE)
+    got = StorageList.model_validate(c.get(f"{PREFIX}/storage").json())
+    rows = {r.component: (r.files, r.bytes, r.reclaimable) for r in got.components}
+    database = rows.pop("database")
+    on_disk = [p for p in data.glob("romsync.db*") if not p.name.endswith(".lock")]
+    assert database[:2] == (len(on_disk), sum(p.stat().st_size for p in on_disk))
+    assert rows == {
+        "covers": (2, 300, 300),
+        "cache": (1, 300, 300),
+        "logs": (1, 40, 0),
+        "runs": (3, 60, 30),
+        "working": (2, 11, 0),
+        "webview": (1, 50, 0),
+    }, "nested files counted; no cover is referenced; runs beyond the one kept"
+    assert [r.component for r in got.components] == [
+        "database",
+        "covers",
+        "cache",
+        "logs",
+        "runs",
+        "working",
+        "webview",
+    ]
+    assert got.total_bytes == sum(r.bytes for r in got.components)
+    assert got.reclaimable_bytes == database[2] + 300 + 300 + 30

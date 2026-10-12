@@ -1,4 +1,5 @@
-"""Maintenance: compact, clear the cache, prune covers, prune runs (F10-S14).
+"""Maintenance: compact, clear the cache, prune covers, prune runs (F10-S14),
+and the storage breakdown those actions reclaim from (F15-S2).
 
 Each destructive action is surveyed first and run second, and a run must name
 the count its survey found: if anything changed in between, the run is refused
@@ -19,6 +20,29 @@ from romsync.ports.repo import GameRepo
 
 ACTIONS: Final = ("compact", "clear-cache", "prune-covers", "prune-runs")
 DESTRUCTIVE: Final = frozenset({"clear-cache", "prune-covers", "prune-runs"})
+
+
+@dataclass(frozen=True, slots=True)
+class Storage:
+    """One part of the data folder, and what maintenance could give back from it."""
+
+    component: str
+    files: int
+    bytes: int
+    reclaimable: int
+
+
+#: The data folder's parts in the order the page lists them, and the action
+#: that reclaims each, where one does.
+COMPONENTS: Final = (
+    ("database", "compact"),
+    ("covers", "prune-covers"),
+    ("cache", "clear-cache"),
+    ("logs", None),
+    ("runs", "prune-runs"),
+    ("working", None),
+    ("webview", None),
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -56,6 +80,21 @@ class Maintenance:
         )
         keep = self._retention()
         return "runs", tuple(runs[: max(0, len(runs) - keep)])
+
+    def storage(self) -> tuple[Storage, ...]:
+        """Every part of the data folder, counted through its subfolders, with the
+        bytes its maintenance action would reclaim now (F15-S2)."""
+        rows = []
+        for component, action in COMPONENTS:
+            used = self._folder.usage(component)
+            if action == "compact":
+                back = self._compactor.reclaimable()
+            elif action is not None:
+                back = self.survey(action).bytes
+            else:
+                back = 0
+            rows.append(Storage(component, used.files, used.bytes, back))
+        return tuple(rows)
 
     def survey(self, action: str) -> Report:
         """What a run would do now. Changes nothing."""

@@ -13,9 +13,32 @@ from typing import Final
 
 from romsync.domain.errors import PathEscape
 from romsync.domain.paths import check_name
-from romsync.ports.maintenance import Entry
+from romsync.ports.maintenance import Entry, Usage
 
 FOLDERS: Final = frozenset({"cache", "covers", "runs", "tmp"})
+
+#: The data folder's parts, each by the bare names that make it up (F15-S2).
+#: The database counts its journal files; working files are what jobs leave
+#: behind mid-flight; the embedded browser's profile is the desktop window's.
+COMPONENTS: Final = {
+    "database": ("romsync.db", "romsync.db-wal", "romsync.db-shm"),
+    "covers": ("covers",),
+    "cache": ("cache",),
+    "logs": ("logs",),
+    "runs": ("runs",),
+    "working": ("tmp", "pull"),
+    "webview": ("webview",),
+}
+
+
+def _usage(path: Path) -> Usage:
+    """Files and bytes at `path`, through every subfolder; a link is not followed."""
+    if path.is_symlink() or not path.exists():
+        return Usage(0, 0)
+    if path.is_file():
+        return Usage(1, path.stat().st_size)
+    files = [f for f in path.rglob("*") if f.is_file() and not f.is_symlink()]
+    return Usage(len(files), sum(f.stat().st_size for f in files))
 
 
 def _size(path: Path) -> int:
@@ -40,6 +63,14 @@ class FsDataFolder:
         return tuple(
             Entry(p.name, _size(p)) for p in sorted(base.iterdir(), key=lambda p: p.name)
         )
+
+    def usage(self, component: str) -> Usage:
+        if component not in COMPONENTS:
+            raise PathEscape(
+                f"{component!r} is not a part of the data folder", field="component"
+            )
+        parts = [_usage(self.data / name) for name in COMPONENTS[component]]
+        return Usage(sum(u.files for u in parts), sum(u.bytes for u in parts))
 
     def remove(self, folder: str, names: Sequence[str]) -> int:
         base = self._folder(folder)
