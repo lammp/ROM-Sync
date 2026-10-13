@@ -6,7 +6,10 @@ The scripts are constants: every name, path and number reaches them through
 environment variables, never by being formatted into the text, so a game
 called `$(Remove-Item ...)` is a name and nothing else.
 
-`CopyHere` is asynchronous and MTP reports a growing file's size in coarse
+Reading from the device copies with every dialog off and waits (F6-S10).
+Sending still uses `CopyHere`, which is asynchronous so its progress can be
+reported, and Windows may show its own dialog if that copy fails. `CopyHere`
+is asynchronous and MTP reports a growing file's size in coarse
 steps (a 4 GB file can sit at one size for minutes), so a copy is judged
 arrived by polling its size, and judged stalled only after a time that scales
 with the file. That allowance is `ArrivalPolicy`, sized from the file and read
@@ -101,10 +104,34 @@ public static class Mtp {
   [DllImport("shell32.dll", PreserveSig = false)]
   static extern void SHCreateItemFromIDList(IntPtr pidl, [MarshalAs(UnmanagedType.LPStruct)] Guid riid,
       [MarshalAs(UnmanagedType.Interface)] out IShellItem item);
+  [DllImport("shell32.dll", CharSet = CharSet.Unicode, PreserveSig = false)]
+  static extern void SHCreateItemFromParsingName(string path, IntPtr pbc,
+      [MarshalAs(UnmanagedType.LPStruct)] Guid riid, [MarshalAs(UnmanagedType.Interface)] out IShellItem item);
   [DllImport("ole32.dll")] static extern void CoTaskMemFree(IntPtr pv);
   static readonly Guid CLSID_FileOperation = new Guid("3AD05575-8857-4850-9277-11B85BDB8E09");
   static readonly Guid IID_IShellItem = new Guid("43826D1E-E718-42EE-BC55-A1E261C37BFE");
   const uint FOF_NO_UI = 0x0004 | 0x0010 | 0x0200 | 0x0400;
+  static IShellItem ItemOf(object o) {
+    IShellItem si;
+    string path = o as string;
+    if (path != null) { SHCreateItemFromParsingName(path, IntPtr.Zero, IID_IShellItem, out si); return si; }
+    IntPtr pidl; SHGetIDListFromObject(o, out pidl);
+    try { SHCreateItemFromIDList(pidl, IID_IShellItem, out si); return si; }
+    finally { CoTaskMemFree(pidl); }
+  }
+  // Copy one item into a folder with every dialog off, waiting for it to finish
+  // (F6-S10). Folder.CopyHere lets Windows show its own error dialog for a
+  // phone whatever its flags say, and the dialog holds the copy until someone
+  // presses OK; this way a failure is a result, never a window.
+  public static uint CopyQuietly(object item, object intoFolder) {
+    IFileOperation op = (IFileOperation)Activator.CreateInstance(Type.GetTypeFromCLSID(CLSID_FileOperation));
+    op.SetOperationFlags(FOF_NO_UI);
+    op.CopyItem(ItemOf(item), ItemOf(intoFolder), null, IntPtr.Zero);
+    uint hr = op.PerformOperations();
+    bool aborted; op.GetAnyOperationsAborted(out aborted);
+    if (hr == 0 && aborted) return 0x000004C7;
+    return hr;
+  }
   public static uint DeleteMany(object[] folderItems) {
     if (folderItems == null || folderItems.Length == 0) return 0;
     IFileOperation op = (IFileOperation)Activator.CreateInstance(Type.GetTypeFromCLSID(CLSID_FileOperation));
@@ -267,11 +294,11 @@ FETCH: Final = _wrap(
   $folder = Resolve-Parts $st $env:RS_PARTS $false
   $item = if ($folder) { Get-Child $folder $env:RS_NAME $false } else { $null }
   if (-not $item) { Write-Output "MISSING`t$env:RS_NAME"; exit 0 }
-  $shell = New-Object -ComObject Shell.Application
   $target = Join-Path $env:RS_LOCAL $env:RS_NAME
   if (Test-Path -LiteralPath $target) { Remove-Item -LiteralPath $target -Recurse -Force }
   $want = Size-Of $item
-  $shell.NameSpace($env:RS_LOCAL).CopyHere($item, 1556)
+  $hr = [Mtp]::CopyQuietly($item.PSObject.BaseObject, [string]$env:RS_LOCAL)
+  if ($hr -ne 0) { Write-Output ("FAILED`tthe device refused the copy (0x{0:X8})" -f $hr); exit 0 }
   $last = -1; $still = 0.0
   while ($true) {
     Start-Sleep -Milliseconds 500

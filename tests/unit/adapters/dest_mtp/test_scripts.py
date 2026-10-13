@@ -324,3 +324,14 @@ def test_a_worker_that_dies_fails_what_it_did_not_finish(
     quiet = mtp(Shell(["START\t0", "OK\tfinished"]), tmp_path)
     (lost, *_rest) = quiet.run(_ops(quiet, store), SinkSpy(), threading.Event())
     assert lost.error_message == "the transfer worker stopped"
+
+
+def test_reading_from_the_device_shows_no_dialog() -> None:
+    """A read copies through the file operation with every dialog off, so a
+    failure is a result and never a Windows dialog that holds the probe until
+    someone presses OK (F6-S10)."""
+    fetch = scripts.FETCH[len(scripts.PROLOGUE) :]
+    assert "CopyHere" not in fetch
+    assert "[Mtp]::CopyQuietly(" in fetch
+    assert "op.SetOperationFlags(FOF_NO_UI);" in scripts.PROLOGUE.split("CopyQuietly", 1)[1]
+    assert "FOF_NO_UI = 0x0004 | 0x0010 | 0x0200 | 0x0400" in scripts.PROLOGUE
