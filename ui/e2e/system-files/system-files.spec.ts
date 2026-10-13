@@ -39,7 +39,7 @@ test('the device page says what its system files lack once read', async ({ page 
   await expect(page.getByText('Game Boy Advance: missing gba_bios.bin')).toBeVisible()
 })
 
-test('a file added to the bios folder shows on return to the window, or on Check again', async ({
+test('a file added to the bios folder shows on return to the window, or on the reload icon', async ({
   page,
   request,
 }) => {
@@ -55,7 +55,40 @@ test('a file added to the bios folder shows on return to the window, or on Check
   await expect(row).not.toContainText('missing')
   // and the button asks at once, without leaving the window
   await request.post('/__seed/bios-removed')
-  await page.getByRole('button', { name: 'Check again' }).click()
+  await page.getByRole('button', { name: 'Check the bios folder again' }).click()
   await expect(row).toContainText('missing')
   await expect(page.getByText(/^checked \d\d:\d\d:\d\d$/)).toBeVisible()
+})
+
+test('the layout fits the space it is given: no inner scroller, nothing cut off (F11-S50)', async ({
+  page,
+}) => {
+  await page.goto('/')
+  await page.getByRole('combobox', { name: 'Device' }).selectOption('dev-1')
+  await page.goto('/system-files/')
+  const list = page.getByRole('navigation', { name: 'Systems' })
+  await expect(list).toBeVisible()
+  for (const width of [480, 900, 1400]) {
+    await page.setViewportSize({ width, height: 700 })
+    const fit = await page.evaluate(() => {
+      const nav = document.querySelector('nav[aria-label="Systems"]') as HTMLElement
+      const main = document.querySelector('main') as HTMLElement
+      return {
+        // a scroller of its own, whether or not it is full yet
+        navScrolls:
+          ['auto', 'scroll'].includes(getComputedStyle(nav).overflowY) ||
+          nav.scrollHeight > nav.clientHeight + 1,
+        cut: main.scrollWidth > main.clientWidth + 1,
+      }
+    })
+    expect(fit, `at ${width}px`).toEqual({ navScrolls: false, cut: false })
+  }
+  // narrow: the list above its detail; wide: beside it
+  await page.setViewportSize({ width: 480, height: 700 })
+  const detail = page.locator('main section').first()
+  const below = async () =>
+    ((await detail.boundingBox())?.y ?? 0) > ((await list.boundingBox())?.y ?? 0) + 20
+  expect(await below()).toBe(true)
+  await page.setViewportSize({ width: 1400, height: 700 })
+  expect(await below()).toBe(false)
 })

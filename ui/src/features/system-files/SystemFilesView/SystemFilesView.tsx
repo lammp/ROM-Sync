@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Button } from '../../../components/atoms/Button/Button'
+import { ReloadButton } from '../../../components/atoms/ReloadButton/ReloadButton'
 import { Muted } from '../../../components/atoms/Muted/Muted'
 import { JobLine, type JobState } from '../../../components/molecules/JobLine/JobLine'
 import { LoadError } from '../../../components/molecules/LoadError/LoadError'
@@ -121,14 +122,11 @@ export function SystemFilesView() {
         actions={
           <>
             {store.dataUpdatedAt > 0 && <Muted>{`checked ${clock(store.dataUpdatedAt)}`}</Muted>}
-            <Button
-              small
-              disabled={store.isFetching}
-              title="Read the bios folder again"
+            <ReloadButton
+              label="Check the bios folder again"
+              busy={store.isFetching}
               onClick={() => void store.refetch()}
-            >
-              {store.isFetching ? 'Checking…' : 'Check again'}
-            </Button>
+            />
           </>
         }
       >
@@ -186,14 +184,11 @@ export function SystemFilesView() {
           >
             Refresh from device
           </Button>
-          <Button
-            small
-            disabled={report.isFetching}
-            title="Read the store's bios folder again"
+          <ReloadButton
+            label="Check the bios folder again"
+            busy={report.isFetching}
             onClick={() => void report.refetch()}
-          >
-            {report.isFetching ? 'Checking…' : 'Check the store again'}
-          </Button>
+          />
         </>
       }
     >

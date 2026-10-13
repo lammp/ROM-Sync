@@ -1,4 +1,12 @@
+/*
+ * The library sizes itself to the space it is given, not the window. The grid
+ * scrolls on its own because it is virtual: thousands of games are drawn only
+ * as they come into view. The filters beside it scroll on their own only
+ * because they sit beside that grid; everything else scrolls with the page.
+ */
 .library {
+  container-type: inline-size;
+  position: relative;
   flex: 1;
   display: flex;
   min-width: 0;
@@ -6,7 +14,7 @@
 }
 
 .sidebar {
-  width: 260px;
+  width: clamp(200px, 24cqi, 260px);
   flex: none;
   overflow: auto;
   border-right: 1px solid var(--divider);
@@ -22,10 +30,21 @@
 }
 
 .panel {
-  width: 420px;
+  width: clamp(300px, 36cqi, 420px);
   flex: none;
   border-left: 1px solid var(--divider);
   background: var(--bg2);
   overflow: auto;
   padding: 16px;
+}
+
+/* too narrow for three columns: the game's details cover the grid, not squeeze it */
+@container (max-width: 760px) {
+  .panel {
+    position: absolute;
+    inset: 0 0 0 auto;
+    width: min(420px, 100%);
+    z-index: 5;
+    box-shadow: -8px 0 24px var(--scrim-1);
+  }
 }

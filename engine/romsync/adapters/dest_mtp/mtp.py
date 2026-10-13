@@ -31,6 +31,7 @@ from romsync.adapters.dest_mtp.scripts import (
     Script,
     parts_env,
 )
+from romsync.adapters.system.powershell import powershell_exe
 from romsync.domain import markers
 from romsync.domain.errors import (
     DestinationItemMissing,
@@ -94,7 +95,7 @@ class PowerShellRunner:  # pragma: no cover - starts a process; the gate never d
         os.close(fd)
         Path(path).write_text(script.text, encoding="utf-8-sig", newline="\r\n")
         argv = [
-            "powershell.exe",
+            powershell_exe(),
             "-NoProfile",
             "-ExecutionPolicy",
             "Bypass",

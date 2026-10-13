@@ -22,7 +22,8 @@ export type SysfileRowProps = {
   readonly onSelect: () => void
 }
 
-/** One system in the system-files list: its readiness in a dot and a word. */
+/** One system in the system-files list: its readiness in a dot and a word, the name
+ * on its own line so a narrow list never squeezes it. */
 export function SysfileRow({ label, state, count, active, onSelect }: SysfileRowProps) {
   const [tone, word] = READINESS[state]
   return (
@@ -35,9 +36,13 @@ export function SysfileRow({ label, state, count, active, onSelect }: SysfileRow
       onClick={onSelect}
     >
       <Dot tone={tone} />
-      <span className={styles.name}>{label}</span>
-      <span className={styles.word}>{word}</span>
-      <span className={styles.n}>{count ? `${count.toLocaleString()} games` : 'no games'}</span>
+      <span className={styles.text}>
+        <span className={styles.name}>{label}</span>
+        <span className={styles.meta}>
+          <span className={styles.word}>{word}</span>
+          <span className={styles.n}>{count ? `${count.toLocaleString()} games` : 'no games'}</span>
+        </span>
+      </span>
     </button>
   )
 }

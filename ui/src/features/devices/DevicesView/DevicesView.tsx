@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
-import { Button } from '../../../components/atoms/Button/Button'
+import { ReloadButton } from '../../../components/atoms/ReloadButton/ReloadButton'
 import { Muted } from '../../../components/atoms/Muted/Muted'
 import { LoadError } from '../../../components/molecules/LoadError/LoadError'
 import {
@@ -137,9 +137,11 @@ export function DevicesView() {
       actions={
         <>
           <Muted>{attached.isError ? `could not look: ${attached.error.message}` : checked}</Muted>
-          <Button small onClick={() => void attached.refetch()} disabled={attached.isFetching}>
-            Look again
-          </Button>
+          <ReloadButton
+            label="Look for devices again"
+            busy={attached.isFetching}
+            onClick={() => void attached.refetch()}
+          />
         </>
       }
     >

@@ -8,6 +8,8 @@ import webbrowser
 from pathlib import Path
 from typing import Final
 
+from romsync.adapters.system.powershell import powershell_exe
+
 #: A Windows toast under PowerShell's own application identity, reading its
 #: text from the environment.
 TOAST: Final = "\n".join(
@@ -58,7 +60,7 @@ class WindowsShell:  # pragma: no cover - drives the desktop
         # it says can become a command.
         env = {**os.environ, "ROMSYNC_TITLE": title, "ROMSYNC_BODY": body}
         done = subprocess.run(
-            ["powershell.exe", "-NoProfile", "-NonInteractive", "-Command", TOAST],
+            [powershell_exe(env), "-NoProfile", "-NonInteractive", "-Command", TOAST],
             env=env,
             capture_output=True,
             timeout=15,

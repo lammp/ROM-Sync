@@ -16,7 +16,7 @@ export type SysStoreItem = components['schemas']['SysStoreItem']
  * Every requirement with the store's copy only. The engine reads the bios
  * folder afresh each time it is asked, so the page asks again whenever the
  * window comes back into focus: a file added or removed in Explorer shows
- * on return, and Check again asks at once.
+ * on return, and the reload icon asks at once.
  */
 export function useStoreSysfiles() {
   const { api } = useEngine()

@@ -1,8 +1,29 @@
+/*
+ * A list beside its detail when the space allows, one above the other when it
+ * does not. The breakpoint is the space this layout is given, not the window,
+ * and neither pane scrolls on its own: the page scrolls.
+ */
+.frame {
+  container-type: inline-size;
+}
+
 .pane {
   display: grid;
-  grid-template-columns: 260px 1fr;
+  grid-template-columns: minmax(0, 1fr);
   gap: 14px;
   align-items: start;
+}
+
+@container (min-width: 720px) {
+  .pane {
+    grid-template-columns: minmax(220px, 300px) minmax(0, 1fr);
+  }
+
+  /* beside a long list, the detail stays in view while the page scrolls */
+  .detail {
+    position: sticky;
+    top: 0;
+  }
 }
 
 .list {
@@ -10,20 +31,14 @@
   border: 1px solid var(--divider);
   border-radius: var(--radius-8);
   padding: 6px;
-  max-height: 70vh;
-  overflow: auto;
 }
 
 .detail {
+  min-width: 0;
   background: var(--bg2);
   border: 1px solid var(--divider);
   border-radius: var(--radius-8);
   padding: 14px 16px;
   min-height: 200px;
-}
-
-@media (max-width: 900px) {
-  .pane {
-    grid-template-columns: 1fr;
-  }
+  overflow-wrap: anywhere;
 }

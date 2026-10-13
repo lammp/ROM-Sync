@@ -70,7 +70,12 @@ test('a device pulled out and plugged back in is said, wherever the person is (F
   await page.clock.fastForward(16_000)
   await expect(page.getByRole('status', { name: 'Notifications' })).toContainText('Thor connected')
   await bell(page).click()
-  const items = page.getByRole('dialog', { name: 'Notifications' }).getByRole('listitem')
+  // the device's own notifications, newest first; a setup step may sit among them
+  const items = page
+    .getByRole('dialog', { name: 'Notifications' })
+    .getByRole('listitem')
+    .filter({ hasText: /^Thor / })
+  await expect(items).toHaveCount(2)
   await expect(items.nth(0)).toContainText('Thor connected')
   await expect(items.nth(1)).toContainText('Thor disconnected')
 })
