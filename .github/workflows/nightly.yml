@@ -29,10 +29,14 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
+      # run from ui/ itself: on the Windows runner `npm install --prefix ui`
+      # looked for package.json in the repository root and failed
       - name: Install the interface toolchain, resolved fresh
-        run: npm install --no-package-lock --prefix ui
+        working-directory: ui
+        run: npm install --no-package-lock
       - name: Install the browser
-        run: npx --prefix ui playwright install chromium
+        working-directory: ui
+        run: npx playwright install chromium
       - name: Verify
         run: python tools/verify.py
       - name: Random test order
