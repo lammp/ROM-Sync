@@ -5,7 +5,7 @@ import { SearchInput } from '../../../components/atoms/SearchInput/SearchInput'
 import { AppHeader } from '../../../components/organisms/AppHeader/AppHeader'
 import { DevicePicker } from '../../../components/organisms/DevicePicker/DevicePicker'
 import { NotificationCentre } from '../../../components/organisms/NotificationCentre/NotificationCentre'
-import { useAttached, useProfiles } from '../../../queries/devices/devices'
+import { attachedFor, useAttached, useProfiles } from '../../../queries/devices/devices'
 import { useRecoverLists } from '../../../queries/recover/recover'
 import { appStore, useAppStore } from '../../../store/store'
 
@@ -32,7 +32,6 @@ export function HeaderBar() {
   const device = useAppStore((s) => s.selection.device)
   const profiles = useProfiles().data ?? []
   const attached = useAttached().data?.devices ?? []
-  const online = new Set(attached.map((d) => d.ref))
   const lists = useRecoverLists(attached.filter((d) => d.profile !== null).map((d) => d.ref))
   const recover = lists.some((l) => (l.data?.length ?? 0) > 0)
   const views = recover || route === RECOVER.href ? [...VIEWS, RECOVER] : VIEWS
@@ -54,7 +53,7 @@ export function HeaderBar() {
           devices={profiles.map((p) => ({
             id: p.id,
             name: p.name,
-            online: p.ref !== null && online.has(p.ref),
+            online: attachedFor(attached, p.id) !== null,
           }))}
           value={device}
           onChange={(id) => appStore.getState().selection.choose(id)}

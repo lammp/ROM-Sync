@@ -545,6 +545,8 @@ function writeSettings(w: World, values: Record<string, unknown>): Answer {
 }
 
 export const THOR_REF = 'YWRiAHNlcmlhbC0x'
+/** Thor's reference over MTP, which its profile was not made on. */
+export const THOR_MTP_REF = 'bXRwAFRob3IASW50ZXJuYWw'
 /** A drive plugged in with no profile, and a handheld carrying another computer's marker. */
 export const CARD_REF = 'dm9sdW1lAGNhcmQ'
 export const RETROID_REF = 'YWRiAHNlcmlhbC0y'
@@ -842,6 +844,36 @@ export function seed(w: World, scenario: string): void {
   if (scenario === 'thor-unplugged') {
     w.unplugged.push(...w.attached.filter((a) => a.ref === THOR_REF))
     w.attached = w.attached.filter((a) => a.ref !== THOR_REF)
+    return
+  }
+  // Thor back over MTP with ADB not answering: the engine knows it by its
+  // marker, so it is still Thor's profile though not the transport it was made on
+  if (scenario === 'thor-over-mtp') {
+    w.attached = w.attached.filter((a) => a.ref !== THOR_REF)
+    w.attached.unshift({
+      ref: THOR_MTP_REF,
+      kind: 'mtp',
+      description: 'Thor / Internal shared storage / ROMs',
+      has_marker: true,
+      roms_root: 'ROMs',
+      profile_id: 'dev-1',
+    })
+    return
+  }
+  // a metadata pass started before the page opened, still running
+  if (scenario === 'metadata-running') {
+    w.jobs.push({
+      id: 'job-pass',
+      kind: 'metadata',
+      target: null,
+      state: 'running',
+      progress: { phase: 'match', done: 10, total: 40, current: 'Alpha Quest', detail: null },
+      result: null,
+      error_code: null,
+      error_message: null,
+      started: '2026-10-13T10:00:00Z',
+      finished: null,
+    })
     return
   }
   if (scenario === 'thor-plugged') {
@@ -1369,9 +1401,11 @@ const ROUTES: Route[] = [
   route('GET', '/api/v1/devices', (w) => ({
     status: 200,
     body: {
-      devices: w.attached.map((a) => ({
+      // the engine knows a device by its marker over any transport, not only the one
+      // its profile was made on; `profile_id` stands for that marker here
+      devices: w.attached.map(({ profile_id, ...a }) => ({
         ...a,
-        profile: w.profiles.find((p) => p.ref === a.ref) ?? null,
+        profile: w.profiles.find((p) => p.ref === a.ref || p.id === profile_id) ?? null,
       })),
       blocked: w.blocked,
       unreachable: w.blocked.length,

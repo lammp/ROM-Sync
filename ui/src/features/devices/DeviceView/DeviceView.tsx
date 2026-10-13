@@ -20,6 +20,7 @@ import { SystemsTable } from '../../../components/organisms/SystemsTable/Systems
 import { PageLayout } from '../../../components/templates/PageLayout/PageLayout'
 import { formatBytes } from '../../../lib/format/format'
 import {
+  attachedFor,
   useAttached,
   useCapacity,
   useInventory,
@@ -81,7 +82,7 @@ export function DeviceView({ id }: { id: string }) {
   const profiles = useProfiles()
   const profile = profiles.data?.find((p) => p.id === id) ?? null
   const attached = useAttached()
-  const device = attached.data?.devices.find((d) => d.profile?.id === id) ?? null
+  const device = attachedFor(attached.data?.devices ?? [], id)
   const ref = device?.ref ?? null
   const connected = device !== null
   const systems = useSystems().data ?? []

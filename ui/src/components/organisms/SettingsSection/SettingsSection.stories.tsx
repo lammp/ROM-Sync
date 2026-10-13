@@ -66,3 +66,15 @@ export const WithActions: Story = {
     )
   },
 }
+
+/** A graphic of the section's state beside its settings, where the section is wide (F11-S53). */
+export const WithGraphic: Story = {
+  args: {
+    actions: (
+      <Button variant="primary" large>
+        Update Metadata
+      </Button>
+    ),
+    aside: <p>The tracker</p>,
+  },
+}

@@ -5,6 +5,7 @@ import { CARD_REF, RETROID_REF, THOR_REF, fakeFetch, freshWorld } from '../../..
 import { EngineProvider, createEngine } from '../engine/engine'
 import {
   PROBE_MS,
+  attachedFor,
   probeMs,
   useAdopt,
   useRename,
@@ -203,5 +204,16 @@ describe('device queries', () => {
       expect((await result.current.scan.mutateAsync()).result).toEqual({ games: 1 })
       expect((await result.current.marker.mutateAsync()).result).toEqual({ written: 1 })
     })
+  })
+
+  it('finds a profile’s device by what the engine recognised, over any transport, the faster first', () => {
+    const at = (ref: string, kind: string, id: string | null) =>
+      ({ ref, kind, profile: id ? { id } : null }) as never
+    const mtp = at('m', 'mtp', 'dev-1')
+    const adb = at('a', 'adb', 'dev-1')
+    expect(attachedFor([mtp], 'dev-1')).toBe(mtp)
+    expect(attachedFor([mtp, adb, at('x', 'adb', 'dev-2')], 'dev-1')).toBe(adb)
+    expect(attachedFor([at('n', 'adb', null)], 'dev-1')).toBeNull()
+    expect(attachedFor([mtp], null)).toBeNull()
   })
 })

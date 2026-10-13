@@ -8,7 +8,7 @@ import * as stories from './HeaderBar.stories'
 const push = vi.fn()
 vi.mock('next/navigation', () => ({ usePathname: () => '/devices/', useRouter: () => ({ push }) }))
 
-const { OnTheLibrary, SomethingToRecover } = composeStories(stories)
+const { OnTheLibrary, SomethingToRecover, BackOverAnotherTransport } = composeStories(stories)
 
 describe('HeaderBar', () => {
   it('reads a route without the export trailing slash', () => {
@@ -42,5 +42,11 @@ describe('HeaderBar', () => {
     cleanup()
     render(<SomethingToRecover />)
     expect(await screen.findByRole('link', { name: 'Recover' })).toBeTruthy()
+  })
+
+  it('says a device is here when it is back over another transport than its profile was made on', async () => {
+    render(<BackOverAnotherTransport />)
+    expect(await screen.findByRole('option', { name: 'Thor' })).toBeTruthy()
+    expect(screen.queryByRole('option', { name: 'Thor (offline)' })).toBeNull()
   })
 })

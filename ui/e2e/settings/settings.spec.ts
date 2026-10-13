@@ -215,3 +215,26 @@ test('every tab keeps its main actions at its top (F11-S51)', async ({ page }) =
       .getByRole('link', { name: 'Export a support bundle' }),
   ).toBeVisible()
 })
+
+test('a running metadata pass stays in view after leaving the tab, beside the settings (F11-S53)', async ({
+  page,
+  request,
+}) => {
+  await page.setViewportSize({ width: 1500, height: 900 })
+  await request.post('/__seed/metadata-running')
+  await page.goto('/settings/#metadata')
+  const ring = page.getByRole('progressbar', { name: 'Matching games' })
+  await expect(ring).toHaveAttribute('aria-valuetext', 'Matching games: 10 of 40')
+  await page.getByRole('link', { name: 'Devices' }).click()
+  await page.getByRole('link', { name: 'Settings' }).click()
+  await page.getByRole('tab', { name: 'Metadata and artwork' }).click()
+  await expect(ring).toBeVisible()
+  // the tracker uses the space to the right of the settings
+  const tracker = await page.getByRole('region', { name: 'Metadata progress' }).boundingBox()
+  const threshold = await page
+    .getByRole('textbox', { name: 'Match acceptance threshold' })
+    .boundingBox()
+  expect(tracker && threshold && tracker.x > threshold.x + threshold.width).toBe(true)
+  await page.getByRole('button', { name: 'Stop' }).click()
+  await expect(ring).toHaveCount(0)
+})

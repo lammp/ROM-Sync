@@ -21,6 +21,7 @@ import { formatBytes } from '../../../lib/format/format'
 import { deviceKey, isOverride, isSelected, onDeviceKeys } from '../../../lib/selection/selection'
 import { buildTwins } from '../../../lib/twins/twins'
 import {
+  attachedFor,
   useAttached,
   useCapacity,
   useClearSelection,
@@ -70,9 +71,7 @@ export function LibraryView() {
   const deviceId = useAppStore((s) => s.selection.device)
   const running = useAppStore((s) => s.sync.running)
   const profile = (useProfiles().data ?? []).find((p) => p.id === deviceId) ?? null
-  const attached =
-    (useAttached().data?.devices ?? []).find((d) => d.ref !== null && d.ref === profile?.ref) ??
-    null
+  const attached = attachedFor(useAttached().data?.devices ?? [], profile?.id ?? null)
   const ref = attached ? attached.ref : null
   const selection = useSelection(deviceId).data ?? null
   const inventory = useInventory(deviceId).data ?? null

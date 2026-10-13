@@ -6,6 +6,55 @@
   margin: 0 0 14px;
   max-width: 900px;
   scroll-margin-top: 12px;
+  container-type: inline-size;
+}
+
+/* a section with a graphic takes the width it is given (F11-S53) */
+.wide {
+  max-width: 1320px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas: 'title' 'actions' 'aside' 'body' 'save';
+  column-gap: 24px;
+}
+
+.title {
+  grid-area: title;
+}
+
+.actions {
+  grid-area: actions;
+}
+
+.aside {
+  grid-area: aside;
+  margin-bottom: 12px;
+}
+
+.body {
+  grid-area: body;
+  min-width: 0;
+}
+
+.save {
+  grid-area: save;
+}
+
+@container (min-width: 980px) {
+  .wide .grid {
+    grid-template-columns: minmax(0, 1fr) 360px;
+    grid-template-areas: 'title aside' 'actions aside' 'body aside' 'save aside';
+    grid-template-rows: auto auto 1fr auto;
+  }
+
+  .wide .aside {
+    align-self: start;
+    position: sticky;
+    top: 12px;
+  }
 }
 
 .title {

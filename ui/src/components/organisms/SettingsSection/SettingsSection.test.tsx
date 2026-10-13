@@ -3,7 +3,8 @@ import { fireEvent, render, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 import * as stories from './SettingsSection.stories'
 
-const { Clean, Edited, Saving, Problem, NothingToSave, WithActions } = composeStories(stories)
+const { Clean, Edited, Saving, Problem, NothingToSave, WithActions, WithGraphic } =
+  composeStories(stories)
 
 describe('SettingsSection', () => {
   it('is a region named by its title, saving only once something is edited', () => {
@@ -41,5 +42,18 @@ describe('SettingsSection', () => {
     const text = screen.getByText('Store root and rescan.')
     expect(actions.compareDocumentPosition(text) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
     expect(screen.getByRole('button', { name: 'Rescan ROMs folder' })).toBeTruthy()
+  })
+
+  it('carries a graphic after its actions and before its settings, and takes the width it is given', () => {
+    render(<WithGraphic />)
+    const region = screen.getByRole('region', { name: /^Library/ })
+    expect(region.className).toMatch(/wide/)
+    const graphic = screen.getByText('The tracker')
+    const actions = screen.getByRole('group', { name: 'Library: actions' })
+    expect(actions.compareDocumentPosition(graphic) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    expect(
+      graphic.compareDocumentPosition(screen.getByText('Store root and rescan.')) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy()
   })
 })

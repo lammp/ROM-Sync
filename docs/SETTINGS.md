@@ -145,8 +145,14 @@ The systems table is the highest-value single addition on the page: it answers
 | **Update Metadata** | once any game has been looked up | looks up the games never looked up or that failed last time, then fills missing covers |
 | **Refresh Metadata** | beside it; needs credentials and a first run | asks first, saying it rebuilds the metadata for every game and how long that takes at the request rate; then looks up every game again, but for one matched by hand, and fills covers |
 
-Under them, one line counts the games not looked up yet, the games matched and
-the games without a cover. Without credentials only libretro covers are
+Beside the tab's settings, or under its actions where the tab is narrow, a
+**tracker** shows the metadata as one graphic (F11-S53): at rest, a ring of how
+much of the library is matched, with three coloured counts (matched, not looked
+up, without a cover); while a pass runs, the ring is its progress, turning and
+glowing, with the phase (matching games, filling covers), the count, the game
+being looked up, the time left at the pace so far, and Stop; when it ends, a
+tick or a cross and what it did. A pass already running when the tab opens, or
+started elsewhere, is followed, so leaving Settings never loses its progress. Without credentials only libretro covers are
 filled, and the line says so. The match skipped for want of credentials is said
 in the job's result, never as a failure. A game matched by hand is **pinned**,
 and a refresh keeps it (F5-S12).
