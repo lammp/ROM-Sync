@@ -21,7 +21,8 @@ describe('SettingsView', () => {
     const diagnostics = await screen.findByRole('region', { name: /^Diagnostics/ })
     await waitFor(() => expect(diagnostics.textContent).toContain('Shelldesktop window'))
     const library = region(/^Library/)
-    expect(within(library).getByRole('button', { name: 'Browse…' })).toBeTruthy()
+    expect(within(library).getByRole('button', { name: /^ROMs folder/ })).toBeTruthy()
+    expect(within(library).queryByRole('textbox', { name: 'ROMs folder' })).toBeNull()
     expect(within(library).getByRole('button', { name: 'Reveal' })).toBeTruthy()
     expect(
       within(region(/^Data and storage/)).getByRole('button', { name: 'Reveal the data folder' }),
@@ -32,7 +33,8 @@ describe('SettingsView', () => {
     render(<OffLoopback />)
     await waitFor(() => expect(region(/^Library/).textContent).toContain('4 systems · 40 games'))
     expect(region(/^Diagnostics/).textContent).toContain('Shellbrowser')
-    expect(screen.queryByRole('button', { name: 'Browse…' })).toBeNull()
+    // nothing here may read this computer's folders, so the path is typed
+    expect(within(region(/^Library/)).getByRole('textbox', { name: 'ROMs folder' })).toBeTruthy()
     expect(screen.queryByRole('button', { name: /^Reveal/ })).toBeNull()
   })
 
@@ -139,9 +141,9 @@ describe('SettingsView', () => {
     fireEvent.change(within(sync).getByRole('textbox', { name: 'Keep free on the device' }), {
       target: { value: '2 GB' },
     })
-    fireEvent.click(within(region(/^Library/)).getByRole('button', { name: 'Rescan store' }))
+    fireEvent.click(within(region(/^Library/)).getByRole('button', { name: 'Rescan ROMs folder' }))
     fireEvent.click(
-      within(screen.getByRole('dialog', { name: 'Rescan the store' })).getByRole('button', {
+      within(screen.getByRole('dialog', { name: 'Rescan the ROMs folder' })).getByRole('button', {
         name: 'Rescan',
       }),
     )

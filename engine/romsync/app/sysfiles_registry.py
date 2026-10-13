@@ -17,8 +17,8 @@ from dataclasses import dataclass
 from types import MappingProxyType
 from typing import Final, Literal
 
-SourceKind = Literal["bios", "firmware", "firmware-zip"]
-SOURCE_KINDS: Final = ("bios", "firmware", "firmware-zip")
+SourceKind = Literal["bios", "firmware-zip"]
+SOURCE_KINDS: Final = ("bios", "firmware-zip")
 
 
 @dataclass(frozen=True, slots=True)
@@ -95,14 +95,14 @@ DATA: Final[tuple[Mapping[str, object], ...]] = (
             {
                 "name": "prod.keys",
                 "required": True,
-                "source": ("firmware", "prod.keys"),
+                "source": ("bios", "prod.keys"),
                 "install": "eden-keys",
                 "note": "Switch keys: Eden > Install keys",
             },
             {
                 "name": "title.keys",
                 "required": False,
-                "source": ("firmware", "title.keys"),
+                "source": ("bios", "title.keys"),
                 "install": "eden-keys",
                 "note": "title keys; optional",
             },

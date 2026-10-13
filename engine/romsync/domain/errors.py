@@ -41,6 +41,12 @@ class NotAName(RomSyncError):
     code = "path.not_a_name"
 
 
+class FolderUnreadable(RomSyncError):
+    """A folder asked to be listed is not a full path, is not a folder, or could not be read."""
+
+    code = "path.unreadable"
+
+
 # --- configuration -----------------------------------------------------------
 
 

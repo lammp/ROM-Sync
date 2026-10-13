@@ -1,5 +1,13 @@
+/*
+ * The window, exactly: fixed to the viewport and clipping, so the document
+ * itself can never scroll. Only the page under the header scrolls; a
+ * visually hidden label, or focus moving down the page, cannot carry the
+ * header out of view.
+ */
 .shell {
-  height: 100%;
+  position: fixed;
+  inset: 0;
+  overflow: clip;
   display: flex;
   flex-direction: column;
 }
@@ -16,6 +24,7 @@
 }
 
 .main {
+  position: relative;
   flex: 1;
   min-height: 0;
   display: flex;

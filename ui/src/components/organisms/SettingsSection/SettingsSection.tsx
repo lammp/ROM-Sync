@@ -14,13 +14,16 @@ export type SettingsSectionProps = {
   readonly saving?: boolean
   /** Absent for a section with nothing to save. */
   readonly onSave?: () => void
+  /** Puts back what is stored, dropping the section's edits; offered beside Save. */
+  readonly onCancel?: () => void
   readonly children: ReactNode
 }
 
 /**
  * One section of the settings page (F11-S34). Saving is explicit and per
  * section, so a job ending elsewhere, or another section's save, never
- * discards what is typed here (SETTINGS.md, principles).
+ * discards what is typed here (SETTINGS.md, principles). Cancel beside Save
+ * drops the section's edits and shows what is stored again.
  */
 export function SettingsSection({
   id,
@@ -29,6 +32,7 @@ export function SettingsSection({
   dirty = false,
   saving = false,
   onSave,
+  onCancel,
   children,
 }: SettingsSectionProps) {
   const head = `${id}-title`
@@ -42,6 +46,11 @@ export function SettingsSection({
       {children}
       {onSave && (
         <div className={styles.save}>
+          {onCancel && (
+            <Button small disabled={!dirty || saving} onClick={onCancel}>
+              Cancel
+            </Button>
+          )}
           <Button variant="primary" small disabled={!dirty || saving} onClick={onSave}>
             {saving ? 'Saving…' : `Save ${title.toLowerCase()}`}
           </Button>

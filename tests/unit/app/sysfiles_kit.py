@@ -31,12 +31,11 @@ def build(
     (store / "bios").mkdir(parents=True)
     for name, data in BIOS.items():
         (store / "bios" / name).write_bytes(data)
-    firmware = tmp_path / "firmware"
-    (firmware / "switch").mkdir(parents=True)
-    (firmware / "switch" / "prod.keys").write_bytes(b"keys")
-    (firmware / "switch" / "Firmware 20.0.zip").write_bytes(b"firmware twenty")
-    (firmware / "switch" / "Firmware 19.0.zip").write_bytes(b"firmware nineteen")
-    files = FsSysfileStore(StoreRoot(str(store)), LocalRoot(str(firmware)))
+    # keys and firmware sit beside the BIOS files, as in an ES-DE library (F8-S9)
+    (store / "bios" / "prod.keys").write_bytes(b"keys")
+    (store / "bios" / "Firmware 20.0.zip").write_bytes(b"firmware twenty")
+    (store / "bios" / "Firmware 19.0.zip").write_bytes(b"firmware nineteen")
+    files = FsSysfileStore(StoreRoot(str(store)))
     r.devices.add(DeviceProfile(DEVICE, "Thor", DeviceKind.FAKE, "ROMs", "x", "x"))
     sysfiles = SystemFiles(
         files,

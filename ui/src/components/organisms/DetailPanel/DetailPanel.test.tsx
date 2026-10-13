@@ -21,6 +21,12 @@ describe('DetailPanel', () => {
     expect(screen.queryByRole('button', { name: /Select for/ })).toBeNull()
   })
 
+  it('closes on Escape', () => {
+    render(<Matched />)
+    fireEvent.keyDown(screen.getByRole('article'), { key: 'Escape' })
+    expect(Matched.args.onClose).toHaveBeenCalledOnce()
+  })
+
   it('counts the files of a folder game', () => {
     render(<Folder />)
     expect(screen.getByText('3.00 MB · 2 files')).toBeTruthy()

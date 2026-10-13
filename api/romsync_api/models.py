@@ -34,7 +34,7 @@ class Version(Model):
 #: Who hosts the page: the desktop window, or a browser the person opened.
 ShellKind = Literal["desktop", "browser"]
 #: A shell action the page may offer, each one an endpoint under `/shell`.
-Capability = Literal["reveal", "pick_folder", "open_url", "notify"]
+Capability = Literal["reveal", "pick_folder", "browse_folders", "open_url", "notify"]
 
 
 class Session(Model):
@@ -352,7 +352,7 @@ class MaintenanceRun(Model):
 
 
 class Reveal(Model):
-    #: One of the configured folders: "store", "data" or "firmware".
+    #: One of the configured folders: "store" or "data".
     root: str
     #: A path below it, or nothing for the folder itself.
     path: str | None = None
@@ -364,6 +364,23 @@ class PickFolder(Model):
 
 class PickedFolder(Model):
     path: str | None
+
+
+class FolderEntry(Model):
+    name: str
+    path: str
+
+
+class FolderListing(Model):
+    """One folder's contents while choosing by browsing (F11-S45)."""
+
+    #: The folder listed; null for the list of drives.
+    path: str | None
+    #: The folder above; null at a drive's root, where up is the list of drives.
+    parent: str | None
+    folders: list[FolderEntry]
+    #: Files of the kinds asked for; empty when none were asked for.
+    files: list[FolderEntry]
 
 
 class OpenLink(Model):

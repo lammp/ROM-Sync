@@ -35,7 +35,7 @@ describe('engine facts and shell actions', () => {
     await waitFor(() =>
       expect(result.current.shell.data).toEqual({
         kind: 'browser',
-        capabilities: ['reveal', 'pick_folder', 'open_url', 'notify'],
+        capabilities: ['reveal', 'pick_folder', 'browse_folders', 'open_url', 'notify'],
       }),
     )
     expect(result.current.version.data?.version).toBe('2.0.0.dev0')

@@ -29,6 +29,9 @@ from romsync_desktop.window import (
 )
 from tests.helpers.fakes import CountingIds, FrozenClock
 
+#: Every shell action the desktop window is offered on loopback.
+ACTIONS = ["reveal", "pick_folder", "browse_folders", "open_url", "notify"]
+
 
 class FakeServer:
     def __init__(self) -> None:
@@ -216,7 +219,7 @@ def test_shell_reported(tmp_path: Path) -> None:
     run(tmp_path / "data", window=window, server=server, engine_factory=engine_at())
     assert window.session is not None
     assert window.session["kind"] == "desktop"
-    assert window.session["capabilities"] == ["reveal", "pick_folder", "open_url", "notify"]
+    assert window.session["capabilities"] == ACTIONS
 
 
 def test_dialogs_gated(tmp_path: Path) -> None:
@@ -231,7 +234,7 @@ def test_dialogs_gated(tmp_path: Path) -> None:
         system=Unused(),
     )
     assert window.session is not None
-    assert window.session["capabilities"] == ["reveal", "pick_folder", "open_url", "notify"]
+    assert window.session["capabilities"] == ACTIONS
     assert window.picked == {"path": "E:\\ROMs"}
     assert window.asked == ["Choose the store folder"]
 

@@ -1,4 +1,4 @@
-"""Where the store and the firmware folder keep system files (F8-S2).
+"""Where the store keeps system files: its bios folder (F8-S2, F8-S9).
 
 Finding a file and hashing it are the only two things the system-files use
 case asks of this computer's disk. Whether to hash is the use case's decision,
@@ -22,9 +22,8 @@ class Located:
 
 class SysfileStore(Protocol):
     def locate(self, kind: str, name: str) -> Located | None:
-        """The store's copy: `bios` by exact name in the store's bios folder,
-        `firmware` by exact name anywhere in the firmware folder, `firmware-zip`
-        as the highest-named zip whose name starts with `name`."""
+        """The store's copy, in the store's bios folder: `bios` by exact name,
+        `firmware-zip` as the highest-named zip whose name starts with `name`."""
         ...
 
     def md5(self, path: ContainedPath) -> str: ...

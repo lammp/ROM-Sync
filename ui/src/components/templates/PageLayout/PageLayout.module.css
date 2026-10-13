@@ -1,4 +1,6 @@
+/* positioned, so anything placed absolutely inside scrolls with the page, not the document */
 .page {
+  position: relative;
   flex: 1;
   overflow: auto;
   padding: 18px 26px;

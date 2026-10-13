@@ -50,6 +50,9 @@ function said(kind: string, result: Readonly<Record<string, number>> | null): st
   return `${kind} done`
 }
 
+/** A time of day as the page says it: 14:05:09. */
+const clock = (at: number) => new Date(at).toTimeString().slice(0, 8)
+
 /**
  * The system files page (F11-S33). With a device chosen and plugged in: its
  * systems, each system's files, and the stray files under the staging root.
@@ -113,7 +116,22 @@ export function SystemFilesView() {
   if (!deviceId || !ref) {
     const root = typeof storeRoot === 'string' ? storeRoot : null
     return (
-      <PageLayout heading="System files in the store">
+      <PageLayout
+        heading="System files in the store"
+        actions={
+          <>
+            {store.dataUpdatedAt > 0 && <Muted>{`checked ${clock(store.dataUpdatedAt)}`}</Muted>}
+            <Button
+              small
+              disabled={store.isFetching}
+              title="Read the bios folder again"
+              onClick={() => void store.refetch()}
+            >
+              {store.isFetching ? 'Checking…' : 'Check again'}
+            </Button>
+          </>
+        }
+      >
         {root && <Muted>{root}\bios</Muted>}
         <p>
           <Muted>
@@ -167,6 +185,14 @@ export function SystemFilesView() {
             onClick={() => start('survey', (cb) => survey.mutate(undefined, cb))}
           >
             Refresh from device
+          </Button>
+          <Button
+            small
+            disabled={report.isFetching}
+            title="Read the store's bios folder again"
+            onClick={() => void report.refetch()}
+          >
+            {report.isFetching ? 'Checking…' : 'Check the store again'}
           </Button>
         </>
       }

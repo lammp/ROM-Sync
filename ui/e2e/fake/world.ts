@@ -67,8 +67,12 @@ export type World = {
   /** Who hosts the page: a browser on loopback, as the e2e suite runs, unless a case says otherwise. */
   shell: {
     kind: 'desktop' | 'browser'
-    capabilities: ('reveal' | 'pick_folder' | 'open_url' | 'notify')[]
+    capabilities: ('reveal' | 'pick_folder' | 'browse_folders' | 'open_url' | 'notify')[]
   }
+  /** System files missing from the store's bios folder, by name; the rest are there. */
+  biosMissing: string[]
+  /** This computer's folders, by full path: what each holds, for browsing (F11-S45). */
+  computer: Record<string, { folders: string[]; files: string[] }>
   /** System notifications the page asked for, by text. */
   notified: string[]
   /** Each transport's state on the last probe, as the engine reports it (F13-S8). */
@@ -134,7 +138,8 @@ const REGISTRY: readonly Json[] = [
     key: 'store.root',
     kind: 'path',
     default: '',
-    description: 'The front-end ROMs folder the library is read from.',
+    description:
+      'The folder with one subfolder per system (nes, snes, psx and so on), laid out as ES-DE reads it.',
     choices: [],
     minimum: null,
     maximum: null,
@@ -146,7 +151,7 @@ const REGISTRY: readonly Json[] = [
     key: 'store.rescan_on_launch',
     kind: 'bool',
     default: false,
-    description: 'Rescan the store every time the application starts.',
+    description: 'Rescan the ROMs folder every time the application starts.',
     choices: [],
     minimum: null,
     maximum: null,
@@ -275,18 +280,6 @@ const REGISTRY: readonly Json[] = [
     minimum: 1048576,
     maximum: 4294967296,
     unit: ' bytes',
-    restart: false,
-    secret: false,
-  },
-  {
-    key: 'firmware.folder',
-    kind: 'path',
-    default: '',
-    description: 'Where firmware and key files are read from. Nothing is ever fetched.',
-    choices: [],
-    minimum: null,
-    maximum: null,
-    unit: '',
     restart: false,
     secret: false,
   },
@@ -664,7 +657,26 @@ export function freshWorld(): World {
     failing: [],
     unread: [],
     nextRun: 1,
-    shell: { kind: 'browser', capabilities: ['reveal', 'pick_folder', 'open_url', 'notify'] },
+    shell: {
+      kind: 'browser',
+      capabilities: ['reveal', 'pick_folder', 'browse_folders', 'open_url', 'notify'],
+    },
+    biosMissing: [],
+    computer: {
+      'C:\\': { folders: ['Users'], files: [] },
+      'C:\\Users': { folders: [], files: [] },
+      'D:\\': { folders: ['Games'], files: [] },
+      'D:\\Games': { folders: ['_firmware', '_tools', 'ROMs'], files: ['README.txt'] },
+      'D:\\Games\\ROMs': { folders: ['nes', 'snes'], files: [] },
+      'D:\\Games\\ROMs\\nes': { folders: [], files: [] },
+      'D:\\Games\\ROMs\\snes': { folders: [], files: [] },
+      'D:\\Games\\_firmware': { folders: [], files: [] },
+      'D:\\Games\\_tools': { folders: ['platform-tools'], files: [] },
+      'D:\\Games\\_tools\\platform-tools': {
+        folders: [],
+        files: ['adb.exe', 'AdbWinApi.dll'],
+      },
+    },
     notified: [],
     transports: [
       { kind: 'volume', available: true, detail: '1 drive(s)' },
@@ -847,6 +859,15 @@ function startSync(w: World, ref: string, confirm: unknown): Answer {
  * name the store's folder already has, unread.
  */
 export function seed(w: World, scenario: string): void {
+  // the GBA BIOS taken out of the store's bios folder, then put back
+  if (scenario === 'bios-removed') {
+    w.biosMissing.push('gba_bios.bin')
+    return
+  }
+  if (scenario === 'bios-restored') {
+    w.biosMissing = []
+    return
+  }
   if (scenario !== 'recover') throw new Error(`no scenario ${scenario}`)
   w.inventory['dev-1']?.push(
     { system: 'snes', name: 'Hidden Gem (USA).sfc', kind: 'file', size: 2 * MB },
@@ -1096,6 +1117,46 @@ const ROUTES: Route[] = [
     status: 200,
     body: { token: 'e2e-token', ...w.shell },
   })),
+  route('GET', '/api/v1/shell/folders', (w, _m, query) => {
+    const q = query as { path?: string[]; files?: string[] }
+    const path = q.path?.[0] ?? ''
+    const kinds = (q.files ?? []).map((k) => `.${k.toLowerCase()}`)
+    const drives = Object.keys(w.computer).filter((p) => /^[A-Z]:\\$/.test(p))
+    if (!path)
+      return {
+        status: 200,
+        body: {
+          path: null,
+          parent: null,
+          folders: drives.map((d) => ({ name: d, path: d })),
+          files: [],
+        },
+      }
+    const here = w.computer[path]
+    if (!here)
+      return error(
+        422,
+        'path.unreadable',
+        `${path} could not be opened: The system cannot find the path specified`,
+        'path',
+      )
+    const join = (name: string) => (path.endsWith('\\') ? path + name : `${path}\\${name}`)
+    const cut = path.replace(/\\$/, '').lastIndexOf('\\')
+    const parent = /^[A-Z]:\\$/.test(path) ? null : cut <= 2 ? path.slice(0, 3) : path.slice(0, cut)
+    const byName = (a: string, b: string) => a.toLowerCase().localeCompare(b.toLowerCase())
+    return {
+      status: 200,
+      body: {
+        path,
+        parent,
+        folders: [...here.folders].sort(byName).map((n) => ({ name: n, path: join(n) })),
+        files: here.files
+          .filter((n) => kinds.some((k) => n.toLowerCase().endsWith(k)))
+          .sort(byName)
+          .map((n) => ({ name: n, path: join(n) })),
+      },
+    }
+  }),
   route('POST', '/api/v1/shell/notify', (w, _m, body) => {
     w.notified.push(String((body as { body?: unknown } | null)?.body ?? ''))
     return { status: 200, body: { delivered: true } }
@@ -1400,7 +1461,7 @@ const ROUTES: Route[] = [
       return error(400, 'dest.marker_untrusted', 'the device has no marker to adopt', 'device')
     return { status: 200, body: makeProfile(w, found, 'dev-elsewhere', 'Retroid') }
   }),
-  route('GET', '/api/v1/sysfiles/store', () => ({
+  route('GET', '/api/v1/sysfiles/store', (w) => ({
     status: 200,
     body: {
       items: Object.entries(SYSFILES).flatMap(([system, s]) =>
@@ -1409,9 +1470,9 @@ const ROUTES: Route[] = [
           emulator: s.emulator,
           name: f.name,
           required: f.required,
-          present: true,
-          size: f.size,
-          verified: f.verified,
+          present: !w.biosMissing.includes(f.name),
+          size: w.biosMissing.includes(f.name) ? null : f.size,
+          verified: w.biosMissing.includes(f.name) ? null : f.verified,
           note: '',
         })),
       ),
@@ -1479,12 +1540,24 @@ export function answer(w: World, method: string, path: string, body: unknown): A
   return error(404, 'request.not_found', `no fake for ${method} ${path}`)
 }
 
+/** A request's query, each name to its values, handed to a GET route as its body. */
+export function queryOf(url: URL): Record<string, string[]> {
+  const q: Record<string, string[]> = {}
+  for (const [k, v] of url.searchParams) (q[k] ??= []).push(v)
+  return q
+}
+
 /** The world as a fetch, for the engine client inside a story. */
 export function fakeFetch(w: World): typeof fetch {
   return (async (input: Request) => {
     const url = new URL(input.url)
     const text = input.method === 'GET' ? '' : await input.text()
-    const a = answer(w, input.method, url.pathname, text ? JSON.parse(text) : null)
+    const a = answer(
+      w,
+      input.method,
+      url.pathname,
+      input.method === 'GET' ? queryOf(url) : text ? JSON.parse(text) : null,
+    )
     return new Response(JSON.stringify(a.body), {
       status: a.status,
       headers: { 'content-type': 'application/json' },

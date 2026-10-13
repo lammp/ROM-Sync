@@ -38,3 +38,24 @@ test('the device page says what its system files lack once read', async ({ page 
   await page.goto('/devices/?id=dev-1')
   await expect(page.getByText('Game Boy Advance: missing gba_bios.bin')).toBeVisible()
 })
+
+test('a file added to the bios folder shows on return to the window, or on Check again', async ({
+  page,
+  request,
+}) => {
+  await request.post('/__seed/bios-removed')
+  await page.goto('/system-files/')
+  const row = page.getByRole('row', { name: /gba_bios\.bin/ })
+  await expect(row).toContainText('missing')
+  // the file is put back in Explorer; coming back to the window reads the folder again
+  await request.post('/__seed/bios-restored')
+  await page.evaluate(() =>
+    document.dispatchEvent(new Event('visibilitychange', { bubbles: true })),
+  )
+  await expect(row).not.toContainText('missing')
+  // and the button asks at once, without leaving the window
+  await request.post('/__seed/bios-removed')
+  await page.getByRole('button', { name: 'Check again' }).click()
+  await expect(row).toContainText('missing')
+  await expect(page.getByText(/^checked \d\d:\d\d:\d\d$/)).toBeVisible()
+})

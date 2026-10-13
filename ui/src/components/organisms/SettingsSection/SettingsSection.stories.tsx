@@ -10,6 +10,7 @@ const meta = {
     title: 'Library',
     status: { tone: 'ok', word: '4 systems' },
     onSave: fn(),
+    onCancel: fn(),
     children: <p>Store root and rescan.</p>,
   },
 } satisfies Meta<typeof SettingsSection>
@@ -20,6 +21,17 @@ type Story = StoryObj<typeof meta>
 export const Clean: Story = {
   play: async ({ canvas }) => {
     await expect(canvas.getByRole('button', { name: 'Save library' })).toBeDisabled()
+    await expect(canvas.getByRole('button', { name: 'Cancel' })).toBeDisabled()
+  },
+}
+
+/** Edits dropped: Cancel puts back what is stored. */
+export const Cancelled: Story = {
+  args: { dirty: true },
+  play: async ({ canvas, args, userEvent }) => {
+    await userEvent.click(canvas.getByRole('button', { name: 'Cancel' }))
+    await expect(args.onCancel).toHaveBeenCalledOnce()
+    await expect(args.onSave).not.toHaveBeenCalled()
   },
 }
 

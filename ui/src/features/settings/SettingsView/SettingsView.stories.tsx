@@ -55,26 +55,60 @@ export const FirstRun: Story = {
   },
 }
 
-/** In the desktop window (F12-S3): the page says so, and offers Browse and Reveal. */
+/** In the desktop window (F12-S3): the page says so, and offers the chooser and Reveal. */
 export const InTheDesktop: Story = {
   parameters: {
-    shell: { kind: 'desktop', capabilities: ['reveal', 'pick_folder', 'open_url', 'notify'] },
+    shell: {
+      kind: 'desktop',
+      capabilities: ['reveal', 'pick_folder', 'browse_folders', 'open_url', 'notify'],
+    },
   },
   play: async ({ canvas }) => {
     const diagnostics = await canvas.findByRole('region', { name: /^Diagnostics/ })
     await waitFor(() => expect(diagnostics).toHaveTextContent('desktop window'))
     const library = canvas.getByRole('region', { name: /^Library/ })
-    await expect(within(library).getByRole('button', { name: 'Browse…' })).toBeVisible()
+    await expect(within(library).getByRole('button', { name: /^ROMs folder/ })).toBeVisible()
+    await expect(within(library).queryByRole('textbox', { name: 'ROMs folder' })).toBeNull()
   },
 }
 
-/** A browser reaching an engine bound off loopback: no shell action is offered. */
+/** A browser reaching an engine bound off loopback: no shell action, and paths are typed. */
 export const OffLoopback: Story = {
   parameters: { shell: { kind: 'browser', capabilities: [] } },
   play: async ({ canvas }) => {
     const diagnostics = await canvas.findByRole('region', { name: /^Diagnostics/ })
     await waitFor(() => expect(diagnostics).toHaveTextContent('browser'))
-    await expect(canvas.queryByRole('button', { name: 'Browse…' })).toBeNull()
+    await expect(canvas.getByRole('textbox', { name: 'ROMs folder' })).toBeVisible()
     await expect(canvas.queryByRole('button', { name: /^Reveal/ })).toBeNull()
+  },
+}
+
+/**
+ * Choosing the store root by browsing (F11-S45): the field opens the folder
+ * browser, a folder is opened and chosen, and Cancel puts back what is stored.
+ */
+export const ChooseByBrowsing: Story = {
+  play: async ({ canvas, userEvent }) => {
+    const library = await canvas.findByRole('region', { name: /^Library/ })
+    const field = await within(library).findByRole('button', {
+      name: 'ROMs folder D:\\Games\\ROMs Choose folder…',
+    })
+    await userEvent.click(field)
+    const dialog = await canvas.findByRole('dialog', { name: 'Choose the ROMs folder' })
+    await waitFor(() => expect(within(dialog).getByText('D:\\Games\\ROMs')).toBeVisible())
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Up' }))
+    await userEvent.click(await within(dialog).findByRole('button', { name: '_firmware' }))
+    await waitFor(() => expect(within(dialog).getByText('D:\\Games\\_firmware')).toBeVisible())
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Choose this folder' }))
+    await expect(canvas.queryByRole('dialog')).toBeNull()
+    await expect(
+      within(library).getByRole('button', {
+        name: 'ROMs folder D:\\Games\\_firmware Choose folder…',
+      }),
+    ).toBeVisible()
+    await userEvent.click(within(library).getByRole('button', { name: 'Cancel' }))
+    await expect(
+      within(library).getByRole('button', { name: 'ROMs folder D:\\Games\\ROMs Choose folder…' }),
+    ).toBeVisible()
   },
 }

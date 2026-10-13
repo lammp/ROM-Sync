@@ -22,9 +22,26 @@ export default meta
 type Story = StoryObj<typeof meta>
 
 export const Text: Story = {
+  args: {
+    label: 'Bind host',
+    def: { ...path, kind: 'str', description: 'Where the engine listens.' },
+    value: '127.0.0.1',
+  },
   play: async ({ canvas, args, userEvent }) => {
-    await userEvent.type(canvas.getByRole('textbox', { name: 'Store root' }), 'X')
-    await expect(args.onChange).toHaveBeenLastCalledWith('D:\\Games\\ROMsX')
+    await userEvent.type(canvas.getByRole('textbox', { name: 'Bind host' }), 'X')
+    await expect(args.onChange).toHaveBeenLastCalledWith('127.0.0.1X')
+  },
+}
+
+/** A path is chosen, never typed (F11-S45). */
+export const Path: Story = {
+  args: { onChoose: fn() },
+  play: async ({ canvas, args, userEvent }) => {
+    await expect(canvas.queryByRole('textbox')).toBeNull()
+    await userEvent.click(
+      canvas.getByRole('button', { name: 'Store root D:\\Games\\ROMs Choose folder…' }),
+    )
+    await expect(args.onChoose).toHaveBeenCalledOnce()
   },
 }
 

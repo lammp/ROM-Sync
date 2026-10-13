@@ -51,13 +51,24 @@ export type DetailPanelProps = {
   readonly onClose: () => void
 }
 
-/** One game in full: what it is, its tags, its versions, and the actions on it. */
+/** One game in full: what it is, its tags, its versions, and the actions on it.
+ * It closes on its close button or Escape. A click outside does not close it:
+ * outside it is the library, where a click picks the next game to show. */
 export function DetailPanel(p: DetailPanelProps) {
   const g = p.game
   const label = g.title || g.name
   const [ref, setRef] = useState('')
   return (
-    <article className={styles.detail} aria-labelledby={`game-${g.id}`}>
+    <article
+      className={styles.detail}
+      aria-labelledby={`game-${g.id}`}
+      onKeyDown={(e) => {
+        if (e.key === 'Escape' && !e.defaultPrevented) {
+          e.stopPropagation()
+          p.onClose()
+        }
+      }}
+    >
       <div className={styles.close}>
         <IconButton label="Close details" onClick={p.onClose}>
           ×

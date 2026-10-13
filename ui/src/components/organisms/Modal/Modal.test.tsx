@@ -38,12 +38,13 @@ describe('Modal', () => {
   it('trap: Tab and Shift+Tab stay inside', () => {
     render(<Open />)
     const cancel = screen.getByRole('button', { name: 'Cancel' })
-    const remove = screen.getByRole('button', { name: 'Remove' })
-    remove.focus()
-    fireEvent.keyDown(remove, { key: 'Tab' })
+    // the close button is the last control, after the content
+    const close = screen.getByRole('button', { name: 'Close' })
+    close.focus()
+    fireEvent.keyDown(close, { key: 'Tab' })
     expect(document.activeElement).toBe(cancel)
     fireEvent.keyDown(cancel, { key: 'Tab', shiftKey: true })
-    expect(document.activeElement).toBe(remove)
+    expect(document.activeElement).toBe(close)
   })
 
   it('escape: closes', () => {
@@ -63,7 +64,7 @@ describe('Modal', () => {
     expect(document.activeElement).toBe(opener)
   })
 
-  it('stays open on a click inside or outside: Escape and Cancel close it', () => {
+  it('closes on a click on the page around it, not on one inside', () => {
     const onClose = vi.fn()
     render(
       <Modal title="T" onClose={onClose}>
@@ -71,7 +72,24 @@ describe('Modal', () => {
       </Modal>,
     )
     fireEvent.mouseDown(screen.getByText('inside'))
-    fireEvent.mouseDown(document.body)
+    fireEvent.mouseDown(screen.getByRole('dialog'))
     expect(onClose).not.toHaveBeenCalled()
+    const around = screen.getByRole('dialog').parentElement
+    if (!around) throw new Error('no backdrop')
+    fireEvent.mouseDown(around)
+    expect(onClose).toHaveBeenCalledOnce()
+  })
+
+  it('always has a close button, after the content', () => {
+    const onClose = vi.fn()
+    render(
+      <Modal title="Choose a folder" onClose={onClose}>
+        <button type="button">Choose</button>
+      </Modal>,
+    )
+    const close = screen.getByRole('button', { name: 'Close' })
+    expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Choose' }))
+    fireEvent.click(close)
+    expect(onClose).toHaveBeenCalledOnce()
   })
 })

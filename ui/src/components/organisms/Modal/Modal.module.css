@@ -9,6 +9,7 @@
 }
 
 .box {
+  position: relative;
   background: var(--bg2);
   border: 1px solid var(--divider);
   border-radius: var(--radius-12);
@@ -20,6 +21,12 @@
 }
 
 .title {
-  margin: 0 0 12px;
+  margin: 0 36px 12px 0;
   font-size: var(--text-xl);
+}
+
+.close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
 }

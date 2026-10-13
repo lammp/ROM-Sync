@@ -5,7 +5,7 @@
 import { readFileSync } from 'node:fs'
 import { createServer } from 'node:http'
 import { join } from 'node:path'
-import { answer, freshWorld, seed } from './fake/world.ts'
+import { answer, freshWorld, queryOf, seed } from './fake/world.ts'
 
 const ROOT = 'out'
 const port = Number(process.argv[2] ?? 4310)
@@ -44,7 +44,13 @@ createServer((req, res) => {
     let raw = ''
     req.on('data', (chunk: Buffer) => (raw += chunk.toString()))
     req.on('end', () => {
-      const result = answer(world, req.method ?? 'GET', url.pathname, raw ? JSON.parse(raw) : null)
+      const method = req.method ?? 'GET'
+      const result = answer(
+        world,
+        method,
+        url.pathname,
+        method === 'GET' ? queryOf(url) : raw ? JSON.parse(raw) : null,
+      )
       res.writeHead(result.status, { 'content-type': 'application/json' })
       res.end(JSON.stringify(result.body))
     })

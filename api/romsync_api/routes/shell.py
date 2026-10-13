@@ -1,4 +1,5 @@
-"""Shell endpoints: reveal, pick folder, open external (F10-S15), notify (F12-S5).
+"""Shell endpoints: reveal, pick folder, open external (F10-S15), notify (F12-S5),
+and browsing this computer's folders to choose one (F11-S45).
 
 They answer only while the server listens on loopback; off loopback every one
 is refused, whatever it is asked.
@@ -6,12 +7,15 @@ is refused, whatever it is asked.
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, Query, Request
 
+from romsync.app.browse import kinds
 from romsync.compose import Engine
 from romsync.domain.errors import ShellUnavailable
 from romsync_api.deps import engine
 from romsync_api.models import (
+    FolderEntry,
+    FolderListing,
     Notified,
     Notify,
     OpenLink,
@@ -51,3 +55,20 @@ def open_link(body: OpenLink, e: Engine = Depends(engine)) -> ShellDone:  # noqa
 def notify(body: Notify, e: Engine = Depends(engine)) -> Notified:  # noqa: B008
     """Never an error: a notification that cannot be shown is `delivered: false`."""
     return Notified(delivered=e.shell.notify(body.title, body.body))
+
+
+@router.get("/folders", response_model=FolderListing, dependencies=[Depends(loopback_only)])
+def folders(
+    path: str | None = None,
+    files: list[str] = Query(default=[]),  # noqa: B008
+    e: Engine = Depends(engine),  # noqa: B008
+) -> FolderListing:
+    """The drives with no `path`, else that folder's subfolders, and its files of
+    the extensions in `files`. Names only, nothing read inside a file, nothing written."""
+    listed = e.browse(path, kinds(files))
+    return FolderListing(
+        path=listed.path,
+        parent=listed.parent,
+        folders=[FolderEntry(name=f.name, path=f.path) for f in listed.folders],
+        files=[FolderEntry(name=f.name, path=f.path) for f in listed.files],
+    )

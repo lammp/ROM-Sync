@@ -1,4 +1,5 @@
 import { useEffect, useId, useRef, type ReactNode } from 'react'
+import { IconButton } from '../../atoms/IconButton/IconButton'
 import styles from './Modal.module.css'
 
 const FOCUSABLE =
@@ -15,15 +16,32 @@ export type ModalProps = {
 
 /**
  * A modal dialog (F11-S25): the dialog role named by its title, focus moved
- * in on open, kept inside while open, given back on close, and Escape to
- * close. Version 1 also closed on a click outside; that is dropped, because
- * a pointer-only dismissal has no control of its own (F11-S10), and Escape
- * and each dialog's Cancel do the same. It replaces version 1's native confirm and
+ * in on open, kept inside while open, and given back on close. It closes
+ * three ways, every one of them always there: its close button, Escape, and
+ * a click on the dimmed page around it. A dialog never leaves the person
+ * without a visible way out. It replaces version 1's native confirm and
  * prompt, which SPEC section 10 forbids.
+ *
+ * The close button comes after the content, so focus opens on the content
+ * and the button is drawn in the corner.
  */
 export function Modal({ title, onClose, children, initialFocus }: ModalProps) {
   const titleId = useId()
   const box = useRef<HTMLDivElement>(null)
+  const backdrop = useRef<HTMLDivElement>(null)
+
+  // A press on the dimmed page around the dialog closes it, as the close button
+  // and Escape do; a press that lands inside the dialog does not. It is a native
+  // listener: the backdrop is not a control, and the keyboard has its own ways out.
+  useEffect(() => {
+    const around = backdrop.current
+    if (!around) return
+    const press = (e: MouseEvent) => {
+      if (e.target === around) onClose()
+    }
+    around.addEventListener('mousedown', press)
+    return () => around.removeEventListener('mousedown', press)
+  }, [onClose])
 
   useEffect(() => {
     const before = document.activeElement instanceof HTMLElement ? document.activeElement : null
@@ -62,7 +80,7 @@ export function Modal({ title, onClose, children, initialFocus }: ModalProps) {
   }
 
   return (
-    <div className={styles.backdrop}>
+    <div ref={backdrop} className={styles.backdrop}>
       <div
         ref={box}
         className={styles.box}
@@ -76,6 +94,11 @@ export function Modal({ title, onClose, children, initialFocus }: ModalProps) {
           {title}
         </h2>
         {children}
+        <span className={styles.close}>
+          <IconButton label="Close" onClick={onClose}>
+            ×
+          </IconButton>
+        </span>
       </div>
     </div>
   )

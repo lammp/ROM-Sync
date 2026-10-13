@@ -104,14 +104,15 @@ SETTINGS: tuple[Setting, ...] = (
         "store.root",
         "path",
         "",
-        "The front-end ROMs folder the library is read from.",
+        "The folder with one subfolder per system (nes, snes, psx and so on), "
+        "laid out as ES-DE reads it.",
         restart=False,
     ),
     Setting(
         "store.rescan_on_launch",
         "bool",
         False,
-        "Rescan the store every time the application starts.",
+        "Rescan the ROMs folder every time the application starts.",
     ),
     Setting(
         "data.directory",
@@ -181,12 +182,6 @@ SETTINGS: tuple[Setting, ...] = (
         minimum=1024 * 1024,
         maximum=4 * 1024 * 1024 * 1024,
         unit=" bytes",
-    ),
-    Setting(
-        "firmware.folder",
-        "path",
-        "",
-        "Where firmware and key files are read from. Nothing is ever fetched.",
     ),
     # --- capacity and safety ---------------------------------------------
     Setting(

@@ -21,12 +21,15 @@ LOG = logging.getLogger("romsync.api")
 SHELL_ACTIONS: Final[tuple[Capability, ...]] = (
     "reveal",
     "pick_folder",
+    "browse_folders",
     "open_url",
     "notify",
 )
 
 #: What a bind off loopback disables, named in the warning.
-DISABLED: Final = "the shell endpoints (reveal, pick folder, open external, notify)"
+DISABLED: Final = (
+    "the shell endpoints (reveal, pick folder, browse folders, open external, notify)"
+)
 
 
 @dataclass(frozen=True, slots=True)

@@ -10,7 +10,7 @@ export type ShellKind = 'desktop' | 'browser'
  * than imported from it (lib sits below the API client); a capability the
  * engine adds and this list lacks fails the type check in `useShell`.
  */
-export type Capability = 'reveal' | 'pick_folder' | 'open_url' | 'notify'
+export type Capability = 'reveal' | 'pick_folder' | 'browse_folders' | 'open_url' | 'notify'
 export type Shell = { readonly kind: ShellKind; readonly capabilities: readonly Capability[] }
 
 /** Until the engine answers, the page assumes the least: a browser that can ask nothing. */

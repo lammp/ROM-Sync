@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react'
 import { Button } from '../../../components/atoms/Button/Button'
 import { Muted } from '../../../components/atoms/Muted/Muted'
 import { DataTable } from '../../../components/molecules/DataTable/DataTable'
@@ -10,6 +10,7 @@ import { SettingControl } from '../../../components/molecules/SettingControl/Set
 import { TransportList } from '../../../components/molecules/TransportList/TransportList'
 import { ConfirmDialog } from '../../../components/organisms/ConfirmDialog/ConfirmDialog'
 import { DiagnosticsSummary } from '../../../components/organisms/DiagnosticsSummary/DiagnosticsSummary'
+import { FolderBrowser } from '../../../components/organisms/FolderBrowser/FolderBrowser'
 import {
   CredentialControl,
   type SecretDraft,
@@ -43,6 +44,7 @@ import {
 import {
   useAnnounce,
   useDiagnostics,
+  useFolders,
   usePickFolder,
   useReveal,
   useShell,
@@ -68,6 +70,32 @@ const MAINTENANCE: Readonly<Record<Action, readonly [string, string]>> = {
   'clear-cache': ['Clear the screenshot cache', 'Screenshots fetch again when shown.'],
   'prune-covers': ['Delete unreferenced covers', 'Covers no game points at.'],
   'prune-runs': ['Prune old sync run folders', 'Run folders past the number kept.'],
+}
+
+/** Path settings that name a file, and the kinds of file each takes; every other names a folder. */
+const FILES: Readonly<Record<string, readonly string[]>> = { 'adb.path': ['exe'] }
+
+/** What a path setting asks its chooser for (F11-S45). */
+type Choice = {
+  readonly title: string
+  readonly kind: 'folder' | 'file'
+  readonly current: string
+  readonly onPicked: (path: string) => void
+}
+
+/** Opens the chooser for a path setting; null where nothing can be chosen. */
+const Chooser = createContext<((choice: Choice) => void) | null>(null)
+
+/** A label inside a sentence: "Data folder" reads "data folder"; "ROMs folder" and "ADB executable" keep their capitals. */
+const lowerFirst = (label: string) =>
+  /^[A-Z][a-z]/.test(label) ? label.charAt(0).toLowerCase() + label.slice(1) : label
+
+/** Where browsing for `current` starts: the folder itself, or the file's folder. */
+function startAt(current: string, kind: 'folder' | 'file'): string | null {
+  if (!current) return null
+  if (kind === 'folder') return current
+  const cut = Math.max(current.lastIndexOf('\\'), current.lastIndexOf('/'))
+  return cut > 0 ? current.slice(0, cut + (current[cut - 1] === ':' ? 1 : 0)) : null
 }
 
 /** A job a section started: its line while it runs, its sentence when it ends. */
@@ -116,6 +144,7 @@ type FieldsProps = {
 
 /** A section's registry fields, each showing its draft over the stored value. */
 function Fields({ section, byKey, drafts, errors, onDraft, skip }: FieldsProps) {
+  const choose = useContext(Chooser)
   return (
     <>
       {section.keys
@@ -144,6 +173,18 @@ function Fields({ section, byKey, drafts, errors, onDraft, skip }: FieldsProps) 
               onChange={(v) => onDraft(key, v)}
               defaultText={s.kind === 'bool' ? undefined : toText(s, s.default) || 'none'}
               onDefault={s.stored && draft !== null ? () => onDraft(key, null) : undefined}
+              pathKind={key in FILES ? 'file' : 'folder'}
+              onChoose={
+                s.kind === 'path' && choose
+                  ? () =>
+                      choose({
+                        title: `Choose the ${lowerFirst(LABELS[key] ?? key)}`,
+                        kind: key in FILES ? 'file' : 'folder',
+                        current: String(value),
+                        onPicked: (path) => onDraft(key, path),
+                      })
+                  : undefined
+              }
             />
           )
         })}
@@ -186,7 +227,11 @@ function useDrafts(title: string) {
       },
     )
   }
-  return { drafts, errors, onDraft, save, saving: write.isPending, reset: () => setDrafts({}) }
+  const reset = () => {
+    setDrafts({})
+    setErrors({})
+  }
+  return { drafts, errors, onDraft, save, saving: write.isPending, reset }
 }
 
 type SectionProps = {
@@ -213,6 +258,7 @@ function PlainSection({ section, byKey, status, children }: SectionProps) {
       dirty={Object.keys(d.drafts).length > 0}
       saving={d.saving}
       onSave={section.keys.length ? () => d.save(byKey) : undefined}
+      onCancel={section.keys.length ? d.reset : undefined}
     >
       <Fields
         section={section}
@@ -259,6 +305,11 @@ function MetadataSection({ section, byKey, status, children }: SectionProps) {
               : {}
         d.save(byKey, extra)
         setSecret({ kind: 'keep' })
+      }}
+      onCancel={() => {
+        d.reset()
+        setSecret({ kind: 'keep' })
+        setTested(null)
       }}
     >
       <CredentialControl
@@ -329,6 +380,12 @@ export function SettingsView() {
   const storage = useStorage()
   const runMaintenance = useRunMaintenance()
   const [dismissed, setDismissed] = useState(false)
+  const [browsing, setBrowsing] = useState<(Choice & { readonly path: string | null }) | null>(null)
+  const folders = useFolders(
+    browsing?.path ?? null,
+    browsing?.kind === 'file' ? (FILES['adb.path'] ?? []) : [],
+    browsing !== null,
+  )
   const [ask, setAsk] = useState<null | {
     title: string
     body: string
@@ -398,12 +455,33 @@ export function SettingsView() {
       onError: (e) => toast(e.message, true),
     })
 
+  /**
+   * In the desktop window a folder is chosen in the window's own dialog; a file,
+   * and anything in a browser, in this page's folder browser (F11-S45).
+   */
+  const browse = (choice: Choice) =>
+    setBrowsing({ ...choice, path: startAt(choice.current, choice.kind) })
+  const choose =
+    can(shell, 'pick_folder') || can(shell, 'browse_folders')
+      ? (choice: Choice) => {
+          if (choice.kind === 'folder' && shell.kind === 'desktop' && can(shell, 'pick_folder'))
+            pick.mutate(choice.title, {
+              onSuccess: (path) => {
+                if (path) choice.onPicked(path)
+              },
+              // a dialog the window cannot open still leaves a way to choose
+              onError: () => (can(shell, 'browse_folders') ? browse(choice) : undefined),
+            })
+          else browse(choice)
+        }
+      : null
+
   const rescan = () => {
     const run = () => startJob(scan, scanJob.start)
     if (games.length)
       setAsk({
-        title: 'Rescan the store',
-        body: `Read ${storeRoot || 'the store'} again and replace the library's record of ${games.length.toLocaleString()} games with what is there now. Matches, tags and selections are kept for games still present.`,
+        title: 'Rescan the ROMs folder',
+        body: `Read ${storeRoot || 'the ROMs folder'} again and replace the library's record of ${games.length.toLocaleString()} games with what is there now. Matches, tags and selections are kept for games still present.`,
         confirm: 'Rescan',
         run,
       })
@@ -411,271 +489,274 @@ export function SettingsView() {
   }
 
   return (
-    <PageLayout heading="Settings">
-      {!(dismissed && step1 && step2 && step3) && (
-        <SettingsSection id="setup" title="Setup">
-          <SetupSteps
-            steps={[
-              {
-                label: '1. Point at your ROMs folder',
-                done: step1,
-                action: { label: 'Go to Library', onClick: () => scroll('library') },
-              },
-              {
-                label: '2. Read the library',
-                done: step2,
-                action: { label: 'Rescan store', onClick: rescan },
-              },
-              {
-                label: '3. Add IGDB credentials for covers and details',
-                done: step3,
-                note: 'libretro box art needs no account.',
-                action: { label: 'Go to Metadata', onClick: () => scroll('metadata') },
-              },
-            ]}
-            onDismiss={() => setDismissed(true)}
-          />
-        </SettingsSection>
-      )}
-
-      <PlainSection
-        section={section('library')}
-        byKey={byKey}
-        status={
-          !storeRoot
-            ? { tone: 'bad', word: 'no store chosen' }
-            : sys.length
-              ? {
-                  tone: 'ok',
-                  word: `${sys.length} systems · ${games.length.toLocaleString()} games`,
-                }
-              : { tone: 'warn', word: 'no systems found here' }
-        }
-      >
-        {(onDraft) => (
-          <>
-            <p>
-              {can(shell, 'pick_folder') && (
-                <Button
-                  small
-                  onClick={() =>
-                    pick.mutate('Choose the store folder', {
-                      onSuccess: (path) => {
-                        if (path) onDraft('store.root', path)
-                      },
-                    })
-                  }
-                >
-                  Browse…
-                </Button>
-              )}{' '}
-              {can(shell, 'reveal') && storeRoot && (
-                <Button small onClick={() => reveal.mutate({ root: 'store' })}>
-                  Reveal
-                </Button>
-              )}{' '}
-              <Button small disabled={!storeRoot || scanJob.running} onClick={rescan}>
-                Rescan store
-              </Button>
-            </p>
-            {scanJob.line}
-            <DataTable
-              caption="Systems in the store"
-              columns={[
+    <Chooser.Provider value={choose}>
+      <PageLayout heading="Settings">
+        {!(dismissed && step1 && step2 && step3) && (
+          <SettingsSection id="setup" title="Setup">
+            <SetupSteps
+              steps={[
                 {
-                  key: 'system',
-                  label: 'System',
-                  cell: (s: (typeof sys)[number]) => `${s.label} (${s.key})`,
+                  label: '1. Point at your ROMs folder',
+                  done: step1,
+                  action: { label: 'Go to Library', onClick: () => scroll('library') },
                 },
                 {
-                  key: 'games',
-                  label: 'Games',
-                  numeric: true,
-                  cell: (s: (typeof sys)[number]) => s.games.toLocaleString(),
+                  label: '2. Read the library',
+                  done: step2,
+                  action: { label: 'Rescan ROMs folder', onClick: rescan },
                 },
                 {
-                  key: 'bytes',
-                  label: 'Size',
-                  numeric: true,
-                  cell: (s: (typeof sys)[number]) => formatBytes(s.bytes),
+                  label: '3. Add IGDB credentials for covers and details',
+                  done: step3,
+                  note: 'libretro box art needs no account.',
+                  action: { label: 'Go to Metadata', onClick: () => scroll('metadata') },
                 },
               ]}
-              rows={sys}
-              rowKey={(s) => s.key}
-              empty="No systems found. Check the store root, then rescan."
+              onDismiss={() => setDismissed(true)}
             />
-          </>
+          </SettingsSection>
         )}
-      </PlainSection>
 
-      <MetadataSection
-        section={section('metadata')}
-        byKey={byKey}
-        status={
-          credentials
-            ? { tone: 'ok', word: 'credentials set' }
-            : { tone: 'warn', word: 'no credentials' }
-        }
-      >
-        <p>
-          <Button
-            small
-            disabled={!pending || metadataBusy || !credentials}
-            title={credentials ? undefined : 'Add credentials first'}
-            onClick={() =>
-              setAsk({
-                title: 'Match new games',
-                body: `Look up ${pending.toLocaleString()} unmatched games on IGDB, at up to ${String(byKey.get('igdb.requests_per_second')?.value ?? 4)} requests a second.`,
-                confirm: 'Match',
-                run: () => startJob(match, metaJob.start),
-              })
-            }
-          >
-            Match new ({pending.toLocaleString()})
-          </Button>{' '}
-          <Button
-            small
-            disabled={!coverless || metadataBusy}
-            onClick={() => startJob(covers, metaJob.start)}
-          >
-            Fill missing covers ({coverless.toLocaleString()})
-          </Button>
-        </p>
-        {metaJob.line}
-      </MetadataSection>
+        <PlainSection
+          section={section('library')}
+          byKey={byKey}
+          status={
+            !storeRoot
+              ? { tone: 'bad', word: 'no ROMs folder chosen' }
+              : sys.length
+                ? {
+                    tone: 'ok',
+                    word: `${sys.length} systems · ${games.length.toLocaleString()} games`,
+                  }
+                : { tone: 'warn', word: 'no systems found here' }
+          }
+        >
+          {() => (
+            <>
+              <p>
+                {can(shell, 'reveal') && storeRoot && (
+                  <Button small onClick={() => reveal.mutate({ root: 'store' })}>
+                    Reveal
+                  </Button>
+                )}{' '}
+                <Button small disabled={!storeRoot || scanJob.running} onClick={rescan}>
+                  Rescan ROMs folder
+                </Button>
+              </p>
+              {scanJob.line}
+              <DataTable
+                caption="Systems in the ROMs folder"
+                columns={[
+                  {
+                    key: 'system',
+                    label: 'System',
+                    cell: (s: (typeof sys)[number]) => `${s.label} (${s.key})`,
+                  },
+                  {
+                    key: 'games',
+                    label: 'Games',
+                    numeric: true,
+                    cell: (s: (typeof sys)[number]) => s.games.toLocaleString(),
+                  },
+                  {
+                    key: 'bytes',
+                    label: 'Size',
+                    numeric: true,
+                    cell: (s: (typeof sys)[number]) => formatBytes(s.bytes),
+                  },
+                ]}
+                rows={sys}
+                rowKey={(s) => s.key}
+                empty="No systems found. Check the ROMs folder, then rescan."
+              />
+            </>
+          )}
+        </PlainSection>
 
-      <PlainSection section={section('tags')} byKey={byKey}>
-        <p>
-          <Button
-            small
-            disabled={metadataBusy || tagJob.running}
-            onClick={() => startJob(franchises, tagJob.start)}
-          >
-            Propose franchise tags
-          </Button>{' '}
-          <Muted>
-            Proposals wait for a decision in each game&apos;s details; a decision is never
-            overwritten.
-          </Muted>
-        </p>
-        {tagJob.line}
-      </PlainSection>
-
-      <PlainSection section={section('transports')} byKey={byKey}>
-        <TransportList transports={attached.data?.transports ?? []} />
-      </PlainSection>
-      <PlainSection section={section('sync')} byKey={byKey} />
-
-      <PlainSection section={section('data')} byKey={byKey}>
-        {can(shell, 'reveal') && (
+        <MetadataSection
+          section={section('metadata')}
+          byKey={byKey}
+          status={
+            credentials
+              ? { tone: 'ok', word: 'credentials set' }
+              : { tone: 'warn', word: 'no credentials' }
+          }
+        >
           <p>
-            <Button small onClick={() => reveal.mutate({ root: 'data' })}>
-              Reveal the data folder
+            <Button
+              small
+              disabled={!pending || metadataBusy || !credentials}
+              title={credentials ? undefined : 'Add credentials first'}
+              onClick={() =>
+                setAsk({
+                  title: 'Match new games',
+                  body: `Look up ${pending.toLocaleString()} unmatched games on IGDB, at up to ${String(byKey.get('igdb.requests_per_second')?.value ?? 4)} requests a second.`,
+                  confirm: 'Match',
+                  run: () => startJob(match, metaJob.start),
+                })
+              }
+            >
+              Match new ({pending.toLocaleString()})
+            </Button>{' '}
+            <Button
+              small
+              disabled={!coverless || metadataBusy}
+              onClick={() => startJob(covers, metaJob.start)}
+            >
+              Fill missing covers ({coverless.toLocaleString()})
             </Button>
           </p>
-        )}
-        {storage.isError ? (
-          <LoadError
-            what="the storage breakdown"
-            message={storage.error.message}
-            retrying={storage.isFetching}
-            onRetry={() => void storage.refetch()}
-          />
-        ) : (
-          <StorageTable parts={storage.data?.components ?? []} />
-        )}
-        <MaintenanceTable
-          busy={runMaintenance.isPending}
-          rows={ACTIONS.map((action, i) => {
-            const r = reports[i]?.data
-            const [label, what] = MAINTENANCE[action]
-            return {
-              action,
-              label,
-              what,
-              count: r ? r.count : null,
-              bytes: r?.bytes ?? 0,
-              onRun: () =>
-                r &&
-                setAsk({
-                  title: label,
-                  body: `${label}: ${r.count.toLocaleString()} item${r.count === 1 ? '' : 's'}, ${formatBytes(r.bytes)}.`,
-                  confirm: 'Run',
-                  danger: action !== 'compact',
-                  run: () =>
-                    runMaintenance.mutate(
-                      { action, expected: r.count },
-                      {
-                        onSuccess: () => toast(`${label}: started`),
-                        onError: (e) => toast(e.message, true),
-                      },
-                    ),
-                }),
-            }
-          })}
-        />
-      </PlainSection>
+          {metaJob.line}
+        </MetadataSection>
 
-      <PlainSection section={section('diagnostics')} byKey={byKey}>
-        {diagnostics.isError ? (
-          <LoadError
-            what="the diagnostics"
-            message={diagnostics.error.message}
-            retrying={diagnostics.isFetching}
-            onRetry={() => void diagnostics.refetch()}
+        <PlainSection section={section('tags')} byKey={byKey}>
+          <p>
+            <Button
+              small
+              disabled={metadataBusy || tagJob.running}
+              onClick={() => startJob(franchises, tagJob.start)}
+            >
+              Propose franchise tags
+            </Button>{' '}
+            <Muted>
+              Proposals wait for a decision in each game&apos;s details; a decision is never
+              overwritten.
+            </Muted>
+          </p>
+          {tagJob.line}
+        </PlainSection>
+
+        <PlainSection section={section('transports')} byKey={byKey}>
+          <TransportList transports={attached.data?.transports ?? []} />
+        </PlainSection>
+        <PlainSection section={section('sync')} byKey={byKey} />
+
+        <PlainSection section={section('data')} byKey={byKey}>
+          {can(shell, 'reveal') && (
+            <p>
+              <Button small onClick={() => reveal.mutate({ root: 'data' })}>
+                Reveal the data folder
+              </Button>
+            </p>
+          )}
+          {storage.isError ? (
+            <LoadError
+              what="the storage breakdown"
+              message={storage.error.message}
+              retrying={storage.isFetching}
+              onRetry={() => void storage.refetch()}
+            />
+          ) : (
+            <StorageTable parts={storage.data?.components ?? []} />
+          )}
+          <MaintenanceTable
+            busy={runMaintenance.isPending}
+            rows={ACTIONS.map((action, i) => {
+              const r = reports[i]?.data
+              const [label, what] = MAINTENANCE[action]
+              return {
+                action,
+                label,
+                what,
+                count: r ? r.count : null,
+                bytes: r?.bytes ?? 0,
+                onRun: () =>
+                  r &&
+                  setAsk({
+                    title: label,
+                    body: `${label}: ${r.count.toLocaleString()} item${r.count === 1 ? '' : 's'}, ${formatBytes(r.bytes)}.`,
+                    confirm: 'Run',
+                    danger: action !== 'compact',
+                    run: () =>
+                      runMaintenance.mutate(
+                        { action, expected: r.count },
+                        {
+                          onSuccess: () => toast(`${label}: started`),
+                          onError: (e) => toast(e.message, true),
+                        },
+                      ),
+                  }),
+              }
+            })}
           />
-        ) : (
-          <DiagnosticsSummary
-            version={
-              version ? `${version.application} ${version.version} · API ${version.api}` : ''
-            }
-            host={hostOf(shell)}
-            address={diagnostics.data?.address ?? ''}
-            dataFolder={diagnostics.data?.data_folder ?? ''}
-            logFolder={diagnostics.data?.log_folder ?? ''}
-            lastSync={
-              diagnostics.data?.last_sync
-                ? {
-                    device: diagnostics.data.last_sync.device,
-                    started: diagnostics.data.last_sync.run.started,
-                    state: diagnostics.data.last_sync.run.state,
-                    counts: diagnostics.data.last_sync.run.counts ?? {},
-                    bytes: diagnostics.data.last_sync.run.bytes_moved ?? null,
-                  }
-                : null
-            }
-            errors={diagnostics.data?.recent_errors ?? []}
-            bundleHref={`${baseUrl}/api/v1/diagnostics/bundle`}
+        </PlainSection>
+
+        <PlainSection section={section('diagnostics')} byKey={byKey}>
+          {diagnostics.isError ? (
+            <LoadError
+              what="the diagnostics"
+              message={diagnostics.error.message}
+              retrying={diagnostics.isFetching}
+              onRetry={() => void diagnostics.refetch()}
+            />
+          ) : (
+            <DiagnosticsSummary
+              version={
+                version ? `${version.application} ${version.version} · API ${version.api}` : ''
+              }
+              host={hostOf(shell)}
+              address={diagnostics.data?.address ?? ''}
+              dataFolder={diagnostics.data?.data_folder ?? ''}
+              logFolder={diagnostics.data?.log_folder ?? ''}
+              lastSync={
+                diagnostics.data?.last_sync
+                  ? {
+                      device: diagnostics.data.last_sync.device,
+                      started: diagnostics.data.last_sync.run.started,
+                      state: diagnostics.data.last_sync.run.state,
+                      counts: diagnostics.data.last_sync.run.counts ?? {},
+                      bytes: diagnostics.data.last_sync.run.bytes_moved ?? null,
+                    }
+                  : null
+              }
+              errors={diagnostics.data?.recent_errors ?? []}
+              bundleHref={`${baseUrl}/api/v1/diagnostics/bundle`}
+            />
+          )}
+          <JobsTable
+            jobs={(jobs.data ?? []).map((j) => ({
+              id: j.id,
+              kind: j.kind,
+              started: j.started,
+              state: j.state,
+              progress: j.progress,
+              error: j.error_message,
+            }))}
+            onCancel={(id) => cancelJob.mutate(id, { onSuccess: () => void jobs.refetch() })}
+          />
+        </PlainSection>
+
+        {ask && (
+          <ConfirmDialog
+            title={ask.title}
+            confirm={ask.confirm}
+            danger={ask.danger}
+            onCancel={() => setAsk(null)}
+            onConfirm={() => {
+              const run = ask.run
+              setAsk(null)
+              run()
+            }}
+          >
+            {ask.body}
+          </ConfirmDialog>
+        )}
+        {browsing && (
+          <FolderBrowser
+            title={browsing.title}
+            kind={browsing.kind}
+            listing={folders.data}
+            loading={folders.isFetching}
+            error={folders.error?.message}
+            onOpen={(path) => setBrowsing({ ...browsing, path })}
+            onChoose={(path) => {
+              browsing.onPicked(path)
+              setBrowsing(null)
+            }}
+            onCancel={() => setBrowsing(null)}
           />
         )}
-        <JobsTable
-          jobs={(jobs.data ?? []).map((j) => ({
-            id: j.id,
-            kind: j.kind,
-            started: j.started,
-            state: j.state,
-            progress: j.progress,
-            error: j.error_message,
-          }))}
-          onCancel={(id) => cancelJob.mutate(id, { onSuccess: () => void jobs.refetch() })}
-        />
-      </PlainSection>
-
-      {ask && (
-        <ConfirmDialog
-          title={ask.title}
-          confirm={ask.confirm}
-          danger={ask.danger}
-          onCancel={() => setAsk(null)}
-          onConfirm={() => {
-            const run = ask.run
-            setAsk(null)
-            run()
-          }}
-        >
-          {ask.body}
-        </ConfirmDialog>
-      )}
-    </PageLayout>
+      </PageLayout>
+    </Chooser.Provider>
   )
 }

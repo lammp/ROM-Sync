@@ -95,7 +95,7 @@ effect immediately, because the server re-reads config per call.
 
 | Field | Control | Validation | Default | Restart |
 |---|---|---|---|---|
-| Store root | text + Browse + Reveal | must exist and be a directory; **new:** must contain at least one subfolder with a recognised extension, else save with a warning "no systems found here"; reject a path equal to or inside the data folder | `D:\Games\ROMs` (`db.py:248`) | No, but the loaded library is stale: call `loadLibrary()` on success and offer Rescan inline |
+| ROMs folder (`store.root`) | folder chooser + Reveal | must exist and be a directory; **new:** must contain at least one subfolder with a recognised extension, else save with a warning "no systems found here"; reject a path equal to or inside the data folder | `D:\Games\ROMs` (`db.py:248`) | No, but the loaded library is stale: call `loadLibrary()` on success and offer Rescan inline |
 | Systems table | read-only: system, games, folders, bytes, matched | n/a | `db.system_rows()`, which already returns exactly this and is currently unused by the UI | n/a |
 | Rescan store | button, confirms when `counts.games > 0` | n/a | n/a | n/a |
 | Rescan on launch | checkbox | n/a | off | **Yes** |
@@ -140,10 +140,9 @@ its peers.
 
 | Field | Control | Validation | Default |
 |---|---|---|---|
-| ADB executable | text + Browse + Detect + Reveal, with a found / not found pill | must be an existing file; **new:** run `adb version` and show it, else reject with that error | `_tools\platform-tools\adb.exe`, then PATH (`adb.py:20,27`) |
+| ADB executable | file chooser (`.exe`) + Detect + Reveal, with a found / not found pill | must be an existing file; **new:** run `adb version` and show it, else reject with that error | `_tools\platform-tools\adb.exe`, then PATH (`adb.py:20,27`) |
 | Enable ADB transport | checkbox, "faster, needs USB debugging" | n/a | on when adb is found |
 | Enable MTP transport | checkbox | at least one transport must stay enabled | on |
-| Firmware folder | text + Browse + Reveal | must exist if set; empty disables firmware staging | `_firmware` (`sysfiles.py:39`) |
 | Staging path on the device | text template with `{roms}` and `{system}` | must contain `{system}`, must be relative, no `..` | `{roms}/bios/{system}` (`sysfiles.py:41`) |
 | Verify staged files up to | size input, same syntax as the library filters | 0 to 256 MB | 32 MB (`sysfiles.py:40`) |
 | Device probe interval | number, seconds | 15 to 300 | 45 (`server.py:56`) |

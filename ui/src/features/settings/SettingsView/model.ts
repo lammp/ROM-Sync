@@ -37,7 +37,6 @@ export const SECTIONS: readonly Section[] = [
       'mtp.enabled',
       'mtp.arrival_floor',
       'mtp.arrival_rate',
-      'firmware.folder',
       'device.staging_template',
       'sysfiles.hash_limit',
       'device.probe_interval',
@@ -69,7 +68,7 @@ export const SECTIONS: readonly Section[] = [
 
 /** Each key's name on the page; the registry's description is said under it. */
 export const LABELS: Readonly<Record<string, string>> = {
-  'store.root': 'Store root',
+  'store.root': 'ROMs folder',
   'store.rescan_on_launch': 'Rescan on launch',
   'igdb.client_id': 'Twitch client ID',
   'igdb.client_secret': 'Client secret',
@@ -83,7 +82,6 @@ export const LABELS: Readonly<Record<string, string>> = {
   'mtp.enabled': 'Enable MTP transport',
   'mtp.arrival_floor': 'Wait at least this long for an MTP copy to arrive',
   'mtp.arrival_rate': 'Assume an MTP copy arrives at least this fast',
-  'firmware.folder': 'Firmware folder',
   'device.staging_template': 'Staging path on the device',
   'sysfiles.hash_limit': 'Verify staged files up to',
   'device.probe_interval': 'Device probe interval',

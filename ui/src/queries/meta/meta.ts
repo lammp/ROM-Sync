@@ -40,6 +40,27 @@ export function usePickFolder() {
   })
 }
 
+/**
+ * One folder of this computer while choosing by browsing (F11-S45): the
+ * drives when `path` is null. Files are listed only of the `files` kinds.
+ * Asked only while the browser is open.
+ */
+export function useFolders(path: string | null, files: readonly string[], enabled: boolean) {
+  const { api } = useEngine()
+  return useQuery({
+    queryKey: ['folders', path ?? '', files.join(',')],
+    enabled,
+    retry: false,
+    queryFn: async ({ signal }) =>
+      unwrap(
+        await api.GET('/api/v1/shell/folders', {
+          params: { query: { path: path ?? undefined, files: [...files] } },
+          signal,
+        }),
+      ),
+  })
+}
+
 /** Shows a folder the engine knows by name (store, data, logs) in the file manager. */
 export function useReveal() {
   const { api } = useEngine()

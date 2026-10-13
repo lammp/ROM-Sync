@@ -21,7 +21,6 @@ REQUIRED_KEYS = (
     "adb.path",
     "adb.enabled",
     "mtp.enabled",
-    "firmware.folder",
     "device.staging_template",
     "sysfiles.hash_limit",
     "device.probe_interval",

@@ -15,6 +15,7 @@ from __future__ import annotations
 import time
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass
+from functools import partial
 from pathlib import Path
 
 from romsync.adapters.artwork_libretro.libretro import LibretroArtwork
@@ -28,6 +29,7 @@ from romsync.adapters.dest_volume.volume import windows_identity
 from romsync.adapters.discovery import Discovery
 from romsync.adapters.local_fs.covers import FsCoverFiles
 from romsync.adapters.local_fs.data_folder import FsDataFolder
+from romsync.adapters.local_fs.folders import LocalFolders
 from romsync.adapters.local_fs.logs import AppLog
 from romsync.adapters.local_fs.logs import configure as configure_log
 from romsync.adapters.local_fs.runs import FsLocalFiles, FsRunFolders
@@ -43,6 +45,7 @@ from romsync.adapters.metadata_igdb.throttle import Throttle
 from romsync.adapters.shell_win.windows import WindowsShell
 from romsync.adapters.store_fs.scanner import FsStore
 from romsync.adapters.system.clock import RandomIds, SystemClock
+from romsync.app.browse import Listing, browse
 from romsync.app.connection_check import ConnectionCheck
 from romsync.app.devices import Devices, Probe
 from romsync.app.library import Library
@@ -63,6 +66,7 @@ from romsync.jobs.registry import Context, JobRecord, Jobs, Runner, Work, thread
 from romsync.jobs.sync_job import Syncs
 from romsync.ports.clock import ClockPort, IdPort
 from romsync.ports.dest import Dest, TransportState
+from romsync.ports.folders import Folders
 from romsync.ports.metadata import MetadataPort
 from romsync.ports.shell import ShellPort
 
@@ -122,6 +126,8 @@ class Engine:
     transports: Callable[[], tuple[TransportState, ...]]
     #: The support bundle, given what the caller knows of the system (F15-S3).
     support: Callable[[Mapping[str, object]], bytes]
+    #: This computer's folders, to choose one by browsing (F11-S45).
+    browse: Callable[[str | None, frozenset[str]], Listing]
 
 
 def prepare_database(db: Path, clock: ClockPort) -> tuple[int, ...]:
@@ -147,6 +153,7 @@ def build(
     fetch: Callable[[str], bytes] | None = None,
     metadata_transport: Transport | None = None,
     sleep: Callable[[float], None] = time.sleep,
+    folders: Folders | None = None,
 ) -> Engine:
     """Build an engine over the data folder `data`.
 
@@ -215,11 +222,10 @@ def build(
         return FsStore(Path(root)) if root else None
 
     def system_files() -> SystemFiles:
-        firmware = str(settings.value("firmware.folder") or "")
         limit = settings.value("sysfiles.hash_limit")
         assert isinstance(limit, int)
         return SystemFiles(
-            FsSysfileStore(store_root(), LocalRoot(firmware) if firmware else None),
+            FsSysfileStore(store_root()),
             stores.sysfiles,
             clock,
             LocalRoot(str(data / "tmp")),
@@ -231,7 +237,6 @@ def build(
         return {
             "store": str(settings.value("store.root") or ""),
             "data": str(data),
-            "firmware": str(settings.value("firmware.folder") or ""),
         }
 
     def retention() -> int:
@@ -279,6 +284,7 @@ def build(
         support=lambda system: support_bundle(
             system, settings, jobs.all(), data_folder.logs(LOG_TAIL)
         ),
+        browse=partial(browse, folders or LocalFolders()),
     )
 
 

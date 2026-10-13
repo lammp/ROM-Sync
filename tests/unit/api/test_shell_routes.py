@@ -63,12 +63,18 @@ def test_root_check(tmp_path: Path) -> None:
         {"root": "store", "path": "C:/Windows"},
         {"root": "store", "path": "/etc"},
         {"root": "home"},
+        {"root": "firmware"},  # retired: system files live in the store's bios folder
         {"root": "store", "path": "nes/../../.."},
     ):
         refused = c.post(f"{PREFIX}/shell/reveal", json=body)
         assert refused.status_code == 422, body
-    unset = c.post(f"{PREFIX}/shell/reveal", json={"root": "firmware"})
-    assert unset.json()["error"]["code"] == "config.missing"
+    assert len(shell.revealed) == 3
+
+    bare = build(tmp_path / "bare", clock=FrozenClock(), shell=shell)
+    b = TestClient(create_app(bare), base_url=BASE)
+    b.headers.update({"Origin": BASE, TOKEN_HEADER: b.get(f"{PREFIX}/session").json()["token"]})
+    unset = b.post(f"{PREFIX}/shell/reveal", json={"root": "store"})
+    assert unset.json()["error"]["code"] == "config.missing", "no store chosen yet"
     assert len(shell.revealed) == 3
 
 
@@ -125,6 +131,8 @@ def test_off_loopback_the_shell_is_refused(tmp_path: Path) -> None:
         refused = c.post(f"{PREFIX}/shell/{path}", json=body)
         assert refused.status_code == 403
         assert refused.json()["error"]["code"] == "shell.unavailable"
+    browsed = c.get(f"{PREFIX}/shell/folders", params={"path": str(tmp_path)})
+    assert browsed.status_code == 403, "off loopback no page may read this computer's folders"
     assert shell.revealed == [] and shell.opened == [] and shell.notified == []
     assert c.get(f"{PREFIX}/session").json()["capabilities"] == []
 
@@ -133,7 +141,13 @@ def test_a_browser_on_loopback_is_offered_every_action(tmp_path: Path) -> None:
     c, _ = setup(tmp_path)
     got = c.get(f"{PREFIX}/session").json()
     assert got["kind"] == "browser"
-    assert got["capabilities"] == ["reveal", "pick_folder", "open_url", "notify"]
+    assert got["capabilities"] == [
+        "reveal",
+        "pick_folder",
+        "browse_folders",
+        "open_url",
+        "notify",
+    ]
 
 
 def test_notify(tmp_path: Path) -> None:
@@ -142,3 +156,45 @@ def test_notify(tmp_path: Path) -> None:
     assert sent.json() == {"delivered": True}
     assert shell.notified == [("ROM-Sync", "Scan done")]
     assert c.post(f"{PREFIX}/shell/notify", json={"title": "", "body": "x"}).status_code == 422
+
+
+def test_browse_folders(tmp_path: Path) -> None:
+    """Folders by name, files only of the kinds asked for, sorted as Explorer does (F11-S45)."""
+    c, _ = setup(tmp_path)
+    tools = tmp_path / "tools"
+    (tools / "platform-tools").mkdir(parents=True)
+    (tools / "Zelda").mkdir()
+    (tools / ".git").mkdir()
+    (tools / "adb.EXE").write_bytes(b"MZ")
+    (tools / "notes.txt").write_text("x", encoding="utf-8")
+    got = c.get(f"{PREFIX}/shell/folders", params={"path": str(tools)})
+    assert got.status_code == 200
+    assert got.json() == {
+        "path": str(tools),
+        "parent": str(tmp_path),
+        "folders": [
+            {"name": "platform-tools", "path": str(tools / "platform-tools")},
+            {"name": "Zelda", "path": str(tools / "Zelda")},
+        ],
+        "files": [],
+    }
+    files = c.get(f"{PREFIX}/shell/folders", params={"path": str(tools), "files": ["exe"]})
+    assert files.json()["files"] == [{"name": "adb.EXE", "path": str(tools / "adb.EXE")}]
+
+
+def test_browse_starts_at_the_drives(tmp_path: Path) -> None:
+    c, _ = setup(tmp_path)
+    got = c.get(f"{PREFIX}/shell/folders").json()
+    assert got["path"] is None and got["parent"] is None and got["files"] == []
+    assert got["folders"], "at least one drive"
+
+
+@pytest.mark.parametrize("path", ["relative/folder", "missing"])
+def test_a_folder_that_cannot_be_listed_is_said(tmp_path: Path, path: str) -> None:
+    c, _ = setup(tmp_path)
+    asked = path if path != "missing" else str(tmp_path / "missing")
+    got = c.get(f"{PREFIX}/shell/folders", params={"path": asked})
+    assert got.status_code == 422
+    error = got.json()["error"]
+    assert error["code"] == "path.unreadable" and error["field"] == "path"
+    assert asked in error["message"]

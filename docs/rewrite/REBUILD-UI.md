@@ -305,7 +305,9 @@ Parity is the constraint, so every departure is listed here or it is a defect.
 | Capacity thresholds arrive from the engine | `SPEC.md` section 7 |
 | Job results stop being rendered as `JSON.stringify` | `SPEC.md` section 8 |
 | A chosen facet value is always drawn, even when it ranks past the sixty-value cap | version 1 drops it from the list, so it can neither be seen nor cleared there; pinned as found by the facets corpus, case "a tag past the cap" |
-| A click outside a dialog no longer closes it; Escape and the dialog's Cancel do | a pointer-only dismissal has no control of its own, which SPEC section 10 forbids |
+| Every dialog and pop-out shows a close button, and closes on it, on Escape, on a click outside, and on its own Cancel | a dialog must never leave the person without a visible way out; the click outside comes in addition to a control, never instead of one |
+| A setting that names a place on this computer is chosen, never typed: a folder in the desktop window's own dialog, a file or anything in a browser in the page's folder browser; only a bind off loopback, where the page may not read this computer, falls back to typing | a typed path is the commonest wrong value, and a free text field is no way to find a folder |
+| The header stays in view on every page: the window never scrolls, only the page under the header | a page scrolled under the header must never take the way out with it |
 | Text on an active system-file row is full white, not 80 per cent white | at 80 per cent it measures 3.46:1 on `--accent-solid`, below 4.5 |
 | Facet values at zero and systems with no games on the device are muted text, not faded to 35 and 60 per cent | faded, they fell below readable contrast; the count of 0 and "no games" say the same in words |
 | Sync in the library's selection summary opens the device's page, where the plan and the sync dialog are; version 1 opened the dialog over the library | one place starts a sync, with the plan in view; while one runs, the summary shows its progress as version 1's did |

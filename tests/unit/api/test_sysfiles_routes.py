@@ -113,7 +113,7 @@ def test_store_side(tmp_path: Path) -> None:
     found = {(i.system, i.name): i.present for i in items}
     assert found[("nds", "bios7.bin")] is True
     assert found[("nds", "firmware.bin")] is False
-    assert found[("switch", "prod.keys")] is False, "no firmware folder is set"
+    assert found[("switch", "prod.keys")] is False, "the store's bios folder holds no keys"
 
 
 def test_an_unset_store_reads_nothing(tmp_path: Path) -> None:

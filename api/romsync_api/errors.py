@@ -52,6 +52,7 @@ STATUS: Final[Mapping[str, int]] = {
     "config.missing": 422,
     "path.escape": 422,
     "path.not_a_name": 422,
+    "path.unreadable": 422,
     "dest.bad_reference": 422,
 }
 

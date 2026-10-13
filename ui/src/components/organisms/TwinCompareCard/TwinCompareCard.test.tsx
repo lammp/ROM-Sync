@@ -14,6 +14,14 @@ describe('TwinCompareCard', () => {
     expect(ByKeyboard.args.onClose).toHaveBeenCalled()
   })
 
+  it('closes on a press outside it, not on one inside', () => {
+    render(<ByKeyboard />)
+    fireEvent.pointerDown(screen.getByRole('button', { name: 'Switch' }))
+    expect(ByKeyboard.args.onClose).not.toHaveBeenCalled()
+    fireEvent.pointerDown(document.body)
+    expect(ByKeyboard.args.onClose).toHaveBeenCalledOnce()
+  })
+
   it('switch_and_select: both actions are buttons that fire without a pointer', () => {
     render(<ByKeyboard />)
     const sw = screen.getByRole('button', { name: 'Switch' })

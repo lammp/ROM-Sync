@@ -16,8 +16,9 @@ export type TwinCompareCardProps = {
 /**
  * The versions of the selected game on other systems (F11-S30). It belongs
  * to the selected tile only, opens from that tile's twin mark by pointer or
- * keyboard, takes focus, and closes on Escape or its close button. Switch
- * and Select are buttons, so neither needs a pointer.
+ * keyboard, takes focus, and closes on Escape, its close button, or a click
+ * anywhere outside it. Switch and Select are buttons, so neither needs a
+ * pointer.
  */
 export function TwinCompareCard({ matchedOn, rows, onClose, anchor }: TwinCompareCardProps) {
   const head = useId()
@@ -25,6 +26,13 @@ export function TwinCompareCard({ matchedOn, rows, onClose, anchor }: TwinCompar
   useEffect(() => {
     card.current?.focus()
   }, [])
+  useEffect(() => {
+    const outside = (e: PointerEvent) => {
+      if (e.target instanceof Node && !card.current?.contains(e.target)) onClose()
+    }
+    document.addEventListener('pointerdown', outside)
+    return () => document.removeEventListener('pointerdown', outside)
+  }, [onClose])
   const others = rows.length - 1
   const position: CSSProperties | undefined = anchor
     ? { top: anchor.top, left: anchor.left }

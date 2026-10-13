@@ -2,6 +2,7 @@ import { ActionLink } from '../../atoms/ActionLink/ActionLink'
 import { Checkbox } from '../../atoms/Checkbox/Checkbox'
 import { Select } from '../../atoms/Select/Select'
 import { TextInput } from '../../atoms/TextInput/TextInput'
+import { PathField } from '../PathField/PathField'
 import { helpText, isSize, type Def } from '../../../lib/settings/settings'
 import styles from './SettingControl.module.css'
 
@@ -17,12 +18,17 @@ export type SettingControlProps = {
   /** Offered when a value is stored: put the registry's default back. */
   readonly defaultText?: string
   readonly onDefault?: () => void
+  /** A path setting: opens its chooser. Absent where nothing can be chosen. */
+  readonly onChoose?: () => void
+  /** A path setting names a folder unless it names a file. */
+  readonly pathKind?: 'folder' | 'file'
 }
 
 /**
  * One registry setting as a control (F11-S34): a checkbox for a flag, a
- * select for a choice, otherwise a text field, each with what it takes said
- * under it. The page never hard-codes a setting's kind or range.
+ * select for a choice, a chooser for a path (F11-S45), otherwise a text
+ * field, each with what it takes said under it. The page never hard-codes a
+ * setting's kind or range.
  */
 export function SettingControl({
   label,
@@ -32,6 +38,8 @@ export function SettingControl({
   onChange,
   defaultText,
   onDefault,
+  onChoose,
+  pathKind = 'folder',
 }: SettingControlProps) {
   const help = helpText(def)
   const control =
@@ -40,6 +48,16 @@ export function SettingControl({
         <Checkbox label={label} checked={value === true} onChange={onChange} />
         <span className={styles.help}>{help}</span>
       </>
+    ) : def.kind === 'path' ? (
+      <PathField
+        label={label}
+        value={String(value)}
+        kind={pathKind}
+        help={help}
+        error={error}
+        onChoose={onChoose}
+        onChange={onChange}
+      />
     ) : def.choices.length ? (
       <>
         <Select

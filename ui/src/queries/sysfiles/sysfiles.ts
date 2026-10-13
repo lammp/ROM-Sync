@@ -12,11 +12,17 @@ export type SysReport = components['schemas']['SysReport']
 export type SysSystem = components['schemas']['SysSystem']
 export type SysStoreItem = components['schemas']['SysStoreItem']
 
-/** Every requirement with the store's copy only. */
+/**
+ * Every requirement with the store's copy only. The engine reads the bios
+ * folder afresh each time it is asked, so the page asks again whenever the
+ * window comes back into focus: a file added or removed in Explorer shows
+ * on return, and Check again asks at once.
+ */
 export function useStoreSysfiles() {
   const { api } = useEngine()
   return useQuery({
     queryKey: ['sysfiles', 'store'],
+    refetchOnWindowFocus: true,
     queryFn: async ({ signal }) =>
       unwrap(await api.GET('/api/v1/sysfiles/store', { signal })).items,
   })
@@ -28,6 +34,8 @@ export function useSysReport(ref: string | null) {
   return useQuery({
     queryKey: ['sysfiles', ref ?? ''],
     enabled: ref !== null,
+    // the store's side is read afresh; the device's is the last survey
+    refetchOnWindowFocus: true,
     queryFn: async ({ signal }) =>
       unwrap(
         await api.GET('/api/v1/devices/{ref}/sysfiles', {

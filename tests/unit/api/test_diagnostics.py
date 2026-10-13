@@ -54,6 +54,7 @@ def test_fields(tmp_path: Path) -> None:
     assert got.kind == "desktop" and got.capabilities == [
         "reveal",
         "pick_folder",
+        "browse_folders",
         "open_url",
         "notify",
     ]

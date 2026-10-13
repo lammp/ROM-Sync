@@ -292,6 +292,9 @@ component, feature or function they cover.
 | F11-S36 | The live region announces every toast | F11-S8 | Every toast is announced | `ui/tests/a11y/live-region.test.ts::announces_every_toast` |
 | F11-S37 | No state is carried by colour alone | F11-S3 | Every state has a second channel | `ui/tests/a11y/non-colour.test.ts::every_state_has_a_second_channel` |
 | F11-S38 | Every view recovers from a failed fetch with a retry | F11-S7 | No view can reach a permanent loading state | `ui/tests/organisms/errors.test.ts::retry_everywhere`, `::no_permanent_loading` |
+| F11-S45 (added) | Paths are chosen, not typed, and nothing traps the person: path settings open a folder or file chooser (the window's own dialog for a folder in the desktop; the page's folder browser otherwise, over a loopback-only listing of this computer's folders); every dialog and pop-out closes on a visible close button, Escape and a click outside; the header never scrolls out of view; every settings section has Cancel | F11-S25, F11-S34, F12-S4 | No path setting is a free text field where a chooser can be offered; every dialog has a visible way out; the header is reachable from anywhere on Settings | `ui/e2e/settings/settings.spec.ts`, `ui/src/components/organisms/FolderBrowser/FolderBrowser.test.tsx`, `ui/src/components/molecules/PathField/PathField.test.tsx`, `tests/unit/app/test_browse.py`, `tests/unit/api/test_shell_routes.py::test_browse_folders` |
+| F11-S46 (added) | System files are read again when the store's bios folder changes: on the window's return to focus, and at once on Check again, with the time of the last check shown; the device page offers the same for the store's side | F11-S33 | A file added to or removed from the bios folder shows without restarting the application | `ui/e2e/system-files/system-files.spec.ts` |
+| F8-S9 (added) | Every system file is read from one place, the ROMs folder's bios folder: BIOS files, keys and the Switch firmware zip alike; the firmware folder setting is retired | F8-S2 | prod.keys, title.keys and the firmware zip in the bios folder show as present, and nothing outside it is read for them | `tests/unit/app/test_sysfiles_store.py::test_only_the_bios_folder_is_read` |
 
 ## F12 Desktop shell
 
@@ -343,6 +346,6 @@ component, feature or function they cover.
 | | |
 |---|---|
 | Features | 16 |
-| Stories | 181 |
+| Stories | 184 |
 | Security requirements from SPEC section 12, each covered by at least one story | 9 |
 | Stories whose acceptance needs a real device or a clean machine, and therefore sit outside the gate | F6-S5, F6-S6, F10-S26, F13-S2, F13-S6; each is marked for manual verification, and [TESTING.md](TESTING.md) section 8 states what the gate does not prove |

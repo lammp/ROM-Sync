@@ -28,8 +28,18 @@ export const Open: Story = {
     await expect(canvas.getByRole('button', { name: 'Cancel' })).toHaveFocus()
     await userEvent.tab()
     await userEvent.tab()
+    await expect(canvas.getByRole('button', { name: 'Close' })).toHaveFocus()
+    await userEvent.tab()
     await expect(canvas.getByRole('button', { name: 'Cancel' })).toHaveFocus()
     await userEvent.keyboard('{Escape}')
+    await expect(args.onClose).toHaveBeenCalledOnce()
+  },
+}
+
+/** The close button in the corner closes it, as Escape and a click outside do. */
+export const ClosedByItsButton: Story = {
+  play: async ({ canvas, args, userEvent }) => {
+    await userEvent.click(canvas.getByRole('button', { name: 'Close' }))
     await expect(args.onClose).toHaveBeenCalledOnce()
   },
 }
