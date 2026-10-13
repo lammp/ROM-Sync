@@ -13,6 +13,7 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from romsync.compose import Engine, build
+from romsync.domain.errors import ConfigOutOfRange
 from romsync.jobs.registry import Context
 from romsync.ports.shell import ShellPort
 from romsync_api.app import PREFIX
@@ -238,18 +239,16 @@ def test_dialogs_gated(tmp_path: Path) -> None:
     assert window.picked == {"path": "E:\\ROMs"}
     assert window.asked == ["Choose the store folder"]
 
-    server = FakeServer()
-    window = FakeWindow(server, picks=["E:\\ROMs"])
-    run(
-        tmp_path / "lan",
-        window=window,
-        server=server,
-        engine_factory=engine_at({"server.bind_host": "0.0.0.0"}),
-        system=Unused(),
-    )
-    assert window.session is not None and window.session["capabilities"] == []
-    assert window.refused == "shell.unavailable"
-    assert window.asked == [], "a bind off loopback never opens the dialog"
+    # a bind off loopback cannot be chosen at all (F16-S1); that the shell
+    # stays shut off loopback is the binding's own test (test_binding.py)
+    with pytest.raises(ConfigOutOfRange):
+        run(
+            tmp_path / "lan",
+            window=FakeWindow(FakeServer(), picks=["E:\\ROMs"]),
+            server=FakeServer(),
+            engine_factory=engine_at({"server.bind_host": "0.0.0.0"}),
+            system=Unused(),
+        )
 
 
 def test_the_system_shell_reveals_and_opens_and_the_window_picks(tmp_path: Path) -> None:

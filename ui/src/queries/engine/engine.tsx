@@ -56,11 +56,15 @@ export function unwrap<T>(result: { data?: T; error?: unknown; response: Respons
   )
 }
 
-/** Adds the session token to every request that changes state. */
+/** Reads that reach this computer's disk, which the engine asks the token for too (F16-S1). */
+const GUARDED_READS = ['/api/v1/shell/folders']
+
+/** Adds the session token to every request that changes state, and to the guarded reads. */
 export function sessionToken(token: () => Promise<string>): Middleware {
   return {
     async onRequest({ request }) {
-      if (SAFE.has(request.method)) return request
+      const guarded = GUARDED_READS.some((p) => new URL(request.url).pathname === p)
+      if (SAFE.has(request.method) && !guarded) return request
       request.headers.set(TOKEN_HEADER, await token())
       return request
     },

@@ -8,8 +8,9 @@ from pathlib import Path
 import pytest
 
 from romsync.compose import build
+from romsync.domain.errors import ConfigOutOfRange
 from romsync_api.app import create_app
-from romsync_api.binding import Binding, binding_of
+from romsync_api.binding import Binding
 from tests.helpers.fakes import FrozenClock
 
 
@@ -23,14 +24,14 @@ def test_default_loopback(tmp_path: Path, caplog: pytest.LogCaptureFixture) -> N
     assert create_app(None).state.binding.loopback
 
 
-def test_shell_disabled_off_loopback(tmp_path: Path, caplog: pytest.LogCaptureFixture) -> None:
-    engine = build(tmp_path, {"server.bind_host": "0.0.0.0"}, clock=FrozenClock())
-    with caplog.at_level(logging.WARNING, logger="romsync.api"):
-        binding = binding_of(engine)
-    assert not binding.loopback and not binding.shell_enabled
-    (warning,) = caplog.records
-    assert "0.0.0.0" in warning.getMessage()
-    assert "shell endpoints" in warning.getMessage()
+def test_never_offered_to_the_network(tmp_path: Path) -> None:
+    """The engine has no sign-in, so the setting refuses any bind but loopback
+    (F16-S1); a binding off loopback, however it arose, still turns the shell off."""
+    with pytest.raises(ConfigOutOfRange, match=r"must be one of 127\.0\.0\.1, ::1"):
+        build(tmp_path, {"server.bind_host": "0.0.0.0"}, clock=FrozenClock())
+    assert build(tmp_path, {"server.bind_host": "::1"}, clock=FrozenClock())
+    off = Binding("0.0.0.0")
+    assert not off.loopback and not off.shell_enabled and off.capabilities == ()
 
 
 @pytest.mark.parametrize("host", ["127.0.0.1", "::1", "localhost"])

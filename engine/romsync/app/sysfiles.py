@@ -31,6 +31,7 @@ from romsync.app.devices import require
 from romsync.app.sysfiles_registry import APP_FOLDERS, Requirement, SystemEntry, load
 from romsync.domain.errors import ConfigOutOfRange, DestinationItemMissing, PathEscape
 from romsync.domain.paths import ContainedPath, LocalRoot, check_name
+from romsync.domain.staging import staging_template
 from romsync.ports.clock import ClockPort
 from romsync.ports.dest import Dest, DestFiles, DestInventory, DestRoots, DestVerify, Listing
 from romsync.ports.repo import SurveyEntry, SysfileRepo
@@ -79,9 +80,9 @@ class Staging(StrEnum):
 
 def staging_folder(template: str, roots: DestRoots, system: str) -> ContainedPath:
     """Where `system`'s files are staged. `{system}` is required; `{roms}` is the
-    device's ROMs folder. The result must sit inside the device's storage."""
-    if "{system}" not in template:
-        raise ConfigOutOfRange("the staging folder must contain {system}", field=TEMPLATE_KEY)
+    device's ROMs folder. The result must sit inside the device's storage, apart
+    from the games' own folders and Android's app folders (F16-S3)."""
+    staging_template(TEMPLATE_KEY, template)
     leftover = template.replace("{system}", "").replace("{roms}", "")
     if "{" in leftover or "}" in leftover:
         raise ConfigOutOfRange(
@@ -96,6 +97,7 @@ def staging_folder(template: str, roots: DestRoots, system: str) -> ContainedPat
 
 def staging_root(template: str, roots: DestRoots) -> ContainedPath:
     """The folder every system's staging folder sits in: the template up to {system}."""
+    staging_template(TEMPLATE_KEY, template)
     head = template.split("{system}", 1)[0].rstrip("/\\")
     if not head:
         raise ConfigOutOfRange(
@@ -554,7 +556,8 @@ class SystemFiles:
         self, device_id: str, dest: Dest, folder: ContainedPath, name: str
     ) -> None:
         """Delete one stray item under the staging root. `folder` is contained and
-        `name` is a bare name (F8-S5)."""
+        `name` is a bare name (F8-S5), and it must be one the last survey listed as
+        a stray: nothing else under the staging root can be named (F16-S3)."""
         check_name(name)
         files: DestFiles = require(dest, DestFiles)
         roots = dest.roots()
@@ -562,6 +565,12 @@ class SystemFiles:
         if folder.root != roots.device or folder.parts[: len(root.parts)] != root.parts:
             raise PathEscape(
                 "only items under the staging folder can be removed here", field="path"
+            )
+        listed = {(o.path, o.name) for o in self.report(device_id, roots).others}
+        if (folder.relative("/"), name) not in listed:
+            raise PathEscape(
+                f"{name} is not a stray file the last survey listed; read the device again",
+                field="name",
             )
         if not files.delete_file(folder.join(name)):
             raise DestinationItemMissing(f"{name} was not there")

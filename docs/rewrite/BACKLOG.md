@@ -17,6 +17,10 @@ F0 ─ F1 ─┬─ F2 ─┬─ F3 ─┬─ F4 ─┐
                 └──────────────────────────────────────└─ F12 ────┘
 ```
 
+F16 is the security review made before `v2` moves into `main`: each finding
+fixed is a story here, and each one left is listed in [SCOPE.md](SCOPE.md)
+as pending.
+
 F0 comes first and blocks everything, because it must run against the version 1
 application while that application still works. F11 runs in five bands, A to E;
 band E is not a phase but a set of tests that fail the gate from the moment the
@@ -40,6 +44,7 @@ first component exists.
 | F13 | Installer, dependency checks, release | F11, F12 |
 | F14 | Import from version 1 | F2, F3 |
 | F15 | Diagnostics and support bundle | F9, F10 |
+| F16 | Security review before `main` | F10 to F13 |
 
 ---
 
@@ -344,13 +349,23 @@ component, feature or function they cover.
 | F15-S3 | Support bundle with every secret redacted | F10-S8 | No secret appears in the bundle | `::test_bundle_redacted` |
 | F15-S4 | Logging with a configurable level, no secret ever logged | F1-S8 | A secret passed through the engine never reaches a log | `tests/unit/test_logging.py::test_no_secret_in_logs` |
 
+## F16 Security review before `main`
+
+| ID | Story | Depends on | Acceptance | Tests |
+|---|---|---|---|---|
+| F16-S1 | The API surface: the engine binds to loopback only (`127.0.0.1` or `::1`, nothing else is offered); the folder listing needs the page token like every change does; every response, refusals included, forbids framing, sniffing and referrers; a path setting refuses a network share (`\\server\share`) or a device path; the adb setting names an adb executable; recent errors in diagnostics are redacted | F10-S1, F10-S8, F15-S1 | A request from another origin, a frame, a network path or an off-loopback address gets nothing the page could not already do | `tests/unit/api/test_security_review.py`, `tests/unit/api/test_binding.py::test_never_offered_to_the_network`, `tests/unit/desktop/test_shell.py`, `ui/src/queries/engine/engine.test.tsx` |
+| F16-S2 | Sync safety: a device's first sync asks before any removal, however few; a system with no games in the store plans no removals; the confirmation names how many games go and needs them ticked before Start | F7-S3, F11-S20 | A sync can remove games only after the person has seen and ticked how many | `tests/unit/api/test_sync_routes.py::test_a_first_sync_confirms_any_removal`, `::test_a_system_with_no_games_in_the_store_removes_nothing`, `ui/src/components/organisms/SyncConfirm/SyncConfirm.test.tsx` |
+| F16-S3 | System files on the device: the staging folder must contain `{system}` and may not be the ROMs folder of a system or anything under `Android`; removing a stray file needs it to be one the last survey listed | F8-S5 | Neither setting nor request can point a removal at a game or at an app's data | `tests/unit/app/test_sysfiles_device.py`, `tests/unit/api/test_sysfiles_routes.py`, `tests/unit/api/test_security_review.py` |
+| F16-S4 | Drive destinations: nothing is copied or removed through a link or junction inside a drive's ROMs folder; a drive whose ROMs folder is, holds or sits in the library is listed as waiting and never offered | F6-S3, F10-S26 | A sync cannot reach past the drive's ROMs folder or write over the library | `tests/unit/adapters/dest_volume/test_volume.py::test_nothing_is_written_or_removed_through_a_link`, `tests/unit/adapters/test_discovery.py::test_the_librarys_own_drive_folder_is_never_a_destination` |
+| F16-S5 | Release and installer: the release token reaches only the job that publishes, and the build checks out without keeping credentials; a tag that is not a plain version stops the release; the uninstaller removes only what the installer logged, and the install folder is not offered for change | F13-S4, F13-S7 | A crafted tag runs nothing and an uninstall removes nothing it did not install | `tests/unit/test_ci_config.py::test_release_token_reaches_only_the_publishing_job`, `tests/unit/installer/test_spec.py::test_a_release_tag_that_is_not_a_version_is_refused` |
+
 ---
 
 ## Counts
 
 | | |
 |---|---|
-| Features | 16 |
-| Stories | 189 |
+| Features | 17 |
+| Stories | 194 |
 | Security requirements from SPEC section 12, each covered by at least one story | 9 |
 | Stories whose acceptance needs a real device or a clean machine, and therefore sit outside the gate | F6-S5, F6-S6, F10-S26, F13-S2, F13-S6; each is marked for manual verification, and [TESTING.md](TESTING.md) section 8 states what the gate does not prove |

@@ -1,4 +1,6 @@
+import { useState } from 'react'
 import { Button } from '../../atoms/Button/Button'
+import { Checkbox } from '../../atoms/Checkbox/Checkbox'
 import { Muted } from '../../atoms/Muted/Muted'
 import { DataTable } from '../../molecules/DataTable/DataTable'
 import type { PlanOp } from '../../molecules/PlanLine/PlanLine'
@@ -39,12 +41,15 @@ export function lines(plan: SyncPlan): Line[] {
 }
 
 /**
- * What a sync will do, asked before it starts (F11-S32). Starting confirms the
- * removals shown; if the engine's plan has changed since, it refuses and the
- * dialog is asked again.
+ * What a sync will do, asked before it starts (F11-S32). A sync that removes
+ * anything waits for the person to tick that they mean those removals, by
+ * number, before Start can be pressed (F16-S2); if the engine's plan has
+ * changed since, it refuses and the dialog is asked again.
  */
 export function SyncConfirm({ name, plan, busy = false, onStart, onCancel }: SyncConfirmProps) {
   const b = plan.bytes
+  const removing = plan.remove.length
+  const [meant, setMeant] = useState(false)
   return (
     <Modal title={`Sync ${name}`} onClose={onCancel}>
       <div className={styles.body}>
@@ -66,10 +71,17 @@ export function SyncConfirm({ name, plan, busy = false, onStart, onCancel }: Syn
           {b.free != null &&
             ` · ${formatBytes(b.free)} free now, ${formatBytes(b.free - b.net)} after`}
         </Muted>
+        {removing > 0 && (
+          <Checkbox
+            label={`Remove ${removing.toLocaleString()} game${removing === 1 ? '' : 's'} from ${name}`}
+            checked={meant}
+            onChange={setMeant}
+          />
+        )}
       </div>
       <div className={styles.actions}>
         <Button onClick={onCancel}>Cancel</Button>
-        <Button variant="primary" disabled={busy} onClick={onStart}>
+        <Button variant="primary" disabled={busy || (removing > 0 && !meant)} onClick={onStart}>
           {busy ? 'Starting…' : 'Start'}
         </Button>
       </div>

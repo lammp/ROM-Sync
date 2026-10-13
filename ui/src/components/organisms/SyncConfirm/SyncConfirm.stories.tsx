@@ -30,7 +30,11 @@ export const Default: Story = {
     const dialog = within(canvasElement.ownerDocument.body).getByRole('dialog', {
       name: 'Sync Thor',
     })
-    await userEvent.click(within(dialog).getByRole('button', { name: 'Start' }))
+    // a removal waits for the person to say they mean it (F16-S2)
+    const start = within(dialog).getByRole('button', { name: 'Start' })
+    await expect(start).toBeDisabled()
+    await userEvent.click(within(dialog).getByRole('checkbox', { name: 'Remove 1 game from Thor' }))
+    await userEvent.click(start)
     await expect(args.onStart).toHaveBeenCalled()
   },
 }

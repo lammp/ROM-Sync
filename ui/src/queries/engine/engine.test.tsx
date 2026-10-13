@@ -51,6 +51,15 @@ describe('engine', () => {
     ])
   })
 
+  it('sends it on the one read that reaches the disk: listing folders (F16-S1)', async () => {
+    const { engine, seen } = fakeEngine()
+    await engine.api.GET('/api/v1/shell/folders', { params: { query: { path: 'X:\\' } } })
+    expect(seen).toEqual([
+      { method: 'GET', url: '/api/v1/session', token: null },
+      { method: 'GET', url: '/api/v1/shell/folders', token: 'tok-1' },
+    ])
+  })
+
   it('asks for the session again after a refusal', async () => {
     const { engine, seen } = fakeEngine([])
     const cancel = () =>

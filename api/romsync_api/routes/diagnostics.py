@@ -13,6 +13,7 @@ from fastapi import APIRouter, Depends, Request, Response
 
 from romsync import __version__
 from romsync.compose import Engine
+from romsync.domain.redaction import redact
 from romsync_api.deps import engine
 from romsync_api.models import Diagnostics, LastSync, RecentError, StorageList, StorageRow
 from romsync_api.routes.sync import run_view
@@ -35,6 +36,9 @@ def last_sync(e: Engine) -> LastSync | None:
 
 
 def recent_errors(e: Engine) -> list[RecentError]:
+    """The newest failures, their messages with every secret left out, as the
+    support bundle leaves them out."""
+    secrets = e.settings.secrets()
     failed = [j for j in e.jobs.all() if str(j.state) == "failed"]
     failed.sort(key=lambda j: j.finished or "", reverse=True)
     return [
@@ -44,7 +48,7 @@ def recent_errors(e: Engine) -> list[RecentError]:
             target=j.target,
             finished=j.finished,
             code=j.error_code,
-            message=j.error_message,
+            message=None if j.error_message is None else redact(j.error_message, secrets),
         )
         for j in failed[:RECENT]
     ]

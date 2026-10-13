@@ -19,6 +19,7 @@ from romsync.adapters.discovery import (
     Discovery,
     TransportState,
     Waiting,
+    overlaps,
     parse_probe,
 )
 from romsync.domain.errors import DestinationUnavailable
@@ -66,6 +67,7 @@ SETTINGS: dict[str, object] = {
     "mtp.enabled": True,
     "mtp.arrival_floor": 600,
     "mtp.arrival_rate": 2 * 1024 * 1024,
+    "store.root": "",
 }
 
 
@@ -206,3 +208,26 @@ def test_the_composed_engine_lists_what_discovery_finds(tmp_path: Path) -> None:
         ("adb", "9A8B7C (adb)", "unauthorized: accept the debugging prompt on the device")
     ]
     assert made[0].transports[-1] == TransportState("adb", True, "2 device(s)")
+
+
+def test_the_librarys_own_drive_folder_is_never_a_destination(tmp_path: Path) -> None:
+    """A drive whose ROMs folder is, holds or sits in the library is listed as
+    waiting, never offered: a sync to it would write over the library (F16-S4)."""
+    probe, _, _ = discovery(tmp_path, store_root="e:/ROMs/")
+    drives = probe()[:2]
+    assert isinstance(drives[0], Waiting) and drives[0].describe() == "E:\\ROMs"
+    assert isinstance(drives[1], VolumeDest), "another drive is offered as before"
+
+
+@pytest.mark.parametrize(
+    ("a", "b", "overlap"),
+    [
+        ("E:\\ROMs", "e:/roms", True),
+        ("E:\\ROMs", "E:\\ROMs\\snes", True),
+        ("E:\\", "E:\\ROMs", True),
+        ("D:\\ROMs", "D:\\Games\\ROMs", False),
+        ("E:\\ROMs", "E:\\ROMs2", False),
+    ],
+)
+def test_overlaps(a: str, b: str, overlap: bool) -> None:
+    assert overlaps(a, b) is overlap

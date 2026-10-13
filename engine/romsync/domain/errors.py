@@ -185,6 +185,12 @@ class MarkerUntrusted(RomSyncError):
 # --- the desktop shell --------------------------------------------------------
 
 
+class RequestForbidden(RomSyncError):
+    """The request lacks what the page alone holds: its token."""
+
+    code = "request.forbidden"
+
+
 class ShellUnavailable(RomSyncError):
     """The shell endpoints answer only while the server listens on loopback."""
 

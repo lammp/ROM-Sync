@@ -7,11 +7,13 @@ is refused, whatever it is asked.
 
 from __future__ import annotations
 
+import hmac
+
 from fastapi import APIRouter, Depends, Query, Request
 
 from romsync.app.browse import kinds
 from romsync.compose import Engine
-from romsync.domain.errors import ShellUnavailable
+from romsync.domain.errors import RequestForbidden, ShellUnavailable
 from romsync_api.deps import engine
 from romsync_api.models import (
     FolderEntry,
@@ -24,6 +26,7 @@ from romsync_api.models import (
     Reveal,
     ShellDone,
 )
+from romsync_api.security import TOKEN_HEADER
 
 router = APIRouter(prefix="/shell", tags=["shell"])
 
@@ -31,6 +34,15 @@ router = APIRouter(prefix="/shell", tags=["shell"])
 def loopback_only(request: Request) -> None:
     if not request.app.state.binding.shell_enabled:
         raise ShellUnavailable("the shell endpoints answer only on loopback")
+
+
+def page_only(request: Request) -> None:
+    """A read that reaches this computer's disk asks for the page's token, as a
+    change does: a page on another site may trigger a GET it cannot read, and
+    listing a folder is not harmless enough to allow that."""
+    given = request.headers.get(TOKEN_HEADER, "")
+    if not hmac.compare_digest(given.encode(), request.app.state.page_token.encode()):
+        raise RequestForbidden("listing this computer's folders needs this page's token")
 
 
 @router.post("/reveal", response_model=ShellDone, dependencies=[Depends(loopback_only)])
@@ -57,7 +69,11 @@ def notify(body: Notify, e: Engine = Depends(engine)) -> Notified:  # noqa: B008
     return Notified(delivered=e.shell.notify(body.title, body.body))
 
 
-@router.get("/folders", response_model=FolderListing, dependencies=[Depends(loopback_only)])
+@router.get(
+    "/folders",
+    response_model=FolderListing,
+    dependencies=[Depends(loopback_only), Depends(page_only)],
+)
 def folders(
     path: str | None = None,
     files: list[str] = Query(default=[]),  # noqa: B008

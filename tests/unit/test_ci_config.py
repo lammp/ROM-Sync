@@ -85,10 +85,28 @@ def test_release_workflow() -> None:
     assert places == sorted(places), (
         "gate, interface, freeze, installer, sums, the installer proved, release"
     )
-    assert "reports/release/artefacts/*" in text, "every artefact, the sums among them"
+    assert "path: reports/release/artefacts/" in text and "artefacts/*" in text, (
+        "every artefact, the sums among them"
+    )
     assert "--generate-notes" in text and "--verify-tag" in text
     assert "secrets." not in text, "the run's own token, nothing stored"
-    assert "contents: write" in text
+
+
+def test_release_token_reaches_only_the_publishing_job() -> None:
+    """Every step that runs third-party code has a read-only token not kept in
+    the checkout; only the publishing job may write, and it installs nothing
+    (F16-S5). The tag reaches a script only as a variable."""
+    text = _text("release.yml")
+    build, publish = text.split("\n  publish:", 1)
+    assert "permissions:\n  contents: read" in text
+    assert "contents: write" not in build and "persist-credentials: false" in build
+    assert "contents: write" in publish
+    for installing in ("checkout", "pip install", "npm ci", "choco"):
+        assert installing not in publish, installing
+    assert "${{ github.ref_name }}" in text
+    for line in text.splitlines():
+        if "${{ github.ref_name }}" in line:
+            assert line.strip() == "TAG: ${{ github.ref_name }}", line
 
 
 def test_installer_workflow() -> None:

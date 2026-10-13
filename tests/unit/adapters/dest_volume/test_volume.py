@@ -12,6 +12,7 @@ from romsync.adapters.dest_volume import VolumeDest
 from romsync.adapters.dest_volume import volume as module
 from romsync.domain.errors import (
     DestinationUnavailable,
+    PathEscape,
     TransferFailed,
     VerificationFailed,
 )
@@ -150,3 +151,22 @@ def test_a_fetch_that_fails_is_an_error(
     blocked.write_bytes(b"")
     with pytest.raises(TransferFailed):
         dest.get_file(folder.join("a.bin"), LocalRoot(str(blocked)).child("pull"))
+
+
+def test_nothing_is_written_or_removed_through_a_link(
+    dest: VolumeDest, store: StoreRoot, tmp_path: Path
+) -> None:
+    """A link (or a junction) inside the drive's ROMs folder would carry a copy or
+    a removal to wherever it points; each is refused there and the target is
+    left alone (F16-S4)."""
+    elsewhere = tmp_path / "elsewhere"
+    elsewhere.mkdir()
+    (elsewhere / "keep.bin").write_bytes(b"mine")
+    local_path(dest, dest.roots().roms.resolve("snes")).symlink_to(
+        elsewhere, target_is_directory=True
+    )
+    with pytest.raises(PathEscape, match="link or junction"):
+        dest.delete_file(dest.roots().roms.resolve("snes/keep.bin"))
+    with pytest.raises(PathEscape, match="link or junction"):
+        dest.put_file(dest.roots().roms.resolve("snes"), _file(store, "a.bin", b"abc"))
+    assert sorted(p.name for p in elsewhere.iterdir()) == ["keep.bin"]

@@ -84,6 +84,10 @@ listed while it is to do, points at its tab, and leaves the bell once done.
 
 ## Field specifications
 
+Every path setting refuses a network share (`\\server\share`) and a device
+path (`\\?\`, `\\.\`): reading one would send the Windows sign-in to
+whatever answers (F16-S1).
+
 Legend: **restart** means it is read once at startup. Everything unmarked takes
 effect immediately, because the server re-reads config per call.
 
@@ -136,10 +140,10 @@ its peers.
 
 | Field | Control | Validation | Default |
 |---|---|---|---|
-| ADB executable | file chooser (`.exe`) + Detect + Reveal, with a found / not found pill | must be an existing file; **new:** run `adb version` and show it, else reject with that error | `_tools\platform-tools\adb.exe`, then PATH (`adb.py:20,27`) |
+| ADB executable | file chooser (`.exe`) + Detect + Reveal, with a found / not found pill | must be an existing file named `adb` or `adb.exe` (F16-S1); **new:** run `adb version` and show it, else reject with that error | `_tools\platform-tools\adb.exe`, then PATH (`adb.py:20,27`) |
 | Enable ADB transport | checkbox, "faster, needs USB debugging" | n/a | on when adb is found |
 | Enable MTP transport | checkbox | at least one transport must stay enabled | on |
-| Staging path on the device | text template with `{roms}` and `{system}` | must contain `{system}`, must be relative, no `..` | `{roms}/bios/{system}` (`sysfiles.py:41`) |
+| Staging path on the device | text template with `{roms}` and `{system}` | must contain `{system}`, must be relative, no `..`; may not be `{roms}/{system}` (a system's games) or anything under `Android` (F16-S3) | `{roms}/bios/{system}` (`sysfiles.py:41`) |
 | Verify staged files up to | size input, same syntax as the library filters | 0 to 256 MB | 32 MB (`sysfiles.py:40`) |
 | Device probe interval | number, seconds | 15 to 300 | 45 (`server.py:56`) |
 
@@ -193,6 +197,7 @@ already understated.
 | Shell | read-only: desktop window or browser, plus the WebView2 version when known | from the `shell` block |
 | Address | read-only `http://127.0.0.1:<port>/` + Copy | the port is ephemeral in the window |
 | Preferred port | number, 0 or 1024–65535, "0 picks a free port" | **restart** |
+| Listen on | select: `127.0.0.1` or `::1`; nothing reachable from the network is offered, because the page token is all that guards a change (F16-S1) | **restart** |
 | Jobs | table: kind, started, state, progress, duration, Cancel | replaces the static "running now" line |
 | Recent errors | last N failed jobs, full traceback in a `<pre>` + Copy | the traceback is already kept |
 | Last sync | device, when, sent/removed/failed, bytes, link to the device page | from the sync log |

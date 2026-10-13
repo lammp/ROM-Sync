@@ -4,7 +4,12 @@ The plan is always computed here, from the store, the selection and what the
 device holds; a client never hands the engine a list of operations to run. A
 sync re-plans at the moment it starts, refuses a plan that does not fit, and
 asks for the removal count to be confirmed when it is at or above the
-configured threshold.
+configured threshold, or when the device has never finished a sync from this
+computer: a new or adopted profile's first removals are always confirmed.
+
+A system the store holds no games for is never planned for removal: a system
+folder emptied in the store, or not read, leaves the device's copies alone
+rather than removing them all (F16-S2).
 """
 
 from __future__ import annotations
@@ -17,7 +22,7 @@ from romsync.domain.errors import ConfirmRemovals, DoesNotFit, ProfileNotFound
 from romsync.domain.models import Plan
 from romsync.domain.planning import plan
 from romsync.ports.dest import DestCapacity
-from romsync.ports.repo import DeviceProfile, Repos
+from romsync.ports.repo import DeviceProfile, Repos, RunState
 
 Setting = Callable[[str], object]
 
@@ -49,9 +54,12 @@ class Plans:
         if attached.dest.supports(DestCapacity):
             port: DestCapacity = require(attached.dest, DestCapacity)
             free = port.capacity().free
+        units = self._repos.games.all()
+        stocked = {str(u.system) for u in units}
         computed = plan(
-            systems=[s.key for s in self._repos.games.systems()],
-            units=self._repos.games.all(),
+            # only systems with games in the store: an empty one removes nothing
+            systems=[s.key for s in self._repos.games.systems() if str(s.key) in stocked],
+            units=units,
             selection=self._repos.selections.get(profile.id),
             inventory=self._repos.devices.inventory(profile.id),
             free=free,
@@ -67,7 +75,9 @@ class Plans:
             raise DoesNotFit("the plan's peak use is more than the device's free space")
         removals = len(planned.plan.remove)
         threshold = self._int("sync.confirm_remove_threshold")
-        if removals and removals >= threshold and confirmed_removals != removals:
+        runs = self._repos.runs.for_device(planned.profile.id, 50)
+        first = not any(r.state is RunState.DONE for r in runs)
+        if removals and (removals >= threshold or first) and confirmed_removals != removals:
             raise ConfirmRemovals(
                 f"this sync removes {removals} games; confirm that number to start it",
                 field="confirm_removals",

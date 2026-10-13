@@ -9,8 +9,9 @@ from fastapi.testclient import TestClient
 
 from romsync.adapters.dest_fake import FakeDest
 from romsync.compose import build
-from romsync.domain.models import DeviceItem
+from romsync.domain.models import DeviceItem, SystemKey
 from romsync.jobs.registry import inline
+from romsync.ports.repo import SystemInfo
 from romsync_api.app import PREFIX, create_app
 from romsync_api.models import JobView, PlanView, SyncStatusView
 from romsync_api.security import TOKEN_HEADER
@@ -129,3 +130,33 @@ def test_a_device_without_a_profile(tmp_path: Path) -> None:
     ref = c.get(f"{PREFIX}/devices").json()["devices"][0]["ref"]
     assert c.get(f"{PREFIX}/devices/{ref}/plan").status_code == 404
     assert c.get(f"{PREFIX}/devices/{ref}/sync").status_code == 404
+
+
+def test_a_first_sync_confirms_any_removal(tmp_path: Path) -> None:
+    """A device that has never finished a sync from this computer, a new or an
+    adopted profile, has its removals confirmed whatever their number (F16-S2)."""
+    c, ref, device, _ = setup(tmp_path)
+    stores = seed.stores(tmp_path / "data")
+    stores.devices.put_inventory(device, [DeviceItem("nes", "Old (USA).nes", "file", 10)], "x")
+    refused = c.post(f"{PREFIX}/devices/{ref}/sync", json={})
+    assert refused.status_code == 409
+    assert refused.json()["error"]["code"] == "sync.confirm_removals"
+    done = c.post(f"{PREFIX}/devices/{ref}/sync", json={"confirm_removals": 1})
+    assert done.json()["state"] == "done"
+    stores.devices.put_inventory(
+        device, [DeviceItem("nes", "Older (USA).nes", "file", 10)], "y"
+    )
+    later = c.post(f"{PREFIX}/devices/{ref}/sync", json={})
+    assert later.status_code == 200, "once a sync has finished, the threshold decides"
+
+
+def test_a_system_with_no_games_in_the_store_removes_nothing(tmp_path: Path) -> None:
+    """A system folder emptied in the store, or never read, leaves the device's
+    games for it alone rather than removing them all (F16-S2)."""
+    c, ref, device, _ = setup(tmp_path)
+    stores = seed.stores(tmp_path / "data")
+    stores.games.put_system(SystemInfo(SystemKey("snes"), "Super Nintendo", (".sfc",)))
+    held = [DeviceItem("snes", f"Game {n}.sfc", "file", 10) for n in range(40)]
+    stores.devices.put_inventory(device, held, "x")
+    plan = PlanView.model_validate(c.get(f"{PREFIX}/devices/{ref}/plan").json())
+    assert not [op for op in plan.remove if op.system == "snes"]

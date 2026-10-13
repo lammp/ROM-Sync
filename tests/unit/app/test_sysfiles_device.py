@@ -169,9 +169,20 @@ def test_remove_other_stays_under_the_staging_root(tmp_path: Path, r: Repos) -> 
         sysfiles.remove_other(DEVICE, dest, dest.roots().device.resolve("ROMs/nes"), "Game.nes")
     with pytest.raises(PathEscape):
         sysfiles.remove_other(DEVICE, dest, dest.roots().roms.resolve("nes"), "Game.nes")
+    with pytest.raises(PathEscape, match="not a stray file the last survey listed"):
+        sysfiles.remove_other(
+            DEVICE, dest, dest.roots().device.resolve("ROM-Sync"), "stray.bin"
+        )
+    sysfiles.survey(DEVICE, dest)
+    put(dest, "ROM-Sync/arrived-later.bin", b"x")
+    with pytest.raises(PathEscape, match="not a stray file the last survey listed"):
+        sysfiles.remove_other(
+            DEVICE, dest, dest.roots().device.resolve("ROM-Sync"), "arrived-later.bin"
+        )
     sysfiles.remove_other(DEVICE, dest, dest.roots().device.resolve("ROM-Sync"), "stray.bin")
     assert ("ROM-Sync", "stray.bin") not in dest.files
-    with pytest.raises(DestinationItemMissing):
+    assert ("ROM-Sync", "arrived-later.bin") in dest.files, "only the one named goes"
+    with pytest.raises(PathEscape):
         sysfiles.remove_other(
             DEVICE, dest, dest.roots().device.resolve("ROM-Sync"), "stray.bin"
         )

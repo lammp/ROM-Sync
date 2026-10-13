@@ -28,8 +28,17 @@ describe('SyncConfirm', () => {
     expect(Default.args.onStart).not.toHaveBeenCalled()
   })
 
+  it('asks for the removals to be ticked before Start, and not when there are none', () => {
+    render(<Default />)
+    const start = screen.getByRole('button', { name: 'Start' })
+    expect(start.hasAttribute('disabled')).toBe(true)
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Remove 1 game from Thor' }))
+    expect(start.hasAttribute('disabled')).toBe(false)
+  })
+
   it('leaves out what the sync will not do, and the space when it is unknown', () => {
     render(<SendOnly />)
+    expect(screen.queryByRole('checkbox')).toBeNull()
     expect(cells().map((r) => r[0])).toEqual(['Send', 'Already in place'])
     expect(screen.queryByText(/free now/)).toBeNull()
   })

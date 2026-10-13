@@ -9,6 +9,8 @@ opinion about whose machine it is on.
 
 from __future__ import annotations
 
+import ntpath
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import Literal
 
@@ -17,6 +19,7 @@ from romsync.domain.errors import (
     ConfigWrongType,
     UnknownConfigKey,
 )
+from romsync.domain.staging import staging_template
 
 Kind = Literal["str", "int", "float", "bool", "path"]
 
@@ -38,6 +41,8 @@ class Setting:
     maximum: float | None = None
     choices: tuple[str, ...] = ()
     secret: bool = False
+    #: A further rule a text value must meet, raising ConfigOutOfRange when not.
+    check: Callable[[str, str], None] | None = None
     restart: bool = False
     unit: str = ""
 
@@ -85,6 +90,10 @@ class Setting:
             raise ConfigOutOfRange(
                 f"{self.key} must be one of {', '.join(self.choices)}", field=self.key
             )
+        if isinstance(v, str) and v and self.kind == "path":
+            local_path(self.key, v)
+        if isinstance(v, str) and v and self.check is not None:
+            self.check(self.key, v)
         if isinstance(v, bool) or not isinstance(v, (int, float)):
             return v
         if self.minimum is not None and v < self.minimum:
@@ -96,6 +105,29 @@ class Setting:
                 f"{self.key} must be at most {self.maximum}{self.unit}", field=self.key
             )
         return v
+
+
+# -- rules a value must meet --------------------------------------------------
+
+
+def local_path(key: str, value: str) -> None:
+    """A place on this computer: never a network share or a device path.
+
+    Opening a share (`\\\\server\\share`, `//server/share`, `\\\\?\\UNC\\...`) makes
+    Windows authenticate to that server, handing it the person's sign-in
+    hash; a device path (`\\\\.\\...`) is not a folder at all.
+    """
+    if value[:2] in ("\\\\", "//", "\\/", "/\\"):
+        raise ConfigOutOfRange(
+            f"{key} must be a folder on this computer, not a network or device path",
+            field=key,
+        )
+
+
+def adb_executable(key: str, value: str) -> None:
+    """The debug bridge itself: a file named adb or adb.exe, nothing else to run."""
+    if ntpath.basename(value.replace("/", "\\")).lower() not in ("adb", "adb.exe"):
+        raise ConfigOutOfRange(f"{key} must be the adb executable (adb.exe)", field=key)
 
 
 SETTINGS: tuple[Setting, ...] = (
@@ -130,6 +162,7 @@ SETTINGS: tuple[Setting, ...] = (
         "",
         "The debug bridge executable. Empty means look on the PATH; absent "
         "disables the transport and is stated in Settings, not an error.",
+        check=adb_executable,
     ),
     Setting("mtp.enabled", "bool", True, "Offer devices over the media transfer protocol."),
     Setting(
@@ -165,7 +198,9 @@ SETTINGS: tuple[Setting, ...] = (
         "device.staging_template",
         "str",
         "ROM-Sync/{system}",
-        "Where a system's files are staged on a device. Must contain {system}.",
+        "Where a system's files are staged on a device. Must contain {system}, "
+        "and may not be the ROMs folder's system folders or Android's app folders.",
+        check=staging_template,
     ),
     Setting(
         "device.write_marker_after_sync",
@@ -286,8 +321,9 @@ SETTINGS: tuple[Setting, ...] = (
         "server.bind_host",
         "str",
         "127.0.0.1",
-        "Binding anywhere but loopback disables the shell endpoints and logs why.",
-        choices=("127.0.0.1", "0.0.0.0"),
+        "The engine listens on this computer only: it has no sign-in, so it is "
+        "never offered to the network.",
+        choices=("127.0.0.1", "::1"),
         restart=True,
     ),
     Setting(

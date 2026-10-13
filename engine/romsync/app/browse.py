@@ -40,6 +40,10 @@ def browse(folders: Folders, path: str | None, files: frozenset[str] = frozenset
     """The drives when `path` is empty, otherwise what the folder at `path` holds."""
     if not path:
         return Listing(None, None, tuple(Entry(r, r, True) for r in folders.roots()), ())
+    if path[:2] in ("\\\\", "//", "\\/", "/\\"):
+        # a share or a device path: opening one makes Windows authenticate to
+        # whatever server it names, handing it the person's sign-in hash
+        raise FolderUnreadable(f"{path} is not a folder on this computer", field="path")
     where = Path(path)
     if not where.is_absolute():
         raise FolderUnreadable(f"{path} is not a full path", field="path")

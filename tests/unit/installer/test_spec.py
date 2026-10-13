@@ -223,8 +223,11 @@ def test_data_outside_install(tmp_path: Path) -> None:
 
     for written in entries(script["Files"]):
         assert written["DestDir"] == "{app}"
-    for removed in entries(script["InstallDelete"]) + entries(script["UninstallDelete"]):
-        assert removed["Name"].startswith("{app}"), removed
+    for removed in entries(script["InstallDelete"]):
+        assert removed["Name"].startswith("{app}\\"), removed
+    assert setting(script["Setup"], "DisableDirPage") == "yes", (
+        "the install folder is the application's own, never one the person points at"
+    )
     for shortcut in entries(script["Icons"]) + entries(script["Run"]):
         assert shortcut["Filename"] == "{app}\\ROM-Sync.exe"
         assert '--data ""{code:DataDir}""' in shortcut["Parameters"], (
@@ -256,7 +259,9 @@ def test_the_installer_offers_the_runtime(tmp_path: Path) -> None:
 def test_uninstall_keeps_data(tmp_path: Path) -> None:
     """The uninstaller removes the application only, keeps where the data is, and says so."""
     script = sections(inno_script("2.0.0", tmp_path / "dist"))
-    assert entries(script["UninstallDelete"]) == [{"Type": "filesandordirs", "Name": "{app}"}]
+    # the uninstaller removes what the installer put there, from its log, and no
+    # folder wholesale: a folder removed whole could hold more than the app (F16-S5)
+    assert "UninstallDelete" not in script
     (recorded,) = entries(script["Registry"])
     assert recorded["ValueName"] == "DataDir" and "Flags" not in recorded, (
         "the data folder's record outlives the application, so a reinstall finds it"
@@ -368,3 +373,15 @@ def test_the_compiler_is_found_where_inno_setup_installs_it(
     (installed / "ISCC.exe").write_bytes(b"")
     monkeypatch.setenv("ProgramFiles(x86)", str(tmp_path / "Program Files (x86)"))
     assert iscc(lambda name: None) == installed / "ISCC.exe"
+
+
+@pytest.mark.parametrize(
+    "tag",
+    ["v2.0.0'; Remove-Item x", "v1 .0", "latest", "v1.0.0\nx", "v1.0.0\n", "", "v2.0.0-rc.1;"],
+)
+def test_a_release_tag_that_is_not_a_version_is_refused(tag: str) -> None:
+    """The version goes into the installer's script and file name, so a tag that
+    is not a plain version stops the release (F16-S5)."""
+    with pytest.raises(ValueError, match="is not a release version"):
+        release_version(tag)
+    assert release_version("v2.0.0-rc.1") == "2.0.0-rc.1"

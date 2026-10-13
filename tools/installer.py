@@ -23,6 +23,7 @@ import argparse
 import hashlib
 import importlib
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -124,6 +125,8 @@ AppVersion=${version}
 AppPublisher=ROM-Sync
 DefaultDirName=${install_dir}
 DisableProgramGroupPage=yes
+; the application's own folder, never one the person points at: an uninstall removes it
+DisableDirPage=yes
 PrivilegesRequired=lowest
 MinVersion=${min_version}
 ArchitecturesAllowed=x64compatible
@@ -154,8 +157,6 @@ Root: HKCU; Subkey: "${data_key}"; ValueType: string; ValueName: "DataDir"; Valu
 [Run]
 Filename: "{app}\${app}.exe"; Parameters: "--data ""{code:DataDir}"""; Description: "Start ${app}"; Flags: nowait postinstall skipifsilent
 
-[UninstallDelete]
-Type: filesandordirs; Name: "{app}"
 
 [Code]
 var
@@ -362,9 +363,18 @@ def pyinstaller_args(
     return args
 
 
+#: A version as a release may name it: digits, dots, and a plain suffix.
+VERSION: Final = re.compile(r"^\d+\.\d+\.\d+([.-][0-9A-Za-z.]+)?\Z")
+
+
 def release_version(tag: str) -> str:
-    """The version a release tag names: `v0.1.0` is 0.1.0 (F13-S7)."""
-    return tag[1:] if tag[:1] in ("v", "V") else tag
+    """The version a release tag names: `v0.1.0` is 0.1.0 (F13-S7). Anything
+    else is refused: the version is written into the installer's script and its
+    file name, so it may carry no quote, space or command (F16-S5)."""
+    version = tag[1:] if tag[:1] in ("v", "V") else tag
+    if not VERSION.match(version):
+        raise ValueError(f"{tag!r} is not a release version such as v2.0.0")
+    return version
 
 
 def checksums(files: Sequence[Path]) -> str:

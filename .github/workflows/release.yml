@@ -13,20 +13,26 @@ on:
     tags: ["v*"]
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: release-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
-  release:
+  # Everything that runs third-party code, with a read-only token that is not
+  # kept in the checkout (F16-S5).
+  build:
     runs-on: windows-2022
     timeout-minutes: 45
+    env:
+      # the tag reaches the shell only as a variable, never pasted into a script
+      TAG: ${{ github.ref_name }}
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          persist-credentials: false
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
@@ -50,18 +56,39 @@ jobs:
       - name: Install Inno Setup
         run: choco install innosetup --no-progress -y
       - name: Compile the installer
-        run: python tools/installer.py installer --version "${{ github.ref_name }}"
+        run: python tools/installer.py installer --version "$env:TAG"
       - name: Package and checksum
-        run: python tools/installer.py package --version "${{ github.ref_name }}"
+        run: python tools/installer.py package --version "$env:TAG"
       - name: Install, self-test, start and uninstall
         run: python tools/smoke_install.py
+      - name: Keep the artefacts for the publishing job
+        uses: actions/upload-artifact@v4
+        with:
+          name: release
+          path: reports/release/artefacts/
+          if-no-files-found: error
+
+  # The only step that can write to the repository: no checkout, no install.
+  publish:
+    needs: build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    env:
+      TAG: ${{ github.ref_name }}
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: release
+          path: artefacts
       - name: Publish the release
-        shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
         run: >
-          gh release create "${{ github.ref_name }}"
-          reports/release/artefacts/*
-          --title "ROM-Sync ${{ github.ref_name }}"
+          gh release create "$TAG"
+          artefacts/*
+          --title "ROM-Sync $TAG"
           --generate-notes
           --verify-tag

@@ -137,6 +137,21 @@ def parse_probe(lines: Sequence[str]) -> tuple[list[tuple[str, str]], list[tuple
     return volumes, portable
 
 
+#: Why a drive whose ROMs folder is, holds or sits in the library is not offered.
+IS_THE_STORE: Final = "this is the ROMs folder the library is read from, or holds it"
+
+
+def overlaps(a: str, b: str) -> bool:
+    """Whether one Windows folder is the other or contains it, compared as
+    Windows compares: without case, either slash."""
+
+    def norm(p: str) -> str:
+        return p.replace("/", "\\").rstrip("\\").casefold() + "\\"
+
+    x, y = norm(a), norm(b)
+    return x.startswith(y) or y.startswith(x)
+
+
 class Discovery:
     """The probe the composed engine asks for what is attached."""
 
@@ -175,9 +190,15 @@ class Discovery:
             states.append(TransportState("volume", False, f"drives were not read: {e}"))
             states.append(TransportState("mtp", False, f"devices were not read: {e}"))
             return []
-        found: list[Dest] = [
-            VolumeDest(Path(f"{letter}\\"), ROMS, self._identify) for letter, _ in volumes
-        ]
+        store = str(self._setting("store.root") or "")
+        found: list[Dest] = []
+        for letter, _ in volumes:
+            roms = f"{letter}\\{ROMS}"
+            if store and overlaps(roms, store):
+                # syncing to it would write over, or remove from, the library itself
+                found.append(Waiting(DeviceKind.VOLUME, roms, IS_THE_STORE))
+            else:
+                found.append(VolumeDest(Path(f"{letter}\\"), ROMS, self._identify))
         states.append(TransportState("volume", True, f"{len(volumes)} drive(s)"))
         if not self._setting("mtp.enabled"):
             states.append(TransportState("mtp", False, "turned off in Settings"))

@@ -24,6 +24,7 @@ from romsync.domain.errors import (
     DestinationItemMissing,
     DestinationRootMissing,
     DestinationUnavailable,
+    PathEscape,
     RomSyncError,
     TransferFailed,
     VerificationFailed,
@@ -73,6 +74,12 @@ def _offset(progress: Progress, base: int) -> Progress:
     return lambda n: progress(base + n)
 
 
+def linked(path: Path) -> bool:
+    """Whether `path` is a symbolic link or a junction (a Windows mount point)."""
+    isjunction = getattr(os.path, "isjunction", None)
+    return path.is_symlink() or bool(isjunction is not None and isjunction(path))
+
+
 def _clear(path: Path) -> None:
     if path.is_dir() and not path.is_symlink():
         shutil.rmtree(path)
@@ -100,7 +107,18 @@ class VolumeDest(Declared):
         self._roots = make_roots(str(storage), roms_folder)
 
     def _native(self, path: ContainedPath) -> Path:
-        return self.storage.joinpath(*self.device_parts(path))
+        """`path` on the drive, refused if any folder on the way is a link or a
+        junction: one would carry a copy or a removal outside the drive's ROMs
+        folder, to wherever it points (F16-S4)."""
+        native = self.storage
+        for part in self.device_parts(path):
+            native = native / part
+            if linked(native):
+                raise PathEscape(
+                    f"{native} is a link or junction; nothing is written through one",
+                    field="path",
+                )
+        return native
 
     def _roms(self) -> Path:
         return self.storage.joinpath(*self.roms_parts())

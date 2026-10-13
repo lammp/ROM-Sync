@@ -98,6 +98,8 @@ def test_remove_other_checks_the_folder_first(tmp_path: Path) -> None:
         json={"path": "../outside", "name": "x"},
     )
     assert refused.status_code == 422
+    # only a stray the last survey listed can be removed
+    c.post(f"{PREFIX}/devices/{ref}/sysfiles/survey")
     removed = JobView.model_validate(
         c.post(
             f"{PREFIX}/devices/{ref}/sysfiles/remove-other",
