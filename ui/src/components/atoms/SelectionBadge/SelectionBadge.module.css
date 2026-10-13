@@ -1,0 +1,29 @@
+.sel {
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border-radius: var(--radius-round);
+  background: var(--scrim-1);
+  border: 1px solid var(--badge-edge);
+  color: var(--on-ok);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--text-body-sm);
+  cursor: pointer;
+}
+
+.in {
+  background: var(--ok);
+  border-color: var(--ok);
+}
+
+.over {
+  outline: 2px dashed var(--warn);
+  outline-offset: 1px;
+}
+
+.over:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}

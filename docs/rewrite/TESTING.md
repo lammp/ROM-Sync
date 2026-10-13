@@ -33,7 +33,7 @@ python tools/verify.py
 | 6 | `contract` | `pytest tests/contract` against `dest_fake` and `dest_volume` | any failure |
 | 7 | `golden` | `pytest tests/golden` | any mismatch against a committed golden |
 | 8 | `e2e_fake` | `pytest tests/e2e_fake` | any failure |
-| 9 | `ui` | `vitest run` over `ui/tests` | any failure |
+| 9 | `ui` | Vitest project `unit`, Vitest project `storybook` in Chromium, then Playwright over the built static export, in that order | any failure |
 | 10 | `coverage` | the coverage gates in section 7 | any gate below its floor |
 | 11 | `openapi` | `tools/openapi_check.py`: regenerate the document and diff it against the committed copy | any undeclared drift |
 | 12 | `publication` | `_tools/repo-lint.py --strict` and the secret scan over the working tree | any finding |
@@ -75,19 +75,19 @@ tests/
     test_dest_contract.py  parameterised over every destination adapter
   golden/
     test_title_identity.py test_twins.py test_plan.py test_matcher.py
-    data/                  the committed golden files
+    data/                  the committed goldens, as Python data modules
   e2e_fake/
     test_first_run.py      the whole engine, every adapter faked
   fixtures/
-    titles.tsv             the title corpus
-    scoring.tsv            the matcher corpus
-    escapes.txt            the path escape corpus
-    store_tree.yaml        the fixture store
-    device_tree.yaml       the fixture device inventory
-    igdb/                  recorded metadata responses
-    v1.db                  a version 1 database, synthetic
-ui/
-  tests/                   vitest, jsdom, the generated client mocked
+    titles.py              the title corpus
+    twins.py               the twin pairs and non-pairs
+    scoring.py             the matcher corpus
+    escapes.py             the path escape corpus
+    store_tree.py          the fixture store
+    device_tree.py         the fixture device inventory
+    igdb/                  recorded metadata responses, as modules
+    v1_db.py               builds a synthetic version 1 database at test time
+ui/                       tests sit beside the code they cover: REBUILD-UI.md section 14
 ```
 
 | Requirement |
@@ -110,7 +110,7 @@ marker. A test that needs an exception is a test in the wrong tree.
 | Randomness | Seeded. The seed is printed on failure. Any unseeded use fails the determinism self-test. |
 | Network | A socket guard replaces `socket.socket` and raises `NetworkInTest` naming the test. There is no allow-list. Every HTTP interaction in the suite goes through a fake or a recorded response. |
 | Subprocess | A guard replaces `subprocess.Popen` and `subprocess.run` and raises unless the test declares the executable it expects. ADB and MTP command construction is tested by asserting on the argument vector, never by running a binary. |
-| Filesystem | `tmp_path` only. A guard fails any test that writes outside it, or that reads an absolute path not under it, with the two documented exceptions: the repository's own `tests/fixtures` tree, read-only, and `sys.prefix`. |
+| Filesystem | `tmp_path` only. A guard fails any test that writes outside it. A read may come only from the repository, the interpreter (`sys.prefix`), the import path or a temporary directory; any other path, a real home directory included, is refused. |
 | Data directory | Set to a temp directory per test. A test that can see the developer's real data directory is a test that will pass on one machine. |
 | Environment | A fixed, minimal environment. The Windows home, application-data and temporary-directory variables are all redirected inside `tmp_path`, so no test can resolve a real user path. |
 | Ordering | `pytest-randomly` with a fixed seed in the gate, and a nightly run with a random seed. Order dependence is a defect, found by the nightly and fixed, not worked around by ordering. |
@@ -155,19 +155,20 @@ whoever writes the first test.
 
 | Corpus | File | Content | Minimum |
 |---|---|---|---|
-| Titles | `fixtures/titles.tsv` | raw title, expected strict key, expected loose key, a comment naming the property it pins | 400 rows, covering roman numerals, leetspeak, ampersands, apostrophes, region tags, revision tags, disc tags, edition words, articles, subtitle colons, and non-Latin script |
-| Twins | derived from the title corpus | known cross-system pairs, and known false pairs that must not cluster | 60 pairs and 40 non-pairs, the non-pairs including sequels, remakes and same-series different-game |
-| Matcher | `fixtures/scoring.tsv` | candidate title, platform, year, expected score band, expected accept or reject at the pinned thresholds | 200 rows, including the deliberate near-misses that the 0.55 threshold was chosen to exclude |
-| Escapes | `fixtures/escapes.txt` | one path per line, every one of which must raise `PathEscape` | the corpus in SPEC section 3, plus a separator inside a name, a drive-qualified absolute, a UNC path, a trailing dot, a reserved device name, a symlink out of the root, an overlong name, and a mixed-separator form |
-| Store tree | `fixtures/store_tree.yaml` | systems, game files, folder games, multi-disc sets, a `bios` folder, an unmanaged folder, an unreadable system file, a zero-byte file, a name at the path length limit | every branch the scanner has |
-| Device tree | `fixtures/device_tree.yaml` | a matching inventory, plus an emulator state folder, a folder that is not a store system, and a partially transferred `.part` file | every branch the planner has |
-| Version 1 database | `fixtures/v1.db` | synthetic, built by a script in `tools/`, with an unversioned schema | the import tool's full input surface |
+| Titles | `fixtures/titles.py` | raw title, expected strict key, expected loose key, a comment naming the property it pins | 400 rows, covering roman numerals, leetspeak, ampersands, apostrophes, region tags, revision tags, disc tags, edition words, articles, subtitle colons, and non-Latin script |
+| Twins | `fixtures/twins.py`, titles drawn from the title corpus's properties | known cross-system pairs, and known false pairs that must not cluster | 60 pairs and 40 non-pairs, the non-pairs including sequels, remakes and same-series different-game |
+| Matcher | `fixtures/scoring.py` | candidate title, platform, year, expected score band, expected accept or reject at the pinned thresholds | 200 rows, including the deliberate near-misses that the 0.55 threshold was chosen to exclude |
+| Escapes | `fixtures/escapes.py` | one path per line, every one of which must raise `PathEscape` | the corpus in SPEC section 3, plus a separator inside a name, a drive-qualified absolute, a UNC path, a trailing dot, a reserved device name, a symlink out of the root, an overlong name, and a mixed-separator form |
+| Store tree | `fixtures/store_tree.py` | systems, game files, folder games, multi-disc sets, a `bios` folder, an unmanaged folder, an unreadable system file, a zero-byte file, a name at the path length limit | every branch the scanner has |
+| Device tree | `fixtures/device_tree.py` | a matching inventory, plus an emulator state folder, a folder that is not a store system, and a partially transferred `.part` file | every branch the planner has |
+| Version 1 database | `fixtures/v1_db.py` | synthetic, built at test time into the test's temporary directory, with an unversioned schema; no database file is committed | the import tool's full input surface |
 
 | Requirement |
 |---|
 | Every title in every corpus is a real, published game title, which is public fact and not library data. No row is taken from, or derived from, the author's catalogue, and no corpus contains a path, a filename from a real store, or a hash of a real file. |
 | A corpus row carries the property it pins. A row nobody can explain is deleted, not kept for coverage. |
 | A fixture tree is built by code from a declarative file. No binary tree is committed, and no test depends on a tree that a human assembled by hand. |
+| Corpora and fixture trees are Python data modules under `tests/fixtures/`. The publication rules return only source to `tests/`, and the publication lint refuses `.tsv`, `.csv` and database files outright. |
 | Fixture media is generated: a file of a stated size filled with a seeded pattern. No real ROM, image, BIOS, firmware or key file exists anywhere in the repository, including under `tests/`. `_tools/repo-lint.py` asserts this, and stage 12 runs it. |
 
 ## 6. The test kinds, and what each is for
@@ -247,8 +248,11 @@ the real browser. Those are section 8.
 
 ### Interface
 
-`ui/tests`, vitest over jsdom, the generated client mocked at the fetch
-boundary.
+Three layers, specified in [REBUILD-UI.md](REBUILD-UI.md) section 14: unit
+tests under jsdom, component tests built from stories and run in Chromium,
+and Playwright over the built static export. The generated client is mocked
+at the fetch boundary in the first two; the third fakes the engine over HTTP.
+The order in which they run during a build is REBUILD-UI.md section 14.8.
 
 | Requirement |
 |---|
@@ -291,7 +295,7 @@ claim that the gate proves more than it does.
 | Real ADB and MTP behaviour | the contract suite proves the adapters agree with each other and with the fake, not that any of them agrees with a handheld | the opt-in contract run on a connected device, per story, recorded in the pull request |
 | Arrival polling sized by file size | the behaviour exists because MTP reports a static size for minutes on a large file, which no fake reproduces honestly | one manual transfer of a file over 4 GB per release |
 | Killing a transfer worker mid-copy | the rule is that it is never done; there is nothing to assert | code review of the cancel path, plus the contract test that cancel is honoured only between items |
-| The frozen artefact on a machine with no Python | the build is the thing under test | a clean virtual machine per release, running the first-run acceptance by hand |
+| The frozen artefact on a clean machine | the installer workflow (F13-S9) installs, self-tests, starts and uninstalls the artefact on every push, but on a hosted runner, which is not a clean machine: Python is installed there, though off the application's PATH | a clean virtual machine per release, running the first-run acceptance by hand |
 | The embedded browser runtime check | it depends on a system component | the same clean virtual machine, once with the runtime absent |
 | Recycle Bin semantics for store removals | a shell API, not a filesystem call | manual, once per release, confirming the item is restorable |
 | The matcher against a real library | D6 removes the oracle | the scoring corpus, and an acknowledged residual risk |
@@ -306,6 +310,7 @@ repository, versioned, and a release that skips a row says which row and why.
 |---|
 | One workflow, one job, one step that matters: `python tools/verify.py` on a Windows runner. Windows because the application is Windows-only and because the path rules in SPEC section 3 are Windows rules. |
 | The workflow adds nothing the local gate does not do. If CI can fail where a clean local run passed, the gate is wrong, and that is the defect to fix. |
+| A second workflow, `installer`, proves the artefact on every push to `v2` (F13-S9). It is not the gate and does not replace any stage of it: the gate proves the code and stays the required check; `installer` proves that what the code builds installs, runs and uninstalls. |
 | The gate is a required check on the `v2` branch. Merging on a red gate is not available, not merely discouraged. |
 | A second, scheduled workflow runs the gate nightly with a random test order seed and a fresh dependency resolution, and opens an issue on failure. Order dependence and a dependency that moved under us are both found here rather than by a developer. |
 | A tag builds the release, computes checksums, and attaches the artefacts. The release workflow runs the gate first and refuses to publish on a red gate. |
@@ -313,54 +318,53 @@ repository, versioned, and a release that skips a row says which row and why.
 
 ## 10. The autonomous run
 
-The gate exists so that a story can be implemented without supervision and the
-result can be trusted. This is how that run is bounded.
+The gate is the harness. A story is built by looping on its tests until the
+gate passes deterministically; the run then commits the story and continues
+with the next one without waiting for instruction.
 
 ### Per story
 
 1. Read the story row in [BACKLOG.md](BACKLOG.md): identifier, dependencies,
    acceptance, named tests.
-2. Refuse to start if any dependency story is not closed. The dependency graph
-   is not advisory.
-3. Create a branch named for the story identifier.
-4. Write the named tests first, and run the gate. The new tests must fail, and
-   they must fail for the stated reason, not on an import error. A test that
-   passes before the implementation is a test of nothing, and the run stops
-   there.
-5. Implement the smallest change that makes them pass.
-6. Run the full gate. Not the new tests, the gate.
-7. Open one pull request, titled with the story identifier, describing what
-   changed, naming any golden diff and its reason, and listing any manual
-   verification the story's row requires.
-8. Stop. A green gate closes the story's code; a human closes the story.
+2. Start only when every dependency story is closed.
+3. Write the named tests first, and run them. Each new test fails, and fails
+   for the stated reason, not on an import error. A test that passes before
+   the implementation is rewritten until it fails for its reason.
+4. Implement the smallest change that makes them pass, following the build
+   cadence in [REBUILD-UI.md](REBUILD-UI.md) section 14.8 for interface work.
+5. Run the full gate. On a failure, fix the cause and run the full gate again.
+   Repeat until it passes.
+6. Run the story's tests three more times under random order and random
+   seeds. A result that differs between runs is a defect, fixed before the
+   story closes.
+7. Commit the story to `v2`, titled with the story identifier, naming any
+   golden diff and its reason, any test changed and the drift that required
+   it, and any manual verification the story's row requires.
+8. Continue with the next story in dependency order.
 
-### Stop conditions
+### Changing a test
 
-The run halts and reports, rather than continuing or working around, when any
-of these holds:
+| Requirement |
+|---|
+| A test is changed only when it no longer states the intent of the specification because of an earlier change: a moved path, a renamed module, a decision recorded since it was written. The commit names the test and the change it follows. |
+| A test is never changed to make an implementation pass. |
+| A test whose assertion was wrong about version 1 or the specification from the start is corrected, and the commit states what it wrongly asserted. |
 
-| # | Condition |
-|---|---|
-| 1 | The gate is red after the implementation, twice, for the same stage. |
-| 2 | The gate was already red before any change was made. The tree is not a base to build on. |
-| 3 | A named test passed before the implementation existed. |
-| 4 | Closing the story would need a change to [SPEC.md](SPEC.md). The specification is amended by a human, in its own pull request, and only then is the story reattempted. |
-| 5 | Closing the story would need a coverage floor lowered, a pragma added without a reason, a determinism control disabled, a stage skipped, or `--no-verify` used. |
-| 6 | Closing the story would need a golden regenerated for a reason the run cannot state in one sentence. |
-| 7 | The story's acceptance needs a real device, or any other row of section 8. |
-| 8 | Two stories would have to be implemented together. Either the dependency graph is wrong, which is a specification change, or the split is wrong, which is a backlog change. Both are human decisions. |
-| 9 | The change would touch a file outside the story's stated scope, other than the test files it names. |
-| 10 | A security requirement from SPEC section 12 would be weakened, in any degree, for any reason. |
+### Decisions
 
-Conditions 4, 8 and 10 are the ones that matter. An autonomous run that is
-allowed to amend the specification to make a story pass is not building this
-application; it is building whichever application is easiest to finish.
+| Requirement |
+|---|
+| A defect found while building is fixed and the run continues. |
+| A correction to the specification that restores its own stated intent, such as a miscount or a stale path, is made in the story's commit and recorded there. |
+| A change to what the application does for its user, a deviation from version 1's behaviour, or a weakening of any requirement in SPEC section 12 is a decision for Matt. It is recorded as PENDING ACTION in the run's report, and the run continues with stories it does not block. |
+| A story whose acceptance needs a real device, or any other row of section 8, is built to the gate and marked for manual verification. |
 
 ### What a story may not do
 
 | Requirement |
 |---|
-| Never relax the gate to land work. The gate's definition changes only in a pull request whose stated purpose is to change the gate. |
+| Never relax the gate to land work: no floor lowered, no stage skipped, no determinism control disabled, no pragma without a reason, no `--no-verify`. The gate's definition changes only in a commit whose stated purpose is to change the gate. |
+| Never regenerate a golden without a one-sentence reason in the commit. |
 | Never commit a fixture derived from real library, device or credential data. |
 | Never write to any path outside the repository and `tmp_path`. |
 | Never hard-delete. Removals in the development tree follow the same rule as the application's: they move to the Recycle Bin. |

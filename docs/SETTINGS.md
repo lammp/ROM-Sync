@@ -41,10 +41,11 @@ page should say so rather than spraying restart warnings it does not need.
 
 ## Principles
 
-- One page, one scroll, sections in first-run order.
+- One page, its groups as tabs in first-run order; one tab shown at a time.
 - Every section states its own readiness. Only a section with a problem is loud.
-- Saving is explicit and **per section**, so one section's job cannot discard
-  another's edit.
+- Saving is explicit and **per tab**: Save and Cancel act on the tab they sit
+  in, and nothing else. Edits in a tab survive a visit to another, and a tab
+  with unsaved edits carries a dot.
 - Destructive and long actions share one confirmation component, with a
   typed-word gate reserved for the irreversible two.
 - A running job is visible from anywhere on the page, not only from the card
@@ -52,41 +53,72 @@ page should say so rather than spraying restart warnings it does not need.
 - Nothing is read-only prose where an action is possible: a path gets Reveal and
   Copy, a size gets a breakdown, a credential gets a test.
 
+### Controls (F11-S51, the owner's design decisions)
+
+- **A tab's main actions sit at its top**, as large buttons above its
+  settings: what the tab *does* comes before what it *sets*. Library: Rescan
+  ROMs folder and Reveal. Metadata: Run Initial or Update Metadata, and
+  Refresh Metadata. Tag suggestions: Propose franchise tags. Transports: Look
+  for devices again, with what each transport reported. Data: Reveal the data
+  folder. Diagnostics: Export a support bundle.
+- **A saved value is locked.** It is shown, not editable, with an edit icon at
+  its end that opens it, and once open an undo icon that puts the saved value
+  back. An empty field is open: there is nothing to protect. Saving or
+  Cancel locks every field in the tab again. Paths are already chosen rather
+  than typed, through the chooser at their end.
+- **A secret is one field**, always shown: open while nothing is saved, with
+  an eye that shows what is being typed; locked as dots once saved, with an
+  icon to enter a new one and one to remove it. The engine never returns a
+  saved secret, so the eye can only ever show what is typed now.
+- **A button that runs something shows how it went on itself**: its words stay,
+  and its glyph is a recycle sign that turns while the work runs, then a tick
+  when it passed or a red cross when it failed. The outcome is also said
+  beside it in words, so neither the colour nor the glyph carries it alone.
+- **A bounded number is a scale** with its number in a small field to its
+  left for fine tuning; the scale's ends are the registry's bounds, and those
+  bounds are kept to what is sensible (no more than 100 failures in a row, no
+  more than 1,000 games before a removal is confirmed).
+- **A short range or a size is a list**: requests a second is 1 to 4, sizes
+  are the powers of two within the setting's bounds, and a stored value that
+  is none of them is listed too.
+- **A setting nothing reads is not shown.** Auto enrich and the verify
+  percentage were removed: nothing fetches screenshots or tags after a match,
+  and every transfer is already verified wherever its transport can.
+
 ## Information architecture
 
 ```
-Settings
-├─ 0  Setup                 shown only while incomplete
-├─ 1  Library
-├─ 2  Metadata and artwork
-├─ 3  Tag suggestions
-├─ 4  Transports and tools
-├─ 5  Sync behaviour and guards
-├─ 6  Data and storage
-├─ 7  Diagnostics
-└─ 8  Suggested tags review  the existing list, moved last
+Settings  (a cog in the header)
+├─ Library
+├─ Metadata and artwork
+├─ Tag suggestions
+├─ Transports and tools
+├─ Sync behaviour and guards
+├─ Data and storage
+└─ Diagnostics
 ```
 
-Single column, about 900px wide, `<section>` with an `<h2>` and a status pill.
-Keep `.card`, `.field`, `.stat`, `.pill` and `.job` exactly as they are; the
-only new CSS is a two-column label/control grid and a sticky section nav on wide
-viewports. Section 8 stays full width because it is a work queue, not a setting,
-and it is already good.
+Each group is a tab; the address names the open one (`/settings#metadata`), so
+a link can open a tab and a reload keeps it. Each tab's panel is a `<section>`
+with an `<h2>` and a status pill. The arrow keys, Home and End move between
+tabs.
 
-### Section 0, Setup
+### Setup, as notifications
 
-A view over existing data, no new state. Shown while any of three conditions
-holds: no store root, zero systems, no credentials.
+The setup steps are notifications in the header's bell, not a section. Each is
+listed while it is to do, points at its tab, and leaves the bell once done.
 
-| Step | Complete when | Action |
+| Notification | Listed while | Opens |
 |---|---|---|
-| 1. Point at your ROMs folder | `counts.systems > 0` | scrolls to Library |
-| 2. Read the library | `counts.games > 0` | runs Rescan store |
-| 3. Add IGDB credentials for covers and details | `has_secret && client_id` | scrolls to Metadata, with one line noting libretro box art needs no account |
-
-Collapses to a single dismissible "Setup complete" line when all three are met.
+| Choose your ROMs folder | no ROMs folder is chosen | the Library tab |
+| Read the library | a ROMs folder is chosen and no system is read | the Library tab |
+| Add IGDB credentials for covers and details | no client ID and secret are saved; libretro box art needs no account | the Metadata and artwork tab |
 
 ## Field specifications
+
+Every path setting refuses a network share (`\\server\share`) and a device
+path (`\\?\`, `\\.\`): reading one would send the Windows sign-in to
+whatever answers (F16-S1).
 
 Legend: **restart** means it is read once at startup. Everything unmarked takes
 effect immediately, because the server re-reads config per call.
@@ -95,7 +127,7 @@ effect immediately, because the server re-reads config per call.
 
 | Field | Control | Validation | Default | Restart |
 |---|---|---|---|---|
-| Store root | text + Browse + Reveal | must exist and be a directory; **new:** must contain at least one subfolder with a recognised extension, else save with a warning "no systems found here"; reject a path equal to or inside the data folder | `D:\Games\ROMs` (`db.py:248`) | No, but the loaded library is stale: call `loadLibrary()` on success and offer Rescan inline |
+| ROMs folder (`store.root`) | folder chooser + Reveal | must exist and be a directory; **new:** must contain at least one subfolder with a recognised extension, else save with a warning "no systems found here"; reject a path equal to or inside the data folder | `D:\Games\ROMs` (`db.py:248`) | No, but the loaded library is stale: call `loadLibrary()` on success and offer Rescan inline |
 | Systems table | read-only: system, games, folders, bytes, matched | n/a | `db.system_rows()`, which already returns exactly this and is currently unused by the UI | n/a |
 | Rescan store | button, confirms when `counts.games > 0` | n/a | n/a | n/a |
 | Rescan on launch | checkbox | n/a | off | **Yes** |
@@ -105,24 +137,29 @@ The systems table is the highest-value single addition on the page: it answers
 
 ### 2. Metadata and artwork
 
+**Actions, at the top (F11-S52).** The metadata is one action, not two:
+
+| Button | Shown | Does |
+|---|---|---|
+| **Run Initial** | while no game has been looked up | looks up every game, then fills missing covers from libretro when that is on |
+| **Update Metadata** | once any game has been looked up | looks up the games never looked up or that failed last time, then fills missing covers |
+| **Refresh Metadata** | beside it; needs credentials and a first run | asks first, saying it rebuilds the metadata for every game and how long that takes at the request rate; then looks up every game again, but for one matched by hand, and fills covers |
+
+Under them, one line counts the games not looked up yet, the games matched and
+the games without a cover. Without credentials only libretro covers are
+filled, and the line says so. The match skipped for want of credentials is said
+in the job's result, never as a failure. A game matched by hand is **pinned**,
+and a refresh keeps it (F5-S12).
+
 | Field | Control | Validation | Default | Secret |
 |---|---|---|---|---|
-| Twitch Client ID | text, `autocomplete="off"` | trim, non-empty, soft format warning rather than a hard block | `""` | No, echoed as today |
+| Twitch Client ID | locked field once saved, an edit icon to change it | trim | `""` | No |
 | Client Secret | see [the credential section](#the-igdb-credentials-specifically) | trim, warn under 20 characters, never submitted when untouched | unset | **Yes** |
-| Credential status | read-only line | n/a | derived | n/a |
-| Test connection | button | n/a | n/a | n/a |
-| Match acceptance threshold | number 0.30–0.95 step 0.05, with "lower matches more games, and more wrongly" | range | 0.55 (`scrape.py:19`) | No |
-| Requests per second | number 1–4 | hard cap 4 | 4 (`igdb.py:20`) | No |
-| Fill missing covers from libretro after a match | checkbox | n/a | on, which is what happens unconditionally today (`server.py:436`) | No |
-| Fetch screenshots and tags after a match | checkbox | n/a | on, same (`server.py:435`) | No |
-| Counts | five read-only stats, as today | n/a | n/a | No |
-
-Actions: Match new (N) · Retry not-found (N) · Fill missing covers (N) · Fetch
-screenshots and tags · Re-match everything. Each names its count, so the user
-knows the size of what they are starting. Each is disabled when its count is
-zero and while any metadata job runs. The three network-heavy ones confirm with
-the count and an estimate derived from the rate limit. Re-match everything keeps
-its modal and gains a typed-word gate.
+| Test connection | button with its outcome on it: a turning recycle glyph, then a tick or a red cross; the stage said beside it | n/a | n/a | n/a |
+| Match acceptance threshold | scale 0 to 1, its number to the left | range | 0.55 | No |
+| Requests per second | list: 1, 2, 3, 4 | hard cap 4 | 4 | No |
+| Stop after this many failed lookups in a row | scale 1 to 100 | range | 25 | No |
+| Also fill missing covers from libretro | checkbox | n/a | on | No |
 
 ### 3. Tag suggestions
 
@@ -140,29 +177,29 @@ its peers.
 
 | Field | Control | Validation | Default |
 |---|---|---|---|
-| ADB executable | text + Browse + Detect + Reveal, with a found / not found pill | must be an existing file; **new:** run `adb version` and show it, else reject with that error | `_tools\platform-tools\adb.exe`, then PATH (`adb.py:20,27`) |
+| ADB executable | file chooser (`.exe`) + Detect + Reveal, with a found / not found pill | must be an existing file named `adb` or `adb.exe` (F16-S1); **new:** run `adb version` and show it, else reject with that error | `_tools\platform-tools\adb.exe`, then PATH (`adb.py:20,27`) |
 | Enable ADB transport | checkbox, "faster, needs USB debugging" | n/a | on when adb is found |
 | Enable MTP transport | checkbox | at least one transport must stay enabled | on |
-| Firmware folder | text + Browse + Reveal | must exist if set; empty disables firmware staging | `_firmware` (`sysfiles.py:39`) |
-| Staging path on the device | text template with `{roms}` and `{system}` | must contain `{system}`, must be relative, no `..` | `{roms}/bios/{system}` (`sysfiles.py:41`) |
-| Verify staged files up to | size input, same syntax as the library filters | 0 to 256 MB | 32 MB (`sysfiles.py:40`) |
-| Device probe interval | number, seconds | 15 to 300 | 45 (`server.py:56`) |
+| Staging path on the device | text template with `{roms}` and `{system}`, locked once saved | must contain `{system}`, must be relative, no `..`; may not be `{roms}/{system}` (a system's games) or anything under `Android` (F16-S3) | `{roms}/bios/{system}` (`sysfiles.py:41`) |
+| Verify staged files up to | list of sizes | 1 MB to 4 GB | 64 MB |
+| Device probe interval | scale, seconds, step 5; how often the page asks for attached devices | 5 to 300 | 15 |
+| Wait at least this long for an MTP copy | scale, seconds, step 30 | 60 to 7200 | 600 |
+| Assume an MTP copy arrives at least this fast | list of sizes a second | 64 KB/s to 1 GB/s | 2 MB/s |
 
 Changing the staging path orphans anything already staged, so it confirms and
-says so. A read-only Detected transports line belongs here too, fed by
-`/api/devices`, so ADB and MTP can be told apart without leaving Settings.
+says so. The detected transports sit at the top of the tab with Look for
+devices again, so ADB and MTP can be told apart without leaving Settings.
 
 ### 5. Sync behaviour and guards
 
 | Field | Control | Validation | Default |
 |---|---|---|---|
-| Keep free on the device | size input | 0 to 8 GB | 512 MB (`server.py:239`) |
-| Warn at | two numbers, yellow % and red % | 50 ≤ yellow < red ≤ 99 | 80 and 90 (`server.py:301`) |
-| Confirm a sync that removes more than | number of items, 0 means always | ≥ 0 | 0, matching today's always-confirm modal |
+| Keep free on the device | list of sizes | 0 to 8 GB | 512 MB |
+| Warn at, Alarm at | two scales, 0.1 to 1 of the device full | 0.1 to 1 | 0.8 and 0.9 |
+| Confirm a sync that removes at least | scale, games; a device's first sync always asks (F16-S2) | 0 to 1,000 | 25 |
 | Write the device marker after every sync | checkbox | n/a | on, unconditional today (`server.py:596`) |
 | Protected folders inside a managed system | **read-only** list with a note | n/a | `planner.EMULATOR_STATE` |
 | Folders that are not store systems | read-only, "left alone" | n/a | behaviour is fixed |
-| Verify a percentage of sent files by hash | number 0–100 | range | 0 |
 
 The protected-folders list is read-only on purpose. It is a law of the project,
 and an editable list invites a user to delete the entry that stops a sync eating
@@ -178,8 +215,9 @@ evidenced rather than asserted.
 | Compact the database | button with a reclaimable estimate | runs `VACUUM`; refuses while any job runs |
 | Clear the screenshot cache | button, confirms with the size | screenshots refetch on demand |
 | Delete unreferenced covers | button, confirms with count and size | covers no game points at |
-| Keep sync run folders for | select: forever / 90 / 30 days | forever today |
-| Keep job history | number 8–200 | 8 today (`server.py:204`) |
+| Keep sync run folders | scale, 1 to 200 | 50 |
+| Keep job history | scale, 10 to 1,000, step 10 | 200 |
+| Database busy timeout | scale, 100 to 60,000 ms, step 100 | 5,000 ms |
 
 Breakdown rows: database, covers split into IGDB and libretro (the counts
 already distinguish them), screenshots, logs, run folders, records, and the
@@ -197,7 +235,8 @@ already understated.
 |---|---|---|
 | Shell | read-only: desktop window or browser, plus the WebView2 version when known | from the `shell` block |
 | Address | read-only `http://127.0.0.1:<port>/` + Copy | the port is ephemeral in the window |
-| Preferred port | number, 0 or 1024–65535, "0 picks a free port" | **restart** |
+| Preferred port | number, locked once saved; "0 picks a free port" | **restart** |
+| Listen on | select: `127.0.0.1` or `::1`; nothing reachable from the network is offered, because the page token is all that guards a change (F16-S1) | **restart** |
 | Jobs | table: kind, started, state, progress, duration, Cancel | replaces the static "running now" line |
 | Recent errors | last N failed jobs, full traceback in a `<pre>` + Copy | the traceback is already kept |
 | Last sync | device, when, sent/removed/failed, bytes, link to the device page | from the sync log |
@@ -235,16 +274,17 @@ save date identify the key well enough for a human to recognise it.
 
 **What the page shows instead:**
 
-- **Set:** `Saved 8 Oct 2026 · 30 characters · not shown again`, with Replace
-  and Remove. The input does not exist until Replace is pressed, so there is
-  nothing to focus, nothing to autofill and nothing to submit by accident.
+- **Set:** the field is locked and drawn as dots, never the secret, with
+  `Saved 8 Oct 2026 · 30 characters. A saved secret is never shown again.`
+  under it, and two icons at its end: enter a new one, and remove it. Removal
+  waits for Save and can be undone until then.
 - **Set, and `secret_source` is `imported`:** add `imported from RomCurator`.
   This closes the hole where credentials appear that the user never typed.
-- **Unset:** `Not set. Covers and details need Twitch credentials; libretro box
-  art does not.` with one Add credentials button revealing both fields.
-- **The revealed input:** `type="password"`, `autocomplete="new-password"`, no
-  `value` attribute ever, a Show toggle that reveals only what was just typed,
-  and a rule that a focused-then-abandoned field submits nothing.
+- **Unset:** the field is open, with `Covers and details need Twitch
+  credentials; libretro box art does not.` under it.
+- **Typing:** `type="password"`, `autocomplete="off"`, holding only what is
+  typed now; an eye toggles it visible; over a saved secret an undo icon keeps
+  the saved one. A field left empty submits nothing.
 
 **Test connection** is a separate action, not a side effect of saving, and it
 works on unsaved input so a typo is caught before it is stored.
@@ -263,10 +303,11 @@ Testing the token alone is not enough: a valid Twitch token with an
 IGDB-disabled application fails only at the query, which is precisely the case a
 user cannot diagnose from the current single error line.
 
-The result shows inline beside the button as a pill, persists as `last_test` so
-it survives a re-render, and goes stale as soon as either field is edited. The
-Match buttons gain a precondition: with no secret they are disabled with the
-reason given, rather than failing a minute later inside a job.
+The result shows on the button (a tick or a red cross) and beside it as a pill,
+and goes stale as soon as either field is edited: the button turns back to its
+recycle glyph and the pill says to test again. Refresh Metadata needs saved
+credentials and says so when it is disabled, rather than failing a minute later
+inside a job.
 
 **Removal.** `POST /api/settings` drops empty values today, so the secret cannot
 be cleared. Accept an explicit JSON `null` to delete a key, keep "absent means
@@ -313,11 +354,11 @@ Three cross-cutting server changes this depends on:
 
 | Situation | Behaviour |
 |---|---|
-| A field is edited | that section's Save enables and a dot marks the section |
+| A field is edited | that tab's Save and Cancel enable, and a dot marks the tab |
 | Save succeeds | toast, and only that section's status pill refreshes. **No full page re-render**, so no other section loses an edit |
 | Save fails validation | inline message under the field, field focused, no toast |
 | A job starts | the section's own job line shows progress, and a row appears in Diagnostics; both fed by one poller, not one per card |
-| A job finishes | a sentence, not raw JSON; a notification if it ran over 30 seconds; only the affected counts refetch |
+| A job finishes | a sentence, not raw JSON, as a toast and as a notification in the bell, wherever the person is; a system notification if it ran over 30 seconds; only the affected counts refetch |
 | A job fails | the line goes red with the first message, and Details opens the full traceback with Copy |
 | The settings fetch fails | an error with Retry, not a permanent `loading…` |
 | Navigating away mid-job | the poller keeps running against the Diagnostics model, not a detached DOM node |

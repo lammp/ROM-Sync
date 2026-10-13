@@ -1,0 +1,5 @@
+.kv {
+  font-size: var(--text-base-sm);
+  color: var(--muted);
+  word-break: break-all;
+}

@@ -1,0 +1,30 @@
+/* positioned, so anything placed absolutely inside scrolls with the page, not the document */
+.page {
+  position: relative;
+  flex: 1;
+  overflow: auto;
+  padding: 18px 26px;
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin: 0 0 10px;
+}
+
+.heading {
+  font-size: var(--text-xl);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.actions {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}

@@ -1,0 +1,83 @@
+.cap {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--text-base-sm);
+  white-space: nowrap;
+}
+
+.meter {
+  width: 150px;
+  height: 10px;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-5);
+  overflow: hidden;
+  position: relative;
+  display: inline-block;
+}
+
+.meter i {
+  display: block;
+  height: 100%;
+  background: var(--ok);
+  transition: width 0.3s;
+}
+
+.meter .now {
+  position: absolute;
+  left: 0;
+  top: 0;
+  background: var(--tint-3);
+}
+
+.yellow .after {
+  background: var(--warn);
+}
+
+.red .after,
+.full .after {
+  background: var(--bad);
+}
+
+.full .meter {
+  box-shadow: 0 0 0 2px var(--bad);
+}
+
+.pct {
+  font-weight: 600;
+  min-width: 34px;
+  text-align: right;
+}
+
+.green .pct,
+.green .word {
+  color: var(--ok);
+}
+
+.yellow .pct,
+.yellow .word {
+  color: var(--warn);
+}
+
+.red .pct,
+.red .word,
+.full .pct,
+.full .word {
+  color: var(--bad);
+}
+
+.cnt {
+  color: var(--muted);
+}
+
+.cnt b {
+  color: var(--fg);
+  font-weight: 600;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .meter i {
+    transition: none;
+  }
+}

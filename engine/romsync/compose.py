@@ -1,0 +1,336 @@
+"""The composition root.
+
+The only place that knows about both the application layer and the adapters.
+Migrations run here, once, before any worker thread opens a connection.
+Credentials are handed to the clients that need them; no client reads storage
+to find its own secret, which is how version 1's metadata client ended up able
+to read the database.
+
+The interfaces are handed an `Engine`: use cases, never adapters, and never a
+database handle.
+"""
+
+from __future__ import annotations
+
+import time
+from collections.abc import Callable, Mapping
+from dataclasses import dataclass
+from functools import partial
+from pathlib import Path
+
+from romsync.adapters.artwork_libretro.libretro import LibretroArtwork
+from romsync.adapters.db_sqlite.compact import SqliteCompactor
+from romsync.adapters.db_sqlite.connect import connect
+from romsync.adapters.db_sqlite.migrations import migrate
+from romsync.adapters.db_sqlite.repos import repos
+from romsync.adapters.dest_adb.adb import SubprocessRunner
+from romsync.adapters.dest_mtp.mtp import PowerShellRunner
+from romsync.adapters.dest_volume.volume import windows_identity
+from romsync.adapters.discovery import Discovery
+from romsync.adapters.local_fs.covers import FsCoverFiles
+from romsync.adapters.local_fs.data_folder import FsDataFolder
+from romsync.adapters.local_fs.folders import LocalFolders
+from romsync.adapters.local_fs.logs import AppLog
+from romsync.adapters.local_fs.logs import configure as configure_log
+from romsync.adapters.local_fs.runs import FsLocalFiles, FsRunFolders
+from romsync.adapters.local_fs.sysfiles import FsSysfileStore
+from romsync.adapters.metadata_igdb.client import (
+    Credentials,
+    IgdbClient,
+    Transport,
+    UrllibTransport,
+)
+from romsync.adapters.metadata_igdb.covers import IgdbCovers, urllib_get
+from romsync.adapters.metadata_igdb.throttle import Throttle
+from romsync.adapters.shell_win.windows import WindowsShell
+from romsync.adapters.store_fs.scanner import FsStore
+from romsync.adapters.system.clock import RandomIds, SystemClock
+from romsync.app.browse import Listing, browse
+from romsync.app.connection_check import ConnectionCheck
+from romsync.app.devices import Devices, Probe
+from romsync.app.library import Library
+from romsync.app.maintenance import Maintenance
+from romsync.app.passes import Passes
+from romsync.app.plans import Plans
+from romsync.app.recover import Recover
+from romsync.app.selection import Selections
+from romsync.app.settings import Settings
+from romsync.app.shell import Shell
+from romsync.app.support import bundle as support_bundle
+from romsync.app.sync import Sync
+from romsync.app.sysfiles import SystemFiles
+from romsync.app.tags import Tagging
+from romsync.config.registry import REGISTRY, Registry
+from romsync.domain.paths import LocalRoot, StoreRoot
+from romsync.jobs.registry import Context, JobRecord, Jobs, Runner, Work, threaded
+from romsync.jobs.sync_job import Syncs
+from romsync.ports.clock import ClockPort, IdPort
+from romsync.ports.dest import Dest, TransportState
+from romsync.ports.folders import Folders
+from romsync.ports.metadata import MetadataPort
+from romsync.ports.shell import ShellPort
+
+DATABASE = "romsync.db"
+#: The bytes of each log a support bundle carries: the most recent.
+LOG_TAIL = 512 * 1024
+
+
+def no_discovery() -> tuple[Dest, ...]:
+    """Finds nothing: the probe of an engine built without a computer to ask."""
+    return ()
+
+
+Discover = Callable[[Callable[[str], object], Path], Probe]
+
+
+def start_log(engine: Engine) -> AppLog:
+    """The application's log, at the level Settings chooses, secrets left out (F15-S4)."""
+    level = str(engine.settings.value("log.level"))
+    return configure_log(engine.data, level, engine.settings.secrets)
+
+
+def windows_discovery(
+    setting: Callable[[str], object], data: Path
+) -> Probe:  # pragma: no cover - asks Windows and adb for real; the gate never does
+    """Drives, portable devices and ADB devices on this computer (F10-S26, added)."""
+    scratch = LocalRoot(str(data / "tmp"))
+    return Discovery(
+        setting, PowerShellRunner(scratch), SubprocessRunner(), scratch, windows_identity
+    )
+
+
+@dataclass(frozen=True, slots=True)
+class Engine:
+    """What the HTTP layer and the desktop shell are handed."""
+
+    registry: Registry
+    settings: Settings
+    library: Library
+    connection: ConnectionCheck
+    devices: Devices
+    selections: Selections
+    plans: Plans
+    jobs: Jobs
+    syncs: Syncs
+    maintenance: Maintenance
+    shell: Shell
+    passes: Passes
+    tags: Tagging
+    #: System files as configured at the moment of asking.
+    sysfiles: Callable[[], SystemFiles]
+    recover: Recover
+    data: Path
+    #: Shut down: running jobs asked to stop between items, then the database closed.
+    close: Callable[[], None]
+    #: Each transport's state on the last probe; empty when nothing is asked (F13-S8).
+    transports: Callable[[], tuple[TransportState, ...]]
+    #: The support bundle, given what the caller knows of the system (F15-S3).
+    support: Callable[[Mapping[str, object]], bytes]
+    #: This computer's folders, to choose one by browsing (F11-S45).
+    browse: Callable[[str | None, frozenset[str]], Listing]
+
+
+def prepare_database(db: Path, clock: ClockPort) -> tuple[int, ...]:
+    """Bring the database to the current schema, once, before any worker connects.
+
+    The only caller of the migration runner (SPEC section 6): a connection
+    never migrates, and no other module may.
+    """
+    return migrate(db, clock)
+
+
+def build(
+    data: Path,
+    overrides: Mapping[str, object] | None = None,
+    *,
+    clock: ClockPort | None = None,
+    ids: IdPort | None = None,
+    probe: Probe | None = None,
+    discover: Discover | None = None,
+    runner: Runner = threaded,
+    shell: ShellPort | None = None,
+    metadata: Callable[[], MetadataPort] | None = None,
+    fetch: Callable[[str], bytes] | None = None,
+    metadata_transport: Transport | None = None,
+    sleep: Callable[[float], None] = time.sleep,
+    folders: Folders | None = None,
+) -> Engine:
+    """Build an engine over the data folder `data`.
+
+    Devices are found by `probe` when one is given, else by `discover` over
+    the settings and the data folder (the desktop passes `windows_discovery`),
+    else not at all.
+
+    `overrides` is validated against the registry before anything is
+    constructed, so a bad value fails at the boundary rather than halfway
+    through startup.
+    """
+    checked = REGISTRY.validate_all(dict(overrides or {}))
+    clock = clock or SystemClock()
+    ids = ids or RandomIds()
+    data.mkdir(parents=True, exist_ok=True)
+    db = data / DATABASE
+    prepare_database(db, clock)
+    busy = checked.get("db.busy_timeout", REGISTRY.get("db.busy_timeout").default)
+    assert isinstance(busy, int)
+    conn = connect(db, busy, shared=True)
+    stores = repos(conn)
+    settings = Settings(REGISTRY, stores.config, clock, checked)
+    transport = metadata_transport or UrllibTransport()
+
+    def metadata_client(client_id: str, secret: str) -> IgdbClient:
+        """The one place credentials reach the client (S6): handed in, never read by it."""
+        rate = settings.value("igdb.requests_per_second")
+        assert isinstance(rate, int | float)
+        assert clock is not None
+        throttle = Throttle(float(rate), clock, sleep)
+        return IgdbClient(Credentials(client_id, secret), transport, throttle, clock, sleep)
+
+    def saved_credentials() -> tuple[str, str]:
+        return str(settings.value("igdb.client_id")), str(settings.value("igdb.client_secret"))
+
+    # a probe handed in wins; otherwise the computer is asked when a discovery is given
+    asked = probe or (discover(settings.value, data) if discover else no_discovery)
+    devices = Devices(asked, stores.devices, stores.selections, clock, ids)
+
+    def transports() -> tuple[TransportState, ...]:
+        return asked.transports if isinstance(asked, Discovery) else ()
+
+    plans = Plans(stores, devices, settings.value)
+    history = settings.value("jobs.history_length")
+    assert isinstance(history, int)
+    jobs = Jobs(stores.jobs, clock, ids, history, runner)
+    data_folder = FsDataFolder(data)
+    jobs.reconcile()
+
+    def store_root() -> StoreRoot:
+        return StoreRoot(str(settings.value("store.root") or ""))
+
+    write_marker = bool(settings.value("device.write_marker_after_sync"))
+
+    covers_folder = data / "covers"
+    get = fetch or urllib_get
+    igdb_covers = IgdbCovers(covers_folder, get)
+    artwork = LibretroArtwork(data / "cache" / "libretro", covers_folder, clock, get)
+
+    def metadata_port() -> MetadataPort:
+        """The metadata service, with the credentials saved at the moment a pass starts."""
+        return metadata() if metadata is not None else metadata_client(*saved_credentials())
+
+    def open_store() -> FsStore | None:
+        root = str(settings.value("store.root") or "")
+        return FsStore(Path(root)) if root else None
+
+    def system_files() -> SystemFiles:
+        limit = settings.value("sysfiles.hash_limit")
+        assert isinstance(limit, int)
+        return SystemFiles(
+            FsSysfileStore(store_root()),
+            stores.sysfiles,
+            clock,
+            LocalRoot(str(data / "tmp")),
+            str(settings.value("device.staging_template")),
+            limit,
+        )
+
+    def roots() -> dict[str, str]:
+        return {
+            "store": str(settings.value("store.root") or ""),
+            "data": str(data),
+        }
+
+    def retention() -> int:
+        kept = settings.value("runs.retention")
+        assert isinstance(kept, int)
+        return kept
+
+    sync = Sync(stores, FsRunFolders(data), clock, store_root, write_marker)
+
+    def close(wait: float = 10.0, step: float = 0.05) -> None:
+        """Ask every running job to stop between items, give them `wait` seconds to
+        do so, then close the database. A job still running past that is left to
+        startup reconciliation, which records it as interrupted (F9-S4)."""
+        for job in jobs.active():
+            jobs.cancel(job.id)
+        for _ in range(int(wait / step)):
+            if not jobs.active():
+                break
+            sleep(step)
+        conn.close()
+
+    return Engine(
+        registry=REGISTRY,
+        settings=settings,
+        library=Library(
+            stores.games, stores.tags, open_store, clock, FsCoverFiles(covers_folder)
+        ),
+        connection=ConnectionCheck(metadata_client, saved_credentials),
+        devices=devices,
+        selections=Selections(stores.selections, stores.games, stores.devices),
+        plans=plans,
+        jobs=jobs,
+        syncs=Syncs(plans, sync, jobs, stores.runs),
+        maintenance=Maintenance(
+            data_folder, SqliteCompactor(conn, db), stores.games, retention
+        ),
+        shell=Shell(shell or WindowsShell(), roots),
+        passes=Passes(stores.games, metadata_port, igdb_covers, artwork, settings.value),
+        tags=Tagging(stores.games, stores.tags),
+        sysfiles=system_files,
+        recover=Recover(stores, sync, FsLocalFiles(), LocalRoot(str(data / "pull"))),
+        data=data,
+        close=close,
+        transports=transports,
+        support=lambda system: support_bundle(
+            system, settings, jobs.all(), data_folder.logs(LOG_TAIL)
+        ),
+        browse=partial(browse, folders or LocalFolders()),
+    )
+
+
+def launch(engine: Engine) -> JobRecord | None:
+    """What starting the application does once the engine is built: a rescan of
+    the store, as a job, when store.rescan_on_launch is set and a store is chosen."""
+    if not engine.settings.value("store.rescan_on_launch") or not engine.settings.value(
+        "store.root"
+    ):
+        return None
+    return engine.jobs.submit("scan", None, scan_job(engine.library))
+
+
+def scan_job(library: Library) -> Work:
+    def work(ctx: Context) -> dict[str, int]:
+        result = library.scan(ctx)
+        return {
+            "added": result.added,
+            "updated": result.updated,
+            "removed": result.removed,
+            "unchanged": result.unchanged,
+            "systems": result.systems,
+            "unreadable": len(result.unreadable),
+        }
+
+    return work
+
+
+def metadata_job(passes: Passes, refresh: bool) -> Work:
+    def work(ctx: Context) -> dict[str, int]:
+        return passes.metadata(ctx, ctx.cancel.is_set, refresh)
+
+    return work
+
+
+def rematch_job(passes: Passes, game_id: int, ref: str) -> Work:
+    def work(ctx: Context) -> dict[str, int]:
+        passes.rematch(game_id, ref)
+        return {"game": game_id}
+
+    return work
+
+
+def franchise_job(tags: Tagging) -> Work:
+    def work(ctx: Context) -> dict[str, int]:
+        r = tags.propose()
+        return {"proposed": r.proposed, "without_franchise": r.without_franchise}
+
+    return work

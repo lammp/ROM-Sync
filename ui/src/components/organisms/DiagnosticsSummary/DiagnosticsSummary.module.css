@@ -1,0 +1,27 @@
+.facts {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 4px 16px;
+  margin: 8px 0;
+}
+
+.facts dt {
+  color: var(--fg-soft);
+}
+
+.facts dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.errors {
+  margin: 4px 0 8px;
+  padding-left: 18px;
+}
+
+.message {
+  margin: 2px 0 6px;
+  white-space: pre-wrap;
+  font-family: monospace;
+  font-size: 12px;
+}

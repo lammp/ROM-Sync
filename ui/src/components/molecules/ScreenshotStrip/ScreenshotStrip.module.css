@@ -1,0 +1,22 @@
+.shots {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  margin: 10px 0 4px;
+  padding: 0 0 4px;
+  list-style: none;
+}
+
+.shot {
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: zoom-in;
+  flex: none;
+}
+
+.shot img {
+  height: 96px;
+  width: auto;
+  border-radius: var(--radius-6);
+}

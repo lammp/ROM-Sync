@@ -1,0 +1,18 @@
+.nav {
+  display: inline-block;
+  color: var(--fg);
+  text-decoration: none;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-6);
+  padding: 6px 12px;
+}
+
+.nav:hover {
+  border-color: var(--accent);
+}
+
+.current {
+  background: var(--bg3);
+  border-color: var(--border);
+}

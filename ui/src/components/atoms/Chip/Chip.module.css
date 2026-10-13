@@ -1,0 +1,53 @@
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--chip);
+  color: var(--fg);
+  border-radius: var(--radius-12);
+  padding: 2px 8px;
+  font-size: var(--text-base-sm);
+  white-space: nowrap;
+}
+
+.chip:has(button:hover) {
+  background: var(--surface-chip-hover);
+}
+
+.action,
+.remove {
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+}
+
+.remove {
+  font-weight: 700;
+}
+
+.system {
+  background: var(--chip-system);
+}
+
+.franchise {
+  background: var(--chip-franchise);
+}
+
+.suggested {
+  background: var(--chip-suggested);
+  outline: 1px dashed var(--warn);
+}
+
+.collection {
+  background: var(--chip-collection);
+}
+
+.theme {
+  background: var(--chip-theme);
+}
+
+.mode,
+.perspective {
+  background: var(--chip-mode);
+}

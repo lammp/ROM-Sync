@@ -1,0 +1,22 @@
+.filters {
+  display: flex;
+  flex-direction: column;
+}
+
+.section {
+  margin-bottom: 14px;
+}
+
+.heading {
+  margin: 0 0 6px;
+  font-size: var(--text-base-sm);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+}
+
+.muted {
+  color: var(--muted);
+  padding: 2px 4px;
+}

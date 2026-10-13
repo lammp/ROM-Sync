@@ -1,0 +1,29 @@
+.icon {
+  display: inline-block;
+  flex: none;
+  vertical-align: -0.2em;
+}
+
+.ok {
+  color: var(--ok);
+}
+
+.bad {
+  color: var(--bad);
+}
+
+.turning {
+  animation: turn 0.9s linear infinite;
+}
+
+@keyframes turn {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .turning {
+    animation: none;
+  }
+}

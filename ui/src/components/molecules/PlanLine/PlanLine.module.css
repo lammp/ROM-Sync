@@ -1,0 +1,7 @@
+.plan p {
+  margin: 0 0 4px;
+}
+
+.muted {
+  color: var(--muted);
+}

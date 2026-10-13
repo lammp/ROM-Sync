@@ -1,0 +1,285 @@
+"""Devices: what is attached, which profile each one is, and making profiles.
+
+A device is named by a stable reference derived from its identity (F6-S9),
+never by its place in a probe's list. It is recognised by the marker at its
+ROMs root, which is the device's identity whatever transport it arrives on
+(F6-S11); the transport's own key only finds a profile whose marker has gone.
+Reading capacity asks the one device and writes nothing (F6-S10). A marker
+from a device is trusted only after every path in it has been checked
+(F6-S12).
+"""
+
+from __future__ import annotations
+
+from collections.abc import Callable, Sequence
+from dataclasses import dataclass
+from typing import Any
+
+from romsync.app.marker_trust import trust
+from romsync.domain.errors import (
+    CapabilityUnsupported,
+    MarkerUntrusted,
+    ProfileNotFound,
+    RomSyncError,
+    UnknownDevice,
+)
+from romsync.domain.models import DeviceItem, Marker, MarkerEntry, Mode
+from romsync.domain.refs import decode, encode
+from romsync.ports.clock import ClockPort, IdPort
+from romsync.ports.dest import (
+    Capacity,
+    Dest,
+    DestCapacity,
+    DestIdentity,
+    DestInventory,
+    Identity,
+)
+from romsync.ports.repo import DeviceProfile as DeviceProfile
+from romsync.ports.repo import DeviceRepo, SelectionRepo
+from romsync.ports.sink import ProgressSink
+
+Probe = Callable[[], Sequence[Dest]]
+SEP = "\\"
+
+
+def require(dest: Dest, port: type) -> Any:
+    """`dest` as `port`, or `CapabilityUnsupported`. Callers never ask a transport's
+    name. The caller names the port's type where it keeps the result."""
+    if not dest.supports(port):
+        raise CapabilityUnsupported(f"this destination cannot {port.__name__}")
+    return dest
+
+
+def marker_for(
+    profile: DeviceProfile, devices: DeviceRepo, selections: SelectionRepo
+) -> Marker:
+    """The marker a device carries: who it is, what it selects, what it holds."""
+    selection = selections.get(profile.id)
+    systems = tuple(s for s, m in selection.modes.items() if m is Mode.ALL)
+    inventory = tuple(
+        MarkerEntry(f"{i.system}{SEP}{i.name}", i.kind, i.size, None, i.sent_size, i.sent_mtime)
+        for i in devices.inventory(profile.id)
+    )
+    return Marker(
+        profile.id, profile.name, profile.first_seen, tuple(sorted(systems)), inventory
+    )
+
+
+@dataclass(frozen=True, slots=True)
+class Attached:
+    """One attached destination as the last probe saw it."""
+
+    ref: str
+    dest: Dest
+    identity: Identity
+    marker: Marker | None
+    profile: DeviceProfile | None
+    description: str = ""
+
+
+@dataclass(frozen=True, slots=True)
+class Blocked:
+    """An attached destination the probe found but could not read, and why
+    (F10-S23, added): an ADB device waiting on its debugging prompt, say."""
+
+    kind: str
+    description: str
+    reason: str
+
+
+def _describe(dest: Dest) -> str:
+    try:
+        port: DestIdentity = require(dest, DestIdentity)
+        return port.describe()
+    except RomSyncError:
+        return ""
+
+
+class Devices:
+    def __init__(
+        self,
+        probe: Probe,
+        devices: DeviceRepo,
+        selections: SelectionRepo,
+        clock: ClockPort,
+        ids: IdPort,
+    ) -> None:
+        self._probe = probe
+        self._devices = devices
+        self._selections = selections
+        self._clock = clock
+        self._ids = ids
+        self._seen: dict[str, Attached] = {}
+        self.blocked: tuple[Blocked, ...] = ()
+
+    def _now(self) -> str:
+        return self._clock.now().isoformat(timespec="seconds")
+
+    # --- what is attached -------------------------------------------------------------
+
+    def recognise(self, marker: Marker | None, identity: Identity) -> DeviceProfile | None:
+        """The profile a device is. Its marker decides; its transport key only
+        finds a profile when there is no marker to ask."""
+        if marker is not None:
+            return self._devices.get(marker.device_id)
+        return self._devices.by_identity(identity)
+
+    def refresh(self) -> tuple[Attached, ...]:
+        """One device-wide probe. Reads only: nothing is written to a device or here."""
+        found: dict[str, Attached] = {}
+        blocked: list[Blocked] = []
+        for dest in self._probe():
+            try:
+                port: DestIdentity = require(dest, DestIdentity)
+                identity = port.identity()
+                marker = port.read_marker() if port.root_exists() else None
+            except RomSyncError as e:
+                blocked.append(Blocked(str(dest.kind), _describe(dest), str(e)))
+                continue
+            ref = encode(identity.ref)
+            found[ref] = Attached(
+                ref, dest, identity, marker, self.recognise(marker, identity), port.describe()
+            )
+        self._seen = found
+        self.blocked = tuple(blocked)
+        return tuple(found[r] for r in sorted(found))
+
+    @property
+    def unreachable(self) -> int:
+        """How many attached destinations the last probe could not read."""
+        return len(self.blocked)
+
+    def roms_root(self, found: Attached) -> str:
+        """Where a profile made for this device keeps its ROMs: the destination's root."""
+        return found.dest.roots().roms_at.relative("/")
+
+    def profiles(self) -> tuple[DeviceProfile, ...]:
+        """Every device this computer has a profile for, attached or not."""
+        return self._devices.all()
+
+    def inventory(self, device_id: str) -> tuple[DeviceItem, ...]:
+        """What the device held when it was last read (F10-S22, added)."""
+        if self._devices.get(device_id) is None:
+            raise ProfileNotFound(f"no device profile {device_id}", field="device_id")
+        return self._devices.inventory(device_id)
+
+    def find(self, ref: str) -> Attached:
+        """The attached device a reference names, probing again only if it is not known."""
+        decode(ref)
+        if ref not in self._seen:
+            self.refresh()
+        if ref not in self._seen:
+            raise UnknownDevice("that device is not attached", field="device")
+        return self._seen[ref]
+
+    def capacity(self, ref: str) -> Capacity:
+        """The one device's capacity: no probe of every device, and nothing written."""
+        port: DestCapacity = require(self.find(ref).dest, DestCapacity)
+        return port.capacity()
+
+    # --- profiles -----------------------------------------------------------------------
+
+    def _marker_for(self, profile: DeviceProfile) -> Marker:
+        return marker_for(profile, self._devices, self._selections)
+
+    def create(self, ref: str, name: str, write_marker: bool = True) -> DeviceProfile:
+        """A new profile for an attached device, and its marker written to it."""
+        found = self.find(ref)
+        if found.profile is not None:
+            return found.profile
+        now = self._now()
+        profile = DeviceProfile(
+            id=self._ids.new_id(),
+            name=name,
+            kind=found.dest.kind,
+            roms_root=self.roms_root(found),
+            first_seen=now,
+            last_seen=now,
+            identity=found.identity,
+        )
+        self._devices.add(profile)
+        if write_marker:
+            port: DestIdentity = require(found.dest, DestIdentity)
+            port.create_root()
+            port.write_marker(self._marker_for(profile))
+        self._remember(found, profile)
+        return profile
+
+    def _profiled(self, ref: str) -> tuple[Attached, DeviceProfile]:
+        """The attached device and its profile as stored now, not as the last probe saw it."""
+        found = self.find(ref)
+        current = None if found.profile is None else self._devices.get(found.profile.id)
+        if current is None:
+            raise ProfileNotFound("this device has no profile yet", field="device")
+        return found, current
+
+    def rename(self, device_id: str, name: str) -> DeviceProfile:
+        """A profile's new name (F10-S24, added). Nothing is written to the device:
+        its marker keeps the old name until it is written again."""
+        if self._devices.get(device_id) is None:
+            raise ProfileNotFound(f"no device profile {device_id}", field="device_id")
+        self._devices.rename(device_id, name)
+        renamed = self._devices.get(device_id)
+        assert renamed is not None
+        return renamed
+
+    def scan(self, ref: str, sink: ProgressSink) -> int:
+        """Read the device's games into its inventory (F10-S24, added). Reads only:
+        the plan is made against what the device holds, not what was last sent.
+        Returns the number of games found."""
+        found, profile = self._profiled(ref)
+        port: DestInventory = require(found.dest, DestInventory)
+        inventory = port.scan(None, sink)
+        now = self._now()
+        self._devices.put_inventory(profile.id, inventory.items, now)
+        space = None
+        if found.dest.supports(DestCapacity):
+            capacity: DestCapacity = require(found.dest, DestCapacity)
+            space = capacity.capacity()
+        self._devices.seen(
+            profile.id, now, space.total if space else None, space.free if space else None
+        )
+        return len(inventory.items)
+
+    def write_marker(self, ref: str) -> DeviceProfile:
+        """Write the profile's marker to the device again, as it stands now (F10-S24)."""
+        found, profile = self._profiled(ref)
+        port: DestIdentity = require(found.dest, DestIdentity)
+        if not port.root_exists():
+            port.create_root()
+        port.write_marker(self._marker_for(profile))
+        return profile
+
+    def adopt(self, ref: str) -> DeviceProfile:
+        """A profile rebuilt from the marker of a device this computer has not seen.
+
+        The marker is trusted whole or not at all, before anything is written.
+        """
+        found = self.find(ref)
+        if found.profile is not None:
+            return found.profile
+        if found.marker is None:
+            raise MarkerUntrusted("the device has no marker to adopt", field="device")
+        trusted = trust(found.marker, found.dest.roots().roms)
+        now = self._now()
+        marker = trusted.marker
+        profile = DeviceProfile(
+            id=marker.device_id,
+            name=marker.name or "Adopted device",
+            kind=found.dest.kind,
+            roms_root=found.dest.roots().roms_at.relative("/"),
+            first_seen=marker.created or now,
+            last_seen=now,
+            identity=found.identity,
+        )
+        self._devices.add(profile)
+        for system in marker.systems:
+            self._selections.set_mode(profile.id, system, Mode.ALL)
+        self._devices.put_inventory(profile.id, trusted.inventory, now)
+        self._remember(found, profile)
+        return profile
+
+    def _remember(self, found: Attached, profile: DeviceProfile) -> None:
+        self._seen[found.ref] = Attached(
+            found.ref, found.dest, found.identity, found.marker, profile
+        )

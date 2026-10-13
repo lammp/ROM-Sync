@@ -17,6 +17,10 @@ F0 ─ F1 ─┬─ F2 ─┬─ F3 ─┬─ F4 ─┐
                 └──────────────────────────────────────└─ F12 ────┘
 ```
 
+F16 is the security review made before `v2` moves into `main`: each finding
+fixed is a story here, and each one left is listed in [SCOPE.md](SCOPE.md)
+as pending.
+
 F0 comes first and blocks everything, because it must run against the version 1
 application while that application still works. F11 runs in five bands, A to E;
 band E is not a phase but a set of tests that fail the gate from the moment the
@@ -40,27 +44,29 @@ first component exists.
 | F13 | Installer, dependency checks, release | F11, F12 |
 | F14 | Import from version 1 | F2, F3 |
 | F15 | Diagnostics and support bundle | F9, F10 |
+| F16 | Security review before `main` | F10 to F13 |
 
 ---
 
 ## F0 Parity capture from version 1
 
-Runs first. With D2 retired by [REBUILD-UI.md](REBUILD-UI.md), these fixtures
+Runs first. Test and fixture locations: REBUILD-UI.md section 14.5. With D2 retired by [REBUILD-UI.md](REBUILD-UI.md), these fixtures
 are the only thing holding the rebuilt interface to version 1's behaviour, and
 they can only be taken while version 1 still runs.
 
 | ID | Story | Depends on | Acceptance | Tests |
 |---|---|---|---|---|
-| F0-S1 | Tag version 1 and record the tag in every fixture header | none | Every fixture names one tag | `ui/tests/parity/provenance.test.ts::every_fixture_names_a_tag` |
-| F0-S2 | Search grammar corpus: query string to parsed terms and clauses, over all 14 operator keys and all 6 comparators, quoted phrases and malformed input | F0-S1 | Version 1's `parseQuery` output is reproduced exactly | `ui/tests/parity/search.test.ts::grammar_corpus` |
-| F0-S3 | Facet corpus: a synthetic library to facet counts, ordering, caps, zero retention and above-the-fold placement | F0-S1 | Counts and order match | `ui/tests/parity/facets.test.ts::counts`, `::ordering`, `::caps`, `::zero_retained` |
-| F0-S4 | Twin corpus: title pairs to exact and loose clusters, including the known false pairs | F0-S1 | Clusters match, and loose pairs are marked loose | `ui/tests/parity/twins.test.ts::exact`, `::loose`, `::known_non_pairs` |
-| F0-S5 | Sort corpus: titles to sort keys, covering accents, leading articles and digit runs | F0-S1 | Keys match, and 2 sorts before 10 | `ui/tests/parity/sort.test.ts::keys` |
-| F0-S6 | Format corpus: bytes to strings, size strings to bytes, seconds to ETA, including negatives and nulls | F0-S1 | Output matches character for character | `ui/tests/parity/format.test.ts::corpus` |
-| F0-S7 | Grid layout corpus: viewport width and tile size to column count, measured row height and window bounds | F0-S1 | The same window is computed | `ui/tests/parity/windowing.test.ts::bounds` |
-| F0-S8 | Progress corpus: run samples to percentage, rate and ETA, including the run-banking transition and the 99 per cent cap | F0-S1 | Identical arithmetic | `ui/tests/parity/progress.test.ts::corpus` |
-| F0-S9 | Token and contrast snapshot: the as-is table from `docs/design/CAPTURE-TOKENS.md`, committed, so the correction set reads as a diff | F0-S1 | The snapshot reproduces the 31 measured pairs, and `_tools/contrast.py --strict` is the oracle | `ui/tests/parity/tokens.test.ts::as_is_snapshot` |
-| F0-S10 | Every corpus is synthetic or built from published game titles. No path, filename, hash, device identifier or catalogue row from the owner's library appears in any fixture | F0-S2 | The publication lint passes over `ui/tests/fixtures` | `_tools/repo-lint.py --strict`, `ui/tests/parity/provenance.test.ts::no_owner_data` |
+| F0-S1 | Tag version 1 and record the tag in every fixture header | F0-S11 | Every fixture names one tag | `ui/parity/provenance/provenance.test.ts::every_fixture_names_a_tag` |
+| F0-S2 | Search grammar corpus: query string to parsed terms and clauses, over all 13 operator keys and all 6 comparators, quoted phrases and malformed input | F0-S1 | Version 1's `parseQuery` output is reproduced exactly | `ui/parity/search/search.capture.test.ts::grammar_corpus` |
+| F0-S3 | Facet corpus: a synthetic library to facet counts, ordering, caps, zero retention and above-the-fold placement | F0-S1 | Counts and order match | `ui/parity/facets/facets.capture.test.ts::counts`, `::ordering`, `::caps`, `::zero_retained` |
+| F0-S4 | Twin corpus: title pairs to exact and loose clusters, including the known false pairs | F0-S1 | Clusters match, and loose pairs are marked loose | `ui/parity/twins/twins.capture.test.ts::exact`, `::loose`, `::known_non_pairs` |
+| F0-S5 | Sort corpus: titles to sort keys, covering accents, leading articles and digit runs | F0-S1 | Keys match, and 2 sorts before 10 | `ui/parity/sort/sort.capture.test.ts::keys` |
+| F0-S6 | Format corpus: bytes to strings, size strings to bytes, seconds to ETA, including negatives and nulls | F0-S1 | Output matches character for character | `ui/parity/format/format.capture.test.ts::corpus` |
+| F0-S7 | Grid layout corpus: viewport width and tile size to column count, measured row height and window bounds | F0-S1 | The same window is computed | `ui/parity/windowing/windowing.capture.test.ts::bounds` |
+| F0-S8 | Progress corpus: run samples to percentage, rate and ETA, including the run-banking transition and the 99 per cent cap | F0-S1 | Identical arithmetic | `ui/parity/progress/progress.capture.test.ts::corpus` |
+| F0-S9 | Token and contrast snapshot: the as-is table from `docs/design/CAPTURE-TOKENS.md`, committed, so the correction set reads as a diff | F0-S1 | The snapshot reproduces the 31 measured pairs, and `_tools/contrast.py --strict` is the oracle | `ui/parity/tokens/tokens.capture.test.ts::as_is_snapshot` |
+| F0-S10 | Every corpus is synthetic or built from published game titles. No path, filename, hash, device identifier or catalogue row from the owner's library appears in any fixture | F0-S2 | The publication lint passes over every `__fixtures__` folder under `ui/src` | `_tools/repo-lint.py --strict`, `ui/parity/provenance/provenance.test.ts::no_owner_data` |
+| F0-S11 | The `ui` package: Next.js, strict TypeScript and the Vitest `unit` project, with no application code | none | `vitest run --project=unit` runs and passes | `ui/structure/toolchain/toolchain.test.ts::unit_project_runs` |
 
 ## F1 Foundations and the verification gate
 
@@ -128,6 +134,7 @@ they can only be taken while version 1 still runs.
 | F5-S9 | Resumable passes with per-item commit and an error-abort valve | F5-S5 | An interrupted pass resumes without repeating work | `::test_resume`, `::test_abort_after_consecutive_errors` |
 | F5-S10 | Franchise rules loaded from a data file; the pass only proposes | F5-S1 | A rule change needs no code change; a human decision is never overwritten | `tests/unit/app/test_tags.py::test_rules_from_data_file`, `::test_never_overwrites_decision` |
 | F5-S11 | Artwork fallback source as a declared capability | F5-S1 | Absent credentials still yield a working catalogue with fallback art | `::test_fallback_without_credentials` |
+| F5-S12 (added) | One metadata action replaces the separate match and cover passes: an update looks up every game never looked up or that failed last time, a refresh every game but one matched by hand, and either fills missing covers from libretro after when that setting is on; without credentials the match is skipped and said so. A re-match pins its game, and the migration pins a match stored with full confidence, which is how a hand match was kept before | F5-S9, F5-S11, F10-S17 | A refresh never undoes a hand match, and an update never looks up a game twice | `tests/unit/api/test_match_routes.py`, `tests/unit/app/test_metadata.py::test_a_rematch_pins_and_a_refresh_keeps_the_pin`, `tests/unit/adapters/db/test_migrations.py::test_a_match_made_by_hand_before_pins_is_kept_as_one` |
 
 ## F6 Destination ports and adapters
 
@@ -206,21 +213,34 @@ they can only be taken while version 1 still runs.
 | F10-S13 | Job endpoints: list, get, cancel | F9-S1 | Snapshot semantics preserved | `tests/unit/api/test_job_routes.py` |
 | F10-S14 | Maintenance endpoints: compact, clear cache, prune covers, prune runs, all as jobs with a dry run where destructive | F9-S1 | A destructive maintenance action dry-runs first | `tests/unit/api/test_maintenance_routes.py::test_dry_run_first` |
 | F10-S15 | Shell endpoints: reveal, pick folder, open external, each root-checked and loopback-only | F10-S4 | A path outside the roots is refused | `tests/unit/api/test_shell_routes.py::test_root_check`, `::test_scheme_allowlist` |
+| F10-S16 (added) | Store scan as a job: systems, additions, updates and removals; a rescan on launch when set | F4-S4, F9-S1 | A scan job changes the library as the store does, and an unreadable system loses nothing | `tests/unit/api/test_scan_routes.py::test_scan_job`, `::test_rescan_on_launch` |
+| F10-S17 (added) | Match and cover passes as jobs, and re-match of one game | F5-S9, F5-S11, F9-S1 | A pass runs as a job and reports its counts | `tests/unit/api/test_match_routes.py::test_match_job`, `::test_rematch` |
+| F10-S18 (added) | Tag decisions stand; the franchise pass as a job | F5-S10, F9-S1 | A decided tag survives the next pass | `tests/unit/api/test_tag_routes.py::test_decision_stands` |
+| F10-S19 (added) | System files: store side, device survey, readiness as state, stage and unstage as jobs | F8-S6, F9-S1 | Readiness is read without touching a device; staging is a job on the device's reference | `tests/unit/api/test_sysfiles_routes.py::test_readiness_read_only`, `::test_stage_job` |
+| F10-S20 (added) | Recover: what only the device holds, pulled and placed in the store without overwriting | F7-S11, F9-S1 | Placing never overwrites | `tests/unit/api/test_recover_routes.py::test_place_never_overwrites` |
+| F10-S21 (added) | A game's cover served by the name its game records; no request names a path | F5-S8, F10-S7 | An unrecorded name, or one shaped like a path, is not found and never reaches the disk | `tests/unit/api/test_library_routes.py::test_only_a_recorded_cover_is_served` |
+| F10-S22 (added) | A device's inventory and its run history, read by profile | F6-S9, F7-S1 | Both answer for a profile and refuse an unknown one; history is newest first | `tests/unit/api/test_history_routes.py::test_history_newest_first` |
+| F10-S23 (added) | A device the probe finds but cannot read is listed with its transport, description and reason; an attached device says where a new profile would keep its ROMs | F6-S9, F10-S10 | `GET /devices` lists blocked devices beside readable ones, and forgets one once it goes | `tests/unit/app/test_devices.py::test_a_blocked_device_says_what_it_is_and_why`, `tests/unit/api/test_device_routes.py::test_a_device_that_cannot_be_read_is_listed_with_its_reason` |
+| F10-S24 (added) | A device's games are read into its inventory as a read-only job; a profile is renamed; its marker is written again as the profile stands | F6-S9, F9-S1, F10-S10 | A scan writes nothing to the device and forgets what has left it; a rename writes nothing to the device; scan and marker refuse a device with no profile before any job starts | `tests/unit/app/test_devices.py::test_a_scan_reads_the_games_into_the_inventory_and_writes_nothing`, `tests/unit/api/test_device_routes.py::test_scan_rename_and_marker` |
+| F10-S25 (added) | A running sync's progress carries the run's totals: bytes sent and removed so far, and how many of each have finished | F7-S1, F9-S8 | Bytes sent never go backwards and end at the run's total; a copy in hand counts as it goes | `tests/unit/app/test_sync.py::test_progress_carries_the_run_totals` |
+| F10-S26 (added) | The composed engine discovers what is attached over every transport: drives and portable devices from one PowerShell probe as version 1 read them, ADB devices from `adb devices -l`; a device not ready yet is listed with its reason, and a transport turned off, without its tool or failing is a state | F6-S1 to S7, F10-S23 | The desktop engine lists drives, MTP storages and ADB devices; an unauthorised ADB device appears as blocked with its reason; an absent adb leaves the other transports asked | `tests/unit/adapters/test_discovery.py::test_every_transport_is_asked`, `::test_an_absent_tool_is_a_state_not_an_error`, `::test_the_composed_engine_lists_what_discovery_finds` |
 
 ## F11 Interface rebuild as atomic components
 
 Five bands. Band E is not a phase: each of its tests fails the gate from the
 moment the first component exists until the whole interface satisfies it.
-Specified in [REBUILD-UI.md](REBUILD-UI.md).
+Specified in [REBUILD-UI.md](REBUILD-UI.md). Every `ui/tests/...` path below
+resolves through the map in REBUILD-UI.md section 14.6: tests sit beside the
+component, feature or function they cover.
 
 ### Band A, foundations
 
 | ID | Story | Depends on | Acceptance | Tests |
 |---|---|---|---|---|
-| F11-S1 | Next.js project, App Router, strict TypeScript, static export, pinned versions, exported into the engine's static directory | F10-S2 | `next build` emits a static bundle and no runtime Node process exists | `ui/tests/build.test.ts::exports_static`, `::no_node_at_runtime` |
+| F11-S1 | Next.js project, App Router, strict TypeScript, static export, pinned versions, exported into the engine's static directory | F10-S2, F0-S11 | `next build` emits a static bundle, no runtime Node process exists, and the unit, component and end-to-end layers each run | `ui/structure/toolchain/toolchain.test.ts::exports_static`, `::no_node_at_runtime`, `::three_layers_run` |
 | F11-S2 | `tokens.ts` as the single source, generating `tokens.css` and types, carrying the corrected values from `CAPTURE-TOKENS.md` section 6 | F0-S9 | No colour literal exists outside `tokens.ts` | `ui/tests/design/tokens.test.ts::generated_matches_source` |
 | F11-S3 | Contrast test over the generated token set, text at 4.5 and non-text at 3.0, computed rather than asserted | F11-S2 | Every pair passes, focus ring included | `ui/tests/design/contrast.test.ts::aa_all_pairs`, `::focus_ring_on_every_surface` |
-| F11-S4 | Layering test: atoms cannot import molecules, organisms, the store, the queries or the client; templates import atoms only; the colour-literal rule | F11-S1 | Six planted violations each fail | `ui/tests/layering.test.ts::no_illegal_edges`, `::detects_planted_violations` |
+| F11-S4 | Layering and companion tests: the import rules in REBUILD-UI.md section 14.3, the colour-literal rule, and every component, feature and function folder holding its companions | F11-S1 | Six planted violations each fail, and a folder missing a companion fails | `ui/structure/layering/layering.test.ts::no_illegal_edges`, `::detects_planted_violations`; `ui/structure/companions/companions.test.ts::every_folder_complete` |
 | F11-S5 | Generated API client, checked against the committed OpenAPI document | F10-S2 | The committed client matches the document | `ui/tests/api/client.test.ts::generated_matches_openapi` |
 | F11-S6 | One Zustand store with six slices | F11-S1 | No module outside the store holds mutable module state | `ui/tests/store.test.ts::single_container`, `::no_module_state` |
 | F11-S7 | Query layer and the job-polling hook, cancelled on navigation | F11-S5 | A poller stops on navigation and no test touches the network | `ui/tests/queries/job.test.ts::cancels_on_navigation`, `::no_network_in_tests` |
@@ -240,7 +260,7 @@ Specified in [REBUILD-UI.md](REBUILD-UI.md).
 | ID | Story | Depends on | Acceptance | Tests |
 |---|---|---|---|---|
 | F11-S13 | `lib/format` | F0-S6 | The corpus reproduces | `ui/tests/parity/format.test.ts` |
-| F11-S14 | `lib/search`: 14 keys, 6 comparators | F0-S2 | The corpus reproduces | `ui/tests/parity/search.test.ts` |
+| F11-S14 | `lib/search`: 13 keys, 6 comparators | F0-S2 | The corpus reproduces | `ui/tests/parity/search.test.ts` |
 | F11-S15 | `lib/facets`: one-pass fail computation, caps, zero retention, above-the-fold chosen values | F0-S3 | The corpus reproduces | `ui/tests/parity/facets.test.ts` |
 | F11-S16 | `lib/sort` and `lib/scale` | F0-S5 | The corpus reproduces | `ui/tests/parity/sort.test.ts::keys`, `::scale` |
 | F11-S17 | `lib/windowing` as a hook: the ported algorithm, two-row overscan, one definition of the grid gap | F0-S7 | The corpus reproduces | `ui/tests/parity/windowing.test.ts` |
@@ -268,6 +288,7 @@ Specified in [REBUILD-UI.md](REBUILD-UI.md).
 | F11-S34 | `/settings` built to `SETTINGS.md`, including the setup section in first-run order | F10-S8 | Per-section save, and an edit survives a job completing | `ui/tests/pages/settings.test.ts::per_section_save`, `::edit_survives_job`, `::setup_steps` |
 | F11-S39 | `/recover`, with a nav entry that appears only when a device holds something the store does not, and copy that states the next sync would remove it | F10-S10 | The nav entry is absent when there is nothing to recover | `ui/tests/pages/recover.test.ts::lists_missing_from_store`, `::nav_hidden_when_empty`, `::states_removal_consequence` |
 | F11-S40 | Pulled-item placement per run, refusing a name the store already holds, rescanning on success | F7-S11 | A colliding name is reported, never replaced | `ui/tests/pages/recover.test.ts::place_refuses_existing_name`, `::rescan_after_place` |
+| F11-S41 (added) | The library page assembled: the header with search and device picker, the library view bound to the store and the engine, toasts in their live region, and one fake engine shared by stories and end-to-end specs | F11-S26 to S30, F10-S22 | Browse, filter, choose a device, change its selection through the engine, open a game; the choice of device survives a reload | `ui/e2e/library/library.spec.ts`, `ui/src/features/library/LibraryView/LibraryView.test.tsx` |
 
 ### Band E, cross-cutting gates
 
@@ -277,6 +298,17 @@ Specified in [REBUILD-UI.md](REBUILD-UI.md).
 | F11-S36 | The live region announces every toast | F11-S8 | Every toast is announced | `ui/tests/a11y/live-region.test.ts::announces_every_toast` |
 | F11-S37 | No state is carried by colour alone | F11-S3 | Every state has a second channel | `ui/tests/a11y/non-colour.test.ts::every_state_has_a_second_channel` |
 | F11-S38 | Every view recovers from a failed fetch with a retry | F11-S7 | No view can reach a permanent loading state | `ui/tests/organisms/errors.test.ts::retry_everywhere`, `::no_permanent_loading` |
+| F11-S45 (added) | Paths are chosen, not typed, and nothing traps the person: path settings open a folder or file chooser (the window's own dialog for a folder in the desktop; the page's folder browser otherwise, over a loopback-only listing of this computer's folders); every dialog and pop-out closes on a visible close button, Escape and a click outside; the header never scrolls out of view; every settings section has Cancel | F11-S25, F11-S34, F12-S4 | No path setting is a free text field where a chooser can be offered; every dialog has a visible way out; the header is reachable from anywhere on Settings | `ui/e2e/settings/settings.spec.ts`, `ui/src/components/organisms/FolderBrowser/FolderBrowser.test.tsx`, `ui/src/components/molecules/PathField/PathField.test.tsx`, `tests/unit/app/test_browse.py`, `tests/unit/api/test_shell_routes.py::test_browse_folders` |
+| F11-S46 (added) | System files are read again when the store's bios folder changes: on the window's return to focus, and at once on Check again, with the time of the last check shown; the device page offers the same for the store's side | F11-S33 | A file added to or removed from the bios folder shows without restarting the application | `ui/e2e/system-files/system-files.spec.ts` |
+| F11-S47 (added) | Notifications: a bell in the header with an unread count, listing job endings with what they did, failures as errors, devices connecting and disconnecting, and the setup steps still to do; each cleared alone or all at once, kept across reloads, a cleared one never raised again; every job's end is said from any page, including one the engine ran on its own | F11-S41, F9-S1 | A scan the engine ran unasked, a device pulled out on another page, and a setup step each appear in the bell, and clear | `ui/e2e/notifications/notifications.spec.ts`, `ui/src/lib/notices/notices.test.ts`, `ui/src/features/shell/NoticeWatcher/NoticeWatcher.test.tsx` |
+| F11-S48 (added) | Settings in tabs, one per group in first-run order, the open tab named in the address; Save and Cancel act on their tab only; an edited tab carries a dot; Settings is a cog in the header | F11-S34 | Edits in one tab survive switching, Save in another saves that tab alone, and the open tab survives a reload | `ui/e2e/settings/settings.spec.ts`, `ui/src/components/molecules/Tabs/Tabs.test.tsx` |
+| F11-S49 (added) | Reading something again is the reload icon, named by what it reads, turning while it reads: devices on the Devices page, the bios folder on System files | F11-S46 | Each re-check is an icon button with a name, busy while it reads | `ui/src/components/atoms/ReloadButton/ReloadButton.test.tsx`, `ui/e2e/system-files/system-files.spec.ts` |
+| F11-S50 (added) | Layouts respond to the space they are given, not the window, and nothing scrolls on its own unless it must: the system files list and its detail sit side by side where they fit and stack where they do not, the page scrolls rather than the list, and nothing is cut off; the library's columns size to its width and the game's details cover the grid where three columns do not fit. What still scrolls on its own: the virtual game grid and the filters beside it, and dialogs and pop-outs bounded by the window | F11-S1 | At 480, 900 and 1400 pixels the system files page has no inner scroller and nothing cut off | `ui/e2e/system-files/system-files.spec.ts` |
+| F11-S51 (added) | Settings controls that say what they hold: a saved value locks, with an edit icon at its end that opens it and an undo icon that locks it again; a bounded number is a scale with its number to its left for fine tuning; a short range or a size is a list; a button that runs something shows a turning recycle glyph while it runs, then a tick or a cross; each tab's main actions sit prominently at its top. Settings nothing reads are removed: auto enrich and the verify percentage; the device probe interval is read | F11-S48 | Every control is drawn from the registry's kind and bounds, and every action is found at the top of its tab | `ui/src/components/atoms/StatusButton`, `ui/src/components/molecules/LockedField`, `ui/src/components/molecules/SliderField`, `ui/src/components/molecules/SettingControl`, `ui/e2e/settings/settings.spec.ts::every tab keeps its main actions at its top` |
+| F11-S52 (added) | The Metadata tab: Run Initial while nothing is looked up, then Update Metadata, beside Refresh Metadata, which asks before it rebuilds; the client ID locks once saved; the secret is one field, open while empty and locked as dots once saved, with an eye for what is typed and icons to enter a new one or remove it; Test connection shows its outcome on itself; the threshold and the error limit are scales and the request rate a list of 1 to 4 | F5-S12, F11-S51 | The two most important actions are the first thing on the tab, and a saved secret is never shown | `ui/src/components/molecules/SecretField`, `ui/src/components/organisms/CredentialControl`, `ui/src/features/settings/SettingsView/SettingsView.test.tsx`, `ui/e2e/settings/settings.spec.ts::the metadata runs from the top of its tab` |
+| F6-S9 (added) | Windows PowerShell is started by its full path under the Windows folder, never found on the PATH, so a narrowed PATH cannot hide drives, MTP devices or notifications | F6-S2, F10-S26 | With the Windows folder known, PowerShell is named by its full path | `tests/unit/adapters/test_powershell.py` |
+| F6-S10 (added) | Reading a file from an MTP device shows no Windows dialog: the read copies through the file operation with every dialog off and waits for it, so a failed read is a result, never a window that holds the device probe until someone presses OK. Sending still uses the asynchronous shell copy, for its progress | F6-S4 | Plugging in a device whose ROMs folder holds a marker raises no dialog | `tests/unit/adapters/dest_mtp/test_scripts.py::test_reading_from_the_device_shows_no_dialog`; proven on Windows against a local folder, and on a device by its absence of dialogs |
+| F8-S9 (added) | Every system file is read from one place, the ROMs folder's bios folder: BIOS files, keys and the Switch firmware zip alike; the firmware folder setting is retired | F8-S2 | prod.keys, title.keys and the firmware zip in the bios folder show as present, and nothing outside it is read for them | `tests/unit/app/test_sysfiles_store.py::test_only_the_bios_folder_is_read` |
 
 ## F12 Desktop shell
 
@@ -292,7 +324,7 @@ Specified in [REBUILD-UI.md](REBUILD-UI.md).
 
 | ID | Story | Depends on | Acceptance | Tests |
 |---|---|---|---|---|
-| F13-S1 | Frozen build of engine, API and desktop shell with the built interface | F11-S1, F12-S1 | The artefact runs with no Python installed | `tests/unit/installer/test_spec.py::test_bundle_contents` |
+| F13-S1 | Frozen build of engine, API and desktop shell with the built interface | F11-S1, F12-S1 | The artefact runs with no Python installed | `tests/unit/installer/test_spec.py::test_bundle_contents`; the `installer` workflow (F13-S9) |
 | F13-S2 | Dependency checks: Windows version, embedded browser runtime, disk space, data directory writability | F13-S1 | A missing runtime is reported and offered, never skipped silently | `::test_checks_reported`, `::test_missing_runtime_blocks` |
 | F13-S3 | Installer with a data directory outside the install directory | F13-S1 | Replacing the application cannot touch data | `::test_data_outside_install` |
 | F13-S4 | Uninstaller leaves data and says so | F13-S3 | Data survives an uninstall | `::test_uninstall_keeps_data` |
@@ -300,6 +332,7 @@ Specified in [REBUILD-UI.md](REBUILD-UI.md).
 | F13-S6 | First-run acceptance: a clean machine reaches a working catalogue through the interface alone | F13-S3, F11-S13 | A scripted first run with a fixture store succeeds with no file edited | `tests/e2e_fake/test_first_run.py::test_clean_machine` |
 | F13-S7 | Release pipeline: tag, build, checksum, release notes, attach artefacts | F13-S1 | A tag produces a release with checksums | `tests/unit/test_ci_config.py::test_release_workflow` |
 | F13-S8 | Optional transport absence is a state, not an error | F6-S5 | With no transport tool present the application still runs | `tests/e2e_fake/test_first_run.py::test_optional_tool_absent` |
+| F13-S9 | Every push to `v2` builds the installer and proves it on a Windows runner: silent install, self-test with no Python on the PATH, start, uninstall with data kept; the installer is kept as the run's artefact | F13-S1, F13-S3, F13-S4 | A push produces an installer that installs, runs and uninstalls, or the run fails | `tests/unit/test_ci_config.py::test_installer_workflow`, `tests/unit/desktop/test_selftest.py`, `tests/unit/tools/test_smoke_install.py` |
 
 ## F14 Import from version 1
 
@@ -320,13 +353,23 @@ Specified in [REBUILD-UI.md](REBUILD-UI.md).
 | F15-S3 | Support bundle with every secret redacted | F10-S8 | No secret appears in the bundle | `::test_bundle_redacted` |
 | F15-S4 | Logging with a configurable level, no secret ever logged | F1-S8 | A secret passed through the engine never reaches a log | `tests/unit/test_logging.py::test_no_secret_in_logs` |
 
+## F16 Security review before `main`
+
+| ID | Story | Depends on | Acceptance | Tests |
+|---|---|---|---|---|
+| F16-S1 | The API surface: the engine binds to loopback only (`127.0.0.1` or `::1`, nothing else is offered); the folder listing needs the page token like every change does; every response, refusals included, forbids framing, sniffing and referrers; a path setting refuses a network share (`\\server\share`) or a device path; the adb setting names an adb executable; recent errors in diagnostics are redacted | F10-S1, F10-S8, F15-S1 | A request from another origin, a frame, a network path or an off-loopback address gets nothing the page could not already do | `tests/unit/api/test_security_review.py`, `tests/unit/api/test_binding.py::test_never_offered_to_the_network`, `tests/unit/desktop/test_shell.py`, `ui/src/queries/engine/engine.test.tsx` |
+| F16-S2 | Sync safety: a device's first sync asks before any removal, however few; a system with no games in the store plans no removals; the confirmation names how many games go and needs them ticked before Start | F7-S3, F11-S20 | A sync can remove games only after the person has seen and ticked how many | `tests/unit/api/test_sync_routes.py::test_a_first_sync_confirms_any_removal`, `::test_a_system_with_no_games_in_the_store_removes_nothing`, `ui/src/components/organisms/SyncConfirm/SyncConfirm.test.tsx` |
+| F16-S3 | System files on the device: the staging folder must contain `{system}` and may not be the ROMs folder of a system or anything under `Android`; removing a stray file needs it to be one the last survey listed | F8-S5 | Neither setting nor request can point a removal at a game or at an app's data | `tests/unit/app/test_sysfiles_device.py`, `tests/unit/api/test_sysfiles_routes.py`, `tests/unit/api/test_security_review.py` |
+| F16-S4 | Drive destinations: nothing is copied or removed through a link or junction inside a drive's ROMs folder; a drive whose ROMs folder is, holds or sits in the library is listed as waiting and never offered | F6-S3, F10-S26 | A sync cannot reach past the drive's ROMs folder or write over the library | `tests/unit/adapters/dest_volume/test_volume.py::test_nothing_is_written_or_removed_through_a_link`, `tests/unit/adapters/test_discovery.py::test_the_librarys_own_drive_folder_is_never_a_destination` |
+| F16-S5 | Release and installer: the release token reaches only the job that publishes, and the build checks out without keeping credentials; a tag that is not a plain version stops the release; the uninstaller removes only what the installer logged, and the install folder is not offered for change | F13-S4, F13-S7 | A crafted tag runs nothing and an uninstall removes nothing it did not install | `tests/unit/test_ci_config.py::test_release_token_reaches_only_the_publishing_job`, `tests/unit/installer/test_spec.py::test_a_release_tag_that_is_not_a_version_is_refused` |
+
 ---
 
 ## Counts
 
 | | |
 |---|---|
-| Features | 16 |
-| Stories | 167 |
+| Features | 17 |
+| Stories | 198 |
 | Security requirements from SPEC section 12, each covered by at least one story | 9 |
-| Stories whose acceptance needs a real device or a clean machine, and therefore sit outside the gate | F6-S5, F6-S6, F13-S1, F13-S2, F13-S6; each is marked for manual verification, and [TESTING.md](TESTING.md) section 8 states what the gate does not prove |
+| Stories whose acceptance needs a real device or a clean machine, and therefore sit outside the gate | F6-S5, F6-S6, F10-S26, F13-S2, F13-S6; each is marked for manual verification, and [TESTING.md](TESTING.md) section 8 states what the gate does not prove |
