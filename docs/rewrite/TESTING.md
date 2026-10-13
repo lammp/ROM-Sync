@@ -295,7 +295,7 @@ claim that the gate proves more than it does.
 | Real ADB and MTP behaviour | the contract suite proves the adapters agree with each other and with the fake, not that any of them agrees with a handheld | the opt-in contract run on a connected device, per story, recorded in the pull request |
 | Arrival polling sized by file size | the behaviour exists because MTP reports a static size for minutes on a large file, which no fake reproduces honestly | one manual transfer of a file over 4 GB per release |
 | Killing a transfer worker mid-copy | the rule is that it is never done; there is nothing to assert | code review of the cancel path, plus the contract test that cancel is honoured only between items |
-| The frozen artefact on a machine with no Python | the build is the thing under test | a clean virtual machine per release, running the first-run acceptance by hand |
+| The frozen artefact on a clean machine | the installer workflow (F13-S9) installs, self-tests, starts and uninstalls the artefact on every push, but on a hosted runner, which is not a clean machine: Python is installed there, though off the application's PATH | a clean virtual machine per release, running the first-run acceptance by hand |
 | The embedded browser runtime check | it depends on a system component | the same clean virtual machine, once with the runtime absent |
 | Recycle Bin semantics for store removals | a shell API, not a filesystem call | manual, once per release, confirming the item is restorable |
 | The matcher against a real library | D6 removes the oracle | the scoring corpus, and an acknowledged residual risk |
@@ -310,6 +310,7 @@ repository, versioned, and a release that skips a row says which row and why.
 |---|
 | One workflow, one job, one step that matters: `python tools/verify.py` on a Windows runner. Windows because the application is Windows-only and because the path rules in SPEC section 3 are Windows rules. |
 | The workflow adds nothing the local gate does not do. If CI can fail where a clean local run passed, the gate is wrong, and that is the defect to fix. |
+| A second workflow, `installer`, proves the artefact on every push to `v2` (F13-S9). It is not the gate and does not replace any stage of it: the gate proves the code and stays the required check; `installer` proves that what the code builds installs, runs and uninstalls. |
 | The gate is a required check on the `v2` branch. Merging on a red gate is not available, not merely discouraged. |
 | A second, scheduled workflow runs the gate nightly with a random test order seed and a fresh dependency resolution, and opens an issue on failure. Order dependence and a dependency that moved under us are both found here rather than by a developer. |
 | A tag builds the release, computes checksums, and attaches the artefacts. The release workflow runs the gate first and refuses to publish on a red gate. |

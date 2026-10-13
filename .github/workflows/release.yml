@@ -2,7 +2,8 @@
 #
 # Windows, as the gate. The gate runs first and must pass; then the interface
 # is built, the application frozen, the installer compiled, a portable zip
-# made, and every artefact checksummed. The release is created with the
+# made, every artefact checksummed, and the installer installed, self-tested,
+# started and uninstalled on the runner before anything is published. The release is created with the
 # artefacts, their SHA-256 sums, and notes generated from the merged work.
 # No step needs a secret beyond the run's own token, and nothing is signed.
 name: release
@@ -52,6 +53,8 @@ jobs:
         run: python tools/installer.py installer --version "${{ github.ref_name }}"
       - name: Package and checksum
         run: python tools/installer.py package --version "${{ github.ref_name }}"
+      - name: Install, self-test, start and uninstall
+        run: python tools/smoke_install.py
       - name: Publish the release
         shell: bash
         env:

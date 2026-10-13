@@ -78,18 +78,44 @@ def test_release_workflow() -> None:
         "python tools/installer.py build",
         "python tools/installer.py installer",
         "python tools/installer.py package",
+        "python tools/smoke_install.py",
         "gh release create",
     ]
     places = [text.index(step) for step in order]
-    assert places == sorted(places), "gate, interface, freeze, installer, sums, release"
+    assert places == sorted(places), (
+        "gate, interface, freeze, installer, sums, the installer proved, release"
+    )
     assert "reports/release/artefacts/*" in text, "every artefact, the sums among them"
     assert "--generate-notes" in text and "--verify-tag" in text
     assert "secrets." not in text, "the run's own token, nothing stored"
     assert "contents: write" in text
 
 
+def test_installer_workflow() -> None:
+    """Every push to v2 builds the installer and proves it installed (F13-S9), with
+    no tag and nothing published: the installer is kept as the run's artefact."""
+    text = _text("installer.yml")
+    assert "branches: [v2]" in text and "workflow_dispatch" in text
+    assert "tags:" not in text and "gh release" not in text, "nothing published"
+    assert "windows-" in text
+    order = [
+        "npm run bundle --prefix ui",
+        "python tools/installer.py build",
+        "choco install innosetup",
+        "python tools/installer.py installer",
+        "python tools/installer.py package",
+        "python tools/smoke_install.py",
+        "actions/upload-artifact",
+    ]
+    places = [text.index(step) for step in order]
+    assert places == sorted(places), "interface, freeze, compile, sums, proved, kept"
+    assert "path: reports/release/artefacts/" in text
+    assert "retention-days: 14" in text
+    assert "secrets." not in text
+
+
 def test_only_the_release_may_write() -> None:
-    for name in ("gate.yml", "nightly.yml"):
+    for name in ("gate.yml", "nightly.yml", "installer.yml"):
         assert "contents: write" not in _text(name)
 
 

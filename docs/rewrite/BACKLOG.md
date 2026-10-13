@@ -307,7 +307,7 @@ component, feature or function they cover.
 
 | ID | Story | Depends on | Acceptance | Tests |
 |---|---|---|---|---|
-| F13-S1 | Frozen build of engine, API and desktop shell with the built interface | F11-S1, F12-S1 | The artefact runs with no Python installed | `tests/unit/installer/test_spec.py::test_bundle_contents` |
+| F13-S1 | Frozen build of engine, API and desktop shell with the built interface | F11-S1, F12-S1 | The artefact runs with no Python installed | `tests/unit/installer/test_spec.py::test_bundle_contents`; the `installer` workflow (F13-S9) |
 | F13-S2 | Dependency checks: Windows version, embedded browser runtime, disk space, data directory writability | F13-S1 | A missing runtime is reported and offered, never skipped silently | `::test_checks_reported`, `::test_missing_runtime_blocks` |
 | F13-S3 | Installer with a data directory outside the install directory | F13-S1 | Replacing the application cannot touch data | `::test_data_outside_install` |
 | F13-S4 | Uninstaller leaves data and says so | F13-S3 | Data survives an uninstall | `::test_uninstall_keeps_data` |
@@ -315,6 +315,7 @@ component, feature or function they cover.
 | F13-S6 | First-run acceptance: a clean machine reaches a working catalogue through the interface alone | F13-S3, F11-S13 | A scripted first run with a fixture store succeeds with no file edited | `tests/e2e_fake/test_first_run.py::test_clean_machine` |
 | F13-S7 | Release pipeline: tag, build, checksum, release notes, attach artefacts | F13-S1 | A tag produces a release with checksums | `tests/unit/test_ci_config.py::test_release_workflow` |
 | F13-S8 | Optional transport absence is a state, not an error | F6-S5 | With no transport tool present the application still runs | `tests/e2e_fake/test_first_run.py::test_optional_tool_absent` |
+| F13-S9 | Every push to `v2` builds the installer and proves it on a Windows runner: silent install, self-test with no Python on the PATH, start, uninstall with data kept; the installer is kept as the run's artefact | F13-S1, F13-S3, F13-S4 | A push produces an installer that installs, runs and uninstalls, or the run fails | `tests/unit/test_ci_config.py::test_installer_workflow`, `tests/unit/desktop/test_selftest.py`, `tests/unit/tools/test_smoke_install.py` |
 
 ## F14 Import from version 1
 
@@ -342,6 +343,6 @@ component, feature or function they cover.
 | | |
 |---|---|
 | Features | 16 |
-| Stories | 180 |
+| Stories | 181 |
 | Security requirements from SPEC section 12, each covered by at least one story | 9 |
-| Stories whose acceptance needs a real device or a clean machine, and therefore sit outside the gate | F6-S5, F6-S6, F10-S26, F13-S1, F13-S2, F13-S6; each is marked for manual verification, and [TESTING.md](TESTING.md) section 8 states what the gate does not prove |
+| Stories whose acceptance needs a real device or a clean machine, and therefore sit outside the gate | F6-S5, F6-S6, F10-S26, F13-S2, F13-S6; each is marked for manual verification, and [TESTING.md](TESTING.md) section 8 states what the gate does not prove |

@@ -25,6 +25,17 @@ class Server(Protocol):
         ...
 
 
+def uvicorn_settings() -> dict[str, object]:
+    """How uvicorn is configured beyond the address.
+
+    `log_config` is None so uvicorn leaves logging alone: the application's own
+    log records it (F15-S4), and the windowed build has no console, so
+    uvicorn's default formatter, which asks the console whether it is a
+    terminal, fails before the server can start.
+    """
+    return {"log_level": "warning", "lifespan": "off", "log_config": None}
+
+
 class UvicornServer:  # pragma: no cover - opens a socket
     """uvicorn in a thread. Port 0, or a preferred port already taken, gets a free one."""
 
@@ -36,7 +47,7 @@ class UvicornServer:  # pragma: no cover - opens a socket
     def _serve(self, app: FastAPI, host: str, port: int) -> int:
         import uvicorn
 
-        config = uvicorn.Config(app, host=host, port=port, log_level="warning", lifespan="off")
+        config = uvicorn.Config(app, host=host, port=port, **uvicorn_settings())  # type: ignore[arg-type]
         server = uvicorn.Server(config)
         thread = threading.Thread(target=server.run, name="romsync-api", daemon=True)
         thread.start()
