@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it } from 'vitest'
 import { appStore } from '../../../store/store'
 import * as stories from './SettingsView.stories'
 
-const { FirstRun, InTheDesktop, OffLoopback } = composeStories(stories)
+const { FirstRun, InTheDesktop, OffLoopback, MetadataActions } = composeStories(stories)
 
 const region = (name: RegExp) => screen.getByRole('region', { name })
 const toast = () => appStore.getState().ui.toasts.at(-1)?.text
@@ -98,7 +98,7 @@ describe('SettingsView', () => {
   it("draws each tab's section from the registry, with its fields", async () => {
     await page()
     expect(
-      within(tab(/^Sync behaviour/)).getByRole('textbox', { name: 'Keep free on the device' }),
+      within(tab(/^Sync behaviour/)).getByRole('combobox', { name: 'Keep free on the device' }),
     ).toHaveProperty('value', '512.0 MB')
     expect(within(tab(/^Diagnostics/)).getByRole('combobox', { name: 'Log level' })).toHaveProperty(
       'value',
@@ -113,8 +113,8 @@ describe('SettingsView', () => {
       { target: { value: '30' } },
     )
     fireEvent.change(
-      within(tab(/^Sync behaviour/)).getByRole('textbox', { name: 'Keep free on the device' }),
-      { target: { value: '1 GB' } },
+      within(tab(/^Sync behaviour/)).getByRole('combobox', { name: 'Keep free on the device' }),
+      { target: { value: '1.00 GB' } },
     )
     await waitFor(() =>
       expect(
@@ -131,9 +131,9 @@ describe('SettingsView', () => {
       expect(screen.getByRole('tab', { name: 'Transports and tools' })).toBeTruthy(),
     )
     const sync = tab(/^Sync behaviour/)
-    expect(within(sync).getByRole('textbox', { name: 'Keep free on the device' })).toHaveProperty(
+    expect(within(sync).getByRole('combobox', { name: 'Keep free on the device' })).toHaveProperty(
       'value',
-      '1 GB',
+      '1.00 GB',
     )
     expect(within(sync).getByText('edited')).toBeTruthy()
   })
@@ -141,11 +141,11 @@ describe('SettingsView', () => {
   it("Cancel drops the tab's edits and its mark", async () => {
     await page()
     const sync = tab(/^Sync behaviour/)
-    fireEvent.change(within(sync).getByRole('textbox', { name: 'Keep free on the device' }), {
-      target: { value: '1 GB' },
+    fireEvent.change(within(sync).getByRole('combobox', { name: 'Keep free on the device' }), {
+      target: { value: '1.00 GB' },
     })
     fireEvent.click(within(sync).getByRole('button', { name: 'Cancel' }))
-    expect(within(sync).getByRole('textbox', { name: 'Keep free on the device' })).toHaveProperty(
+    expect(within(sync).getByRole('combobox', { name: 'Keep free on the device' })).toHaveProperty(
       'value',
       '512.0 MB',
     )
@@ -168,8 +168,8 @@ describe('SettingsView', () => {
   it('edit_survives_job: a rescan ending does not discard what is typed in another section', async () => {
     await page()
     const sync = tab(/^Sync behaviour/)
-    fireEvent.change(within(sync).getByRole('textbox', { name: 'Keep free on the device' }), {
-      target: { value: '2 GB' },
+    fireEvent.change(within(sync).getByRole('combobox', { name: 'Keep free on the device' }), {
+      target: { value: '2.00 GB' },
     })
     fireEvent.click(within(tab(/^Library/)).getByRole('button', { name: 'Rescan ROMs folder' }))
     fireEvent.click(
@@ -179,28 +179,94 @@ describe('SettingsView', () => {
     )
     await waitFor(() => expect(toast()).toMatch(/^scan done/))
     expect(
-      within(tab(/^Sync behaviour/)).getByRole('textbox', { name: 'Keep free on the device' }),
-    ).toHaveProperty('value', '2 GB')
+      within(tab(/^Sync behaviour/)).getByRole('combobox', { name: 'Keep free on the device' }),
+    ).toHaveProperty('value', '2.00 GB')
   })
 
-  it('takes the credentials without ever showing the secret, and tests them', async () => {
+  it('takes the credentials without ever showing the secret, tests them, then locks both', async () => {
     await page()
     const meta = tab(/^Metadata and artwork/)
     fireEvent.change(within(meta).getByRole('textbox', { name: 'Twitch client ID' }), {
       target: { value: 'my-client' },
     })
-    fireEvent.click(within(meta).getByRole('button', { name: 'Add credentials' }))
-    fireEvent.change(within(meta).getByLabelText('New client secret'), {
+    fireEvent.change(within(meta).getByLabelText('Client secret'), {
       target: { value: 'a-secret-that-is-long-enough' },
     })
-    fireEvent.click(within(meta).getByRole('button', { name: 'Test connection' }))
+    const test = within(meta).getByRole('button', { name: 'Test connection' })
+    fireEvent.click(test)
     await waitFor(() =>
       expect(within(meta).getByRole('status').textContent).toBe('connected: token, api ok'),
     )
+    expect(test.querySelector('svg')?.getAttribute('data-icon')).toBe('tick')
     fireEvent.click(within(meta).getByRole('button', { name: 'Save metadata and artwork' }))
     await waitFor(() => expect(toast()).toBe('Metadata and artwork saved'))
-    expect(await within(meta).findByText(/· 28 characters · not shown again/)).toBeTruthy()
+    expect(
+      await within(meta).findByText(/· 28 characters\. A saved secret is never shown/),
+    ).toBeTruthy()
     await waitFor(() => expect(meta.textContent).toContain('credentials set'))
+    const id = within(meta).getByRole('textbox', { name: 'Twitch client ID' }) as HTMLInputElement
+    expect(id.readOnly).toBe(true)
+    expect((within(meta).getByLabelText('Client secret') as HTMLInputElement).readOnly).toBe(true)
+    fireEvent.click(within(meta).getByRole('button', { name: 'Change Twitch client ID' }))
+    expect(id.readOnly).toBe(false)
+  })
+
+  it('runs the metadata from the top of its tab: Run Initial, then Update, and a Refresh that asks', async () => {
+    render(<MetadataActions />)
+    fireEvent.click(await screen.findByRole('tab', { name: 'Metadata and artwork' }))
+    const actions = screen.getByRole('group', { name: 'Metadata and artwork: actions' })
+    const initial = await within(actions).findByRole('button', { name: 'Run Initial' })
+    await waitFor(() => expect(initial.hasAttribute('disabled')).toBe(false))
+    expect(
+      within(actions).getByRole('button', { name: 'Refresh Metadata' }).getAttribute('title'),
+    ).toBe('Run the initial pass first')
+    fireEvent.click(initial)
+    const update = await within(actions).findByRole('button', { name: 'Update Metadata' })
+    await waitFor(() => expect(update.querySelector('svg')?.getAttribute('data-icon')).toBe('tick'))
+    expect(actions.textContent).toContain('0 not looked up yet')
+    fireEvent.click(within(actions).getByRole('button', { name: 'Refresh Metadata' }))
+    const ask = screen.getByRole('dialog', { name: 'Refresh metadata' })
+    expect(ask.textContent).toContain('Match all 40 games again')
+    fireEvent.click(within(ask).getByRole('button', { name: 'Refresh' }))
+    await waitFor(() => expect(toast()).toMatch(/^metadata done/))
+  })
+
+  it('offers only covers without credentials, and says so', async () => {
+    await page()
+    const actions = within(tab(/^Metadata and artwork/)).getByRole('group', {
+      name: 'Metadata and artwork: actions',
+    })
+    expect(actions.textContent).toContain(
+      'Without Twitch credentials only libretro covers are filled.',
+    )
+    expect(
+      within(actions).getByRole('button', { name: 'Refresh Metadata' }).getAttribute('title'),
+    ).toBe('Add Twitch credentials first')
+  })
+
+  it('locks a saved value until its edit icon opens it; Cancel or its undo locks it again', async () => {
+    await page()
+    const transports = tab(/^Transports and tools/)
+    const staging = within(transports).getByRole('textbox', {
+      name: 'Staging path on the device',
+    }) as HTMLInputElement
+    expect(staging.readOnly).toBe(true)
+    fireEvent.click(
+      within(transports).getByRole('button', { name: 'Change Staging path on the device' }),
+    )
+    expect(staging.readOnly).toBe(false)
+    expect(document.activeElement).toBe(staging)
+    fireEvent.change(staging, { target: { value: 'Elsewhere/{system}' } })
+    fireEvent.click(within(transports).getByRole('button', { name: 'Cancel' }))
+    expect(staging.readOnly).toBe(true)
+    expect(staging.value).toBe('ROM-Sync/{system}')
+    fireEvent.click(
+      within(transports).getByRole('button', { name: 'Change Staging path on the device' }),
+    )
+    fireEvent.click(
+      within(transports).getByRole('button', { name: 'Keep the saved Staging path on the device' }),
+    )
+    expect(staging.readOnly).toBe(true)
   })
 
   it('asks before upkeep that deletes, with what its dry run found', async () => {

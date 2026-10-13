@@ -205,3 +205,12 @@ UPDATE devices SET volume_serial = NULL, adb_serial = NULL WHERE kind = 'mtp';
 UPDATE devices SET mtp_device_id = NULL, mtp_storage_id = NULL, adb_serial = NULL
     WHERE kind = 'volume';
 """
+
+#: A game matched by hand is pinned, so a refresh of the metadata keeps it
+#: (F5-S12). A pin made before this step was stored as a match with full
+#: confidence and cannot be told from an exact automatic match, so both are
+#: pinned: a refresh would match an exact title to the same entry anyway.
+V4_PINS = """
+ALTER TABLE games ADD COLUMN pinned INTEGER NOT NULL DEFAULT 0;
+UPDATE games SET pinned = 1 WHERE scrape_state = 'matched' AND confidence >= 1.0;
+"""

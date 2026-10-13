@@ -77,3 +77,35 @@ export function helpText(
   if (def.restart) bits.push('Takes effect after a restart.')
   return bits.join(' ')
 }
+
+/** A size as a choice reads: "512 MB", "1 GB", "none". */
+export function sizeLabel(def: Def, n: number): string {
+  if (n === 0) return 'none'
+  const text = formatBytes(n).replace(/\.0+ /, ' ')
+  return def.unit.trim() === 'B/s' ? `${text}/s` : text
+}
+
+const KIB = 1024
+
+/**
+ * The sizes a size setting offers as a list (F11-S51): every power of two
+ * from 64 KB within the registry's bounds, nothing when there is no bound,
+ * and the stored value among them however odd it is.
+ */
+export function sizeChoices(def: Def, current: number | null): number[] {
+  if (def.minimum === null || def.maximum === null) return []
+  const out = new Set<number>()
+  if (def.minimum === 0) out.add(0)
+  for (let n = 64 * KIB; n <= def.maximum; n *= 2) if (n >= def.minimum) out.add(n)
+  if (current !== null) out.add(current)
+  return [...out].sort((a, b) => a - b)
+}
+
+/** The whole numbers a short range offers as a list: 1, 2, 3, 4; the stored value among them. */
+export function stepChoices(def: Def, current: number | null): number[] {
+  if (def.minimum === null || def.maximum === null) return []
+  const out = new Set<number>()
+  for (let n = Math.ceil(def.minimum); n <= def.maximum; n++) out.add(n)
+  if (current !== null) out.add(current)
+  return [...out].sort((a, b) => a - b)
+}

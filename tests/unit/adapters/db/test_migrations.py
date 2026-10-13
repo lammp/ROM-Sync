@@ -222,3 +222,27 @@ def test_version_1_identities_are_uncrossed(tmp_path: Path) -> None:
         ("m", None, None, "Thor", "Internal"),
         ("v", "1A2B3C4D", None, None, None),
     ]
+
+
+def test_a_match_made_by_hand_before_pins_is_kept_as_one(tmp_path: Path) -> None:
+    """A re-match was stored as a match with full confidence; step 4 pins those,
+    and nothing else, so a refresh keeps them (F5-S12)."""
+    db = tmp_path / "romsync.db"
+    with sqlite3.connect(db) as conn:
+        conn.executescript(schema.V1)
+        for name, state, confidence in (
+            ("hand", "matched", 1.0),
+            ("close", "matched", 0.97),
+            ("none", "unmatched", 1.0),
+            ("new", "pending", None),
+        ):
+            conn.execute(
+                "INSERT INTO games(system, rel_path, kind, name, title, size, mtime, "
+                "scrape_state, confidence, seen_at) "
+                "VALUES('nes', ?, 'file', ?, ?, 1, 1.0, ?, ?, 'x')",
+                (name, name, name, state, confidence),
+            )
+    migrate(db, FrozenClock())
+    with sqlite3.connect(db) as conn:
+        pinned = conn.execute("SELECT name FROM games WHERE pinned = 1").fetchall()
+    assert pinned == [("hand",)]

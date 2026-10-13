@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { LABELS, SECTIONS, arrange, toValues } from './model'
+import { LABELS, LOCKS, PRESENTATION, SECTIONS, arrange, toValues } from './model'
 
 const def = (kind: string, over: object = {}) => ({
   kind,
@@ -24,6 +24,11 @@ describe('the settings page model', () => {
       'data',
       'diagnostics',
     ])
+  })
+
+  it('draws and locks only keys it places', () => {
+    const placed = new Set(SECTIONS.flatMap((s) => s.keys))
+    expect([...Object.keys(PRESENTATION), ...LOCKS].filter((k) => !placed.has(k))).toEqual([])
   })
 
   it('shows a key the page does not know under Diagnostics, and drops one the engine lacks', () => {

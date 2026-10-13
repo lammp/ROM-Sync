@@ -95,10 +95,16 @@ def _v3(conn: sqlite3.Connection, clock: ClockPort) -> None:
         conn.execute(statement)
 
 
+def _v4(conn: sqlite3.Connection, clock: ClockPort) -> None:
+    for statement in _statements(schema.V4_PINS):
+        conn.execute(statement)
+
+
 STEPS: tuple[Step, ...] = (
     Step(1, "version 1's schema", _v1, metadata_only=True),
     Step(2, "config rows, secrets apart, jobs", _v2, metadata_only=False),
     Step(3, "each transport's identity in its own column", _v3, metadata_only=False),
+    Step(4, "a game matched by hand is pinned", _v4, metadata_only=False),
 )
 HEAD = STEPS[-1].version
 
@@ -108,6 +114,7 @@ SET_VERSION: dict[int, str] = {
     1: "PRAGMA user_version = 1",
     2: "PRAGMA user_version = 2",
     3: "PRAGMA user_version = 3",
+    4: "PRAGMA user_version = 4",
 }
 
 

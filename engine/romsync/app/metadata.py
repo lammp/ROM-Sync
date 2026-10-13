@@ -31,6 +31,8 @@ from romsync.ports.sink import ProgressEvent, ProgressSink
 
 #: States a default pass picks up: never looked up, or failed last time.
 DEFAULT_STATES = ("pending", "error")
+#: States a refresh picks up: every game, matched or not, but for a pin (F5-S12).
+REFRESH_STATES = ("pending", "error", "unmatched", "matched")
 METADATA_ERRORS = (RomSyncError,)
 
 
@@ -50,7 +52,11 @@ def genres_of(c: Candidate) -> tuple[str, ...]:
 
 
 def meta_from(
-    c: Candidate, confidence: float, cover: str | None, prior: GameMeta | None
+    c: Candidate,
+    confidence: float,
+    cover: str | None,
+    prior: GameMeta | None,
+    pinned: bool = False,
 ) -> GameMeta:
     return GameMeta(
         state="matched",
@@ -63,6 +69,7 @@ def meta_from(
         rating_count=c.total_rating_count or c.rating_count,
         genres=genres_of(c),
         cover=cover if cover is not None else (prior.cover if prior else None),
+        pinned=pinned,
     )
 
 
@@ -95,7 +102,8 @@ class Matching:
         states: Sequence[str] = DEFAULT_STATES,
         systems: Sequence[SystemKey] = (),
     ) -> PassResult:
-        todo = self._games.in_states(states, systems)
+        pinned = {i for i, m in self._games.metas().items() if m.pinned}
+        todo = [g for g in self._games.in_states(states, systems) if g.id not in pinned]
         plat = self._platforms() if todo else {}
         matched = unmatched = errors = in_a_row = 0
         for done, game in enumerate(todo):
@@ -138,6 +146,7 @@ class Matching:
 
     def rematch(self, game_id: int, ref: str) -> str:
         """Pin a game to one candidate: an id, a slug, or the service's game URL.
+        A pinned game is kept by a refresh (F5-S12).
 
         Returns the candidate's name. A reference that finds nothing raises.
         """
@@ -150,7 +159,9 @@ class Matching:
         if found is None:
             raise MetadataNotFound(f"no game for {ref!r}")
         prior = self._games.meta(game_id)
-        self._games.set_meta(game_id, meta_from(found, 1.0, self._cover(found), prior))
+        self._games.set_meta(
+            game_id, meta_from(found, 1.0, self._cover(found), prior, pinned=True)
+        )
         return found.name
 
 

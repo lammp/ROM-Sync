@@ -1,5 +1,14 @@
 import { describe, expect, it } from 'vitest'
-import { fromText, helpText, isSize, toText, type Def } from './settings'
+import {
+  fromText,
+  helpText,
+  isSize,
+  sizeChoices,
+  sizeLabel,
+  stepChoices,
+  toText,
+  type Def,
+} from './settings'
 
 const def = (over: Partial<Def>): Def => ({
   kind: 'str',
@@ -75,5 +84,30 @@ describe('settings, as the page edits them', () => {
         restart: false,
       }),
     ).toBe('Probe. From 5 to 300 s.')
+  })
+
+  it('offers a size setting its powers of two within its bounds, keeping what is stored', () => {
+    const MB = 1024 ** 2
+    const offered = sizeChoices(margin, 3 * 1024 ** 3)
+    expect(offered[0]).toBe(0)
+    expect(offered.at(-1)).toBe(8 * 1024 ** 3)
+    expect(offered).toContain(512 * MB)
+    expect(offered).toContain(3 * 1024 ** 3)
+    const limit = def({ kind: 'int', unit: ' bytes', minimum: MB, maximum: 4 * 1024 ** 3 })
+    expect(sizeChoices(limit, null)[0]).toBe(MB)
+    expect(sizeChoices(def({ kind: 'int', unit: ' bytes' }), 5)).toEqual([])
+    expect([
+      sizeLabel(margin, 0),
+      sizeLabel(margin, 512 * MB),
+      sizeLabel(margin, 1024 ** 3),
+    ]).toEqual(['none', '512 MB', '1 GB'])
+    expect(sizeLabel(def({ kind: 'int', unit: 'B/s' }), 2 * MB)).toBe('2 MB/s')
+  })
+
+  it('offers a short range as its whole numbers, keeping what is stored', () => {
+    const rate = def({ kind: 'float', unit: '/s', minimum: 1, maximum: 4 })
+    expect(stepChoices(rate, 4)).toEqual([1, 2, 3, 4])
+    expect(stepChoices(rate, 2.5)).toEqual([1, 2, 2.5, 3, 4])
+    expect(stepChoices(def({ kind: 'int' }), 1)).toEqual([])
   })
 })

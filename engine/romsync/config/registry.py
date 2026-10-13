@@ -248,18 +248,10 @@ SETTINGS: tuple[Setting, ...] = (
         "sync.confirm_remove_threshold",
         "int",
         25,
-        "A plan removing more than this many items asks twice.",
+        "A sync removing at least this many games needs the removal confirmed; "
+        "a device's first sync always does.",
         minimum=0,
-        maximum=100_000,
-    ),
-    Setting(
-        "sync.verify_percentage",
-        "int",
-        100,
-        "How much of a transfer is content-verified where the transport allows it.",
-        minimum=0,
-        maximum=100,
-        unit=" %",
+        maximum=1000,
     ),
     # --- metadata ---------------------------------------------------------
     Setting("igdb.client_id", "str", "", "The metadata service client identifier."),
@@ -291,21 +283,16 @@ SETTINGS: tuple[Setting, ...] = (
         "match.abort_after_errors",
         "int",
         25,
-        "A matching pass stops after this many failures in a row.",
+        "A metadata pass stops after this many lookups fail in a row: the service "
+        "is plainly down, so it stops rather than mark every game an error.",
         minimum=1,
-        maximum=1000,
+        maximum=100,
     ),
     Setting(
         "match.auto_libretro_covers",
         "bool",
         True,
         "Fill a missing cover from the community thumbnail set. Never replaces one.",
-    ),
-    Setting(
-        "match.auto_enrich",
-        "bool",
-        False,
-        "Fetch screenshots and tags for a matched game without being asked.",
     ),
     # --- runtime ----------------------------------------------------------
     Setting(
@@ -337,17 +324,17 @@ SETTINGS: tuple[Setting, ...] = (
         "jobs.history_length",
         "int",
         200,
-        "Terminal jobs kept before the oldest are evicted.",
+        "Finished jobs kept before the oldest are forgotten.",
         minimum=10,
-        maximum=10_000,
+        maximum=1000,
     ),
     Setting(
         "runs.retention",
         "int",
         50,
-        "Run folders kept on disk before the oldest are pruned.",
+        "Sync run folders kept on disk before the oldest are pruned.",
         minimum=1,
-        maximum=1000,
+        maximum=200,
     ),
     Setting(
         "db.busy_timeout",

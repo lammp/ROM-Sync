@@ -12,6 +12,13 @@ const meta = {
     (Story, { parameters }) => {
       const world = freshWorld()
       if (parameters.shell) world.shell = parameters.shell as World['shell']
+      // a library nothing has been looked up for yet, with credentials saved
+      if (parameters.untouched)
+        for (const g of world.games) Object.assign(g, { state: 'pending', matched: false })
+      if (parameters.credentials) {
+        world.stored['igdb.client_id'] = 'abcd1234'
+        world.secret = 'a-saved-secret-of-thirty-chars'
+      }
       return (
         <EngineProvider
           engine={createEngine({
@@ -126,5 +133,26 @@ export const ChooseByBrowsing: Story = {
     await expect(
       within(library).getByRole('button', { name: 'ROMs folder D:\\Games\\ROMs Choose folder…' }),
     ).toBeVisible()
+  },
+}
+
+/**
+ * The metadata's one action, at the top of its tab (F11-S52): Run Initial
+ * while nothing is looked up, Update Metadata after, and Refresh Metadata,
+ * which asks before it rebuilds.
+ */
+export const MetadataActions: Story = {
+  parameters: { untouched: true, credentials: true },
+  play: async ({ canvas, userEvent }) => {
+    await userEvent.click(await canvas.findByRole('tab', { name: 'Metadata and artwork' }))
+    const actions = canvas.getByRole('group', { name: 'Metadata and artwork: actions' })
+    await userEvent.click(await within(actions).findByRole('button', { name: 'Run Initial' }))
+    const update = await within(actions).findByRole('button', { name: 'Update Metadata' })
+    await expect(update).toBeVisible()
+    await userEvent.click(within(actions).getByRole('button', { name: 'Refresh Metadata' }))
+    const ask = canvas.getByRole('dialog', { name: 'Refresh metadata' })
+    await expect(ask).toHaveTextContent('a game you matched by hand keeps its match')
+    await userEvent.click(within(ask).getByRole('button', { name: 'Refresh' }))
+    await expect(canvas.queryByRole('dialog')).toBeNull()
   },
 }

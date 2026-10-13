@@ -16,6 +16,8 @@ export type SettingsSectionProps = {
   readonly onSave?: () => void
   /** Puts back what is stored, dropping the section's edits; offered beside Save. */
   readonly onCancel?: () => void
+  /** The section's main actions, drawn prominently at its top, above its settings (F11-S51). */
+  readonly actions?: ReactNode
   readonly children: ReactNode
 }
 
@@ -23,7 +25,8 @@ export type SettingsSectionProps = {
  * One section of the settings page (F11-S34). Saving is explicit and per
  * section, so a job ending elsewhere, or another section's save, never
  * discards what is typed here (SETTINGS.md, principles). Cancel beside Save
- * drops the section's edits and shows what is stored again.
+ * drops the section's edits and shows what is stored again. What the section
+ * does, as against what it sets, sits at its top as its main actions.
  */
 export function SettingsSection({
   id,
@@ -33,6 +36,7 @@ export function SettingsSection({
   saving = false,
   onSave,
   onCancel,
+  actions,
   children,
 }: SettingsSectionProps) {
   const head = `${id}-title`
@@ -43,6 +47,11 @@ export function SettingsSection({
         {dirty && <span className={styles.dirty}>edited</span>}
         {status && <Pill tone={status.tone}>{status.word}</Pill>}
       </h2>
+      {actions && (
+        <div className={styles.actions} role="group" aria-label={`${title}: actions`}>
+          {actions}
+        </div>
+      )}
       {children}
       {onSave && (
         <div className={styles.save}>

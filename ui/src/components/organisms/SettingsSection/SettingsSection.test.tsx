@@ -3,7 +3,7 @@ import { fireEvent, render, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 import * as stories from './SettingsSection.stories'
 
-const { Clean, Edited, Saving, Problem, NothingToSave } = composeStories(stories)
+const { Clean, Edited, Saving, Problem, NothingToSave, WithActions } = composeStories(stories)
 
 describe('SettingsSection', () => {
   it('is a region named by its title, saving only once something is edited', () => {
@@ -33,5 +33,13 @@ describe('SettingsSection', () => {
   it('has no Save when there is nothing to save', () => {
     render(<NothingToSave />)
     expect(screen.queryByRole('button')).toBeNull()
+  })
+
+  it('puts its main actions at its top, before its settings', () => {
+    render(<WithActions />)
+    const actions = screen.getByRole('group', { name: 'Library: actions' })
+    const text = screen.getByText('Store root and rescan.')
+    expect(actions.compareDocumentPosition(text) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Rescan ROMs folder' })).toBeTruthy()
   })
 })

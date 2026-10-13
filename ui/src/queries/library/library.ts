@@ -93,17 +93,25 @@ export function useRematch(id: number) {
 }
 
 /** The library's own jobs, each started with nothing but its name. */
-type LibraryJob =
-  | '/api/v1/library/scan'
-  | '/api/v1/library/match'
-  | '/api/v1/library/covers'
-  | '/api/v1/library/franchises'
+type LibraryJob = '/api/v1/library/scan' | '/api/v1/library/franchises'
 
-/** Starts one of the library's jobs: scan the store, match, fill covers, propose franchise tags. */
+/** Starts one of the library's jobs: scan the store, or propose franchise tags. */
 export function useLibraryJob(path: LibraryJob) {
   const { api } = useEngine()
   return useMutation({
     mutationFn: async () => unwrap(await api.POST(path, {})),
+  })
+}
+
+/**
+ * The one metadata action (F5-S12): match the games that need it, or every
+ * game but a pin on a refresh, then fill missing covers from libretro.
+ */
+export function useMetadataJob() {
+  const { api } = useEngine()
+  return useMutation({
+    mutationFn: async (refresh: boolean) =>
+      unwrap(await api.POST('/api/v1/library/metadata', { body: { refresh } })),
   })
 }
 

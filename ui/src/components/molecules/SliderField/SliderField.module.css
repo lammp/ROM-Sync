@@ -1,0 +1,74 @@
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+  min-width: 0;
+}
+
+.label {
+  font-size: var(--text-base-sm);
+  color: var(--muted);
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  max-width: 34rem;
+}
+
+.number {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex: none;
+}
+
+.input {
+  width: 6ch;
+  box-sizing: content-box;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-6);
+  padding: 6px 9px;
+  text-align: right;
+}
+
+.input[aria-invalid='true'] {
+  border-color: var(--bad);
+}
+
+.unit {
+  color: var(--muted);
+  font-size: var(--text-base-sm);
+}
+
+.scale {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.scale > span:first-child,
+.scale input {
+  width: 100%;
+}
+
+.bounds {
+  display: flex;
+  justify-content: space-between;
+  color: var(--muted);
+  font-size: var(--text-xs);
+}
+
+.help {
+  color: var(--muted);
+  font-size: var(--text-base-sm);
+}
+
+.error {
+  font-size: var(--text-base-sm);
+  color: var(--bad);
+}

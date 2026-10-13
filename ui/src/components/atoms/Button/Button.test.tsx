@@ -3,7 +3,7 @@ import { fireEvent, render, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 import * as stories from './Button.stories'
 
-const { Default, Primary, Danger, Active, Small, Disabled } = composeStories(stories)
+const { Default, Primary, Danger, Active, Small, Large, Disabled } = composeStories(stories)
 
 describe('Button', () => {
   it('is a button that never submits by accident', () => {
@@ -22,6 +22,7 @@ describe('Button', () => {
       [Primary, 'Sync now'],
       [Danger, 'Remove profile'],
       [Small, 'Accept'],
+      [Large, 'Run Initial'],
     ] as const) {
       const { unmount } = render(<Story />)
       expect(screen.getByRole('button', { name })).toBeTruthy()

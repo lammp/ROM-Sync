@@ -5,6 +5,7 @@ import { CARD_REF, RETROID_REF, THOR_REF, fakeFetch, freshWorld } from '../../..
 import { EngineProvider, createEngine } from '../engine/engine'
 import {
   PROBE_MS,
+  probeMs,
   useAdopt,
   useRename,
   useRuns,
@@ -36,8 +37,12 @@ function harness() {
 }
 
 describe('device queries', () => {
-  it('asks for attached devices at version 1’s probe interval', async () => {
+  it('asks for attached devices at the probe interval the settings say', async () => {
     expect(PROBE_MS).toBe(15_000)
+    const at = (value: unknown) => [{ key: 'device.probe_interval', value }] as never
+    expect(probeMs(undefined)).toBe(PROBE_MS)
+    expect(probeMs(at(30))).toBe(30_000)
+    expect(probeMs(at('often'))).toBe(PROBE_MS)
     const { wrapper } = harness()
     const { result } = renderHook(() => useAttached(), { wrapper })
     await waitFor(() => expect(result.current.data?.devices[0]?.profile?.name).toBe('Thor'))

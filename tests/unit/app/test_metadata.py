@@ -1,4 +1,4 @@
-"""F5-S7 to S9: the matching pass and re-match."""
+"""F5-S7 to S9: the matching pass and re-match; F5-S12: pins and a refresh."""
 
 from __future__ import annotations
 
@@ -7,7 +7,7 @@ from typing import Any
 
 import pytest
 
-from romsync.app.metadata import Matching, PassResult, genres_of
+from romsync.app.metadata import REFRESH_STATES, Matching, PassResult, genres_of
 from romsync.domain.catalogue import Candidate, Platform
 from romsync.domain.errors import (
     JobCancelled,
@@ -175,6 +175,21 @@ def test_rematch_by_slug_or_url(
 ) -> None:
     md = RecordedMetadata(slugs={"alpha-game": Candidate(5, "Alpha Game")})
     assert Matching(r.games, md, covers).rematch(library["Alpha"], ref) == "Alpha Game"
+
+
+def test_a_rematch_pins_and_a_refresh_keeps_the_pin(
+    r: Repos, library: dict[str, int], covers: Any
+) -> None:
+    md = RecordedMetadata(slugs={"alpha-game": Candidate(5, "Alpha Game")})
+    Matching(r.games, md, covers).rematch(library["Alpha"], "alpha-game")
+    assert meta(r, library["Alpha"]).pinned
+    r.games.set_meta(library["Bravo"], GameMeta(state="matched", igdb_id=9))
+    result = Matching(r.games, service(), covers).run(SinkSpy(), states=REFRESH_STATES)
+    assert result.games == 3, "every game but the pin"
+    assert meta(r, library["Alpha"]).igdb_name == "Alpha Game"
+    assert (
+        not meta(r, library["Bravo"]).pinned and meta(r, library["Bravo"]).state == "unmatched"
+    )
 
 
 def test_rematch_not_found(r: Repos, library: dict[str, int], covers: Any) -> None:

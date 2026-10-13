@@ -1,27 +1,23 @@
-"""The match and cover passes as jobs, and re-matching one game (F10-S17)."""
+"""The metadata action as a job (F5-S12), and re-matching one game (F10-S17)."""
 
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends
 
-from romsync.compose import Engine, covers_job, match_job, rematch_job
+from romsync.compose import Engine, metadata_job, rematch_job
 from romsync_api.deps import engine
-from romsync_api.models import JobView, Rematch
+from romsync_api.models import JobView, MetadataRun, Rematch
 from romsync_api.routes.jobs import job_view
 
 router = APIRouter(tags=["metadata"])
 
 
-@router.post("/library/match", response_model=JobView)
-def match(e: Engine = Depends(engine)) -> JobView:  # noqa: B008
-    """Match every game still pending against the metadata service, as a job."""
-    return job_view(e.jobs.submit("match", None, match_job(e.passes)))
-
-
-@router.post("/library/covers", response_model=JobView)
-def covers(e: Engine = Depends(engine)) -> JobView:  # noqa: B008
-    """Fill missing box art from the libretro thumbnails, as a job."""
-    return job_view(e.jobs.submit("covers", None, covers_job(e.passes)))
+@router.post("/library/metadata", response_model=JobView)
+def metadata(body: MetadataRun, e: Engine = Depends(engine)) -> JobView:  # noqa: B008
+    """The one metadata action, as a job (F5-S12): match the games that need it
+    (every game but a pin, on a refresh), then fill missing covers from libretro
+    when that is on."""
+    return job_view(e.jobs.submit("metadata", None, metadata_job(e.passes, body.refresh)))
 
 
 @router.post("/games/{game_id}/rematch", response_model=JobView)

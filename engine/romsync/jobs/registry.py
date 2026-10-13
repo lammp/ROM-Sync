@@ -26,7 +26,7 @@ from romsync.ports.repo import JobRepo, JobState
 from romsync.ports.sink import ProgressEvent
 
 #: Kinds that write the library, and so exclude one another whatever their target.
-LIBRARY: Final = frozenset({"scan", "match", "covers", "franchise", "maintenance"})
+LIBRARY: Final = frozenset({"scan", "metadata", "franchise", "maintenance"})
 
 
 class Token:

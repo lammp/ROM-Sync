@@ -10,7 +10,10 @@ import {
   type ReactNode,
 } from 'react'
 import { Button } from '../../../components/atoms/Button/Button'
+import { Icon } from '../../../components/atoms/Icon/Icon'
+import { LinkButton } from '../../../components/atoms/LinkButton/LinkButton'
 import { Muted } from '../../../components/atoms/Muted/Muted'
+import { StatusButton, type RunState } from '../../../components/atoms/StatusButton/StatusButton'
 import { DataTable } from '../../../components/molecules/DataTable/DataTable'
 import { JobLine, type JobState } from '../../../components/molecules/JobLine/JobLine'
 import { LoadError } from '../../../components/molecules/LoadError/LoadError'
@@ -40,6 +43,7 @@ import {
   useAfterLibraryJob,
   useLibrary,
   useLibraryJob,
+  useMetadataJob,
   useSystems,
 } from '../../../queries/library/library'
 import {
@@ -65,13 +69,13 @@ import {
   type Setting,
 } from '../../../queries/settings/settings'
 import { appStore } from '../../../store/store'
-import { LABELS, arrange, toValues, type Draft, type Section } from './model'
+import { LABELS, LOCKS, PRESENTATION, arrange, toValues, type Draft, type Section } from './model'
 
 const toast = (text: string, bad = false) =>
   appStore.getState().ui.toast(text, bad ? 'bad' : 'info')
 const SECRET = 'igdb.client_secret'
 const CLIENT = 'igdb.client_id'
-const METADATA_JOBS = new Set(['match', 'covers', 'rematch', 'franchise'])
+const METADATA_JOBS = new Set(['metadata', 'match', 'covers', 'rematch', 'franchise'])
 
 const MAINTENANCE: Readonly<Record<Action, readonly [string, string]>> = {
   compact: ['Compact the database', 'Gives back space the database no longer uses.'],
@@ -115,7 +119,7 @@ function startAt(current: string, kind: 'folder' | 'file'): string | null {
   return cut > 0 ? current.slice(0, cut + (current[cut - 1] === ':' ? 1 : 0)) : null
 }
 
-/** A job a section started: its line while it runs, its sentence when it ends. */
+/** A job a section started: its line while it runs, its sentence when it ends, how it went. */
 function useSectionJob(done: () => void) {
   const [id, setId] = useState<string | null>(null)
   const job = useJob(id).data
@@ -147,7 +151,17 @@ function useSectionJob(done: () => void) {
     />
   ) : null
   const running = job !== undefined && !TERMINAL.has(job.state)
-  return { start: setId, line, running }
+  // how the last run went, on the button that started it (F11-S51)
+  const outcome: RunState = !job
+    ? 'idle'
+    : running
+      ? 'running'
+      : job.state === 'done'
+        ? 'passed'
+        : job.state === 'failed'
+          ? 'failed'
+          : 'idle'
+  return { start: setId, line, running, outcome }
 }
 
 type FieldsProps = {
@@ -156,11 +170,33 @@ type FieldsProps = {
   readonly drafts: Readonly<Record<string, Draft>>
   readonly errors: Readonly<Record<string, string>>
   readonly onDraft: (key: string, draft: Draft) => void
+  /** Saved values opened by their edit icon, so no longer locked. */
+  readonly unlocked: ReadonlySet<string>
+  readonly onUnlock: (key: string) => void
+  readonly onRelock: (key: string) => void
   readonly skip?: ReadonlySet<string>
 }
 
+/** Whether a field that locks is locked: it shows a value, is not edited, and was not opened (F11-S51). */
+const locks = (
+  key: string,
+  shown: string,
+  drafts: Readonly<Record<string, Draft>>,
+  unlocked: ReadonlySet<string>,
+) => LOCKS.has(key) && shown !== '' && !(key in drafts) && !unlocked.has(key)
+
 /** A section's registry fields, each showing its draft over the stored value. */
-function Fields({ section, byKey, drafts, errors, onDraft, skip }: FieldsProps) {
+function Fields({
+  section,
+  byKey,
+  drafts,
+  errors,
+  onDraft,
+  unlocked,
+  onUnlock,
+  onRelock,
+  skip,
+}: FieldsProps) {
   const choose = useContext(Chooser)
   return (
     <>
@@ -191,6 +227,10 @@ function Fields({ section, byKey, drafts, errors, onDraft, skip }: FieldsProps) 
               defaultText={s.kind === 'bool' ? undefined : toText(s, s.default) || 'none'}
               onDefault={s.stored && draft !== null ? () => onDraft(key, null) : undefined}
               pathKind={key in FILES ? 'file' : 'folder'}
+              presentation={PRESENTATION[key]}
+              locked={locks(key, String(value), drafts, unlocked)}
+              onUnlock={LOCKS.has(key) ? () => onUnlock(key) : undefined}
+              onLock={LOCKS.has(key) && (s.value ?? '') !== '' ? () => onRelock(key) : undefined}
               onChoose={
                 s.kind === 'path' && choose
                   ? () =>
@@ -213,6 +253,21 @@ function Fields({ section, byKey, drafts, errors, onDraft, skip }: FieldsProps) 
 function useDrafts(title: string) {
   const [drafts, setDrafts] = useState<Record<string, Draft>>({})
   const [errors, setErrors] = useState<Record<string, string>>({})
+  const [unlocked, setUnlocked] = useState<ReadonlySet<string>>(new Set())
+  const unlock = (key: string) => setUnlocked((u) => new Set(u).add(key))
+  /** Drops what was typed in one field and locks its saved value again. */
+  const relock = (key: string) => {
+    setDrafts((d) => {
+      const rest = { ...d }
+      delete rest[key]
+      return rest
+    })
+    setUnlocked((u) => {
+      const rest = new Set(u)
+      rest.delete(key)
+      return rest
+    })
+  }
   const write = useWriteSettings()
   const onDraft = (key: string, draft: Draft) => {
     setDrafts((d) => ({ ...d, [key]: draft }))
@@ -235,6 +290,7 @@ function useDrafts(title: string) {
         onSuccess: () => {
           setDrafts({})
           setErrors({})
+          setUnlocked(new Set())
           toast(`${title} saved`)
         },
         onError: (e) => {
@@ -247,8 +303,19 @@ function useDrafts(title: string) {
   const reset = () => {
     setDrafts({})
     setErrors({})
+    setUnlocked(new Set())
   }
-  return { drafts, errors, onDraft, save, saving: write.isPending, reset }
+  return {
+    drafts,
+    errors,
+    onDraft,
+    unlocked,
+    unlock,
+    relock,
+    save,
+    saving: write.isPending,
+    reset,
+  }
 }
 
 type SectionProps = {
@@ -257,6 +324,8 @@ type SectionProps = {
   /** Told whenever the section's edits start or stop being unsaved, for its tab's mark. */
   readonly onDirty?: (edited: boolean) => void
   readonly status?: { readonly tone: 'ok' | 'warn' | 'bad'; readonly word: string }
+  /** The section's main actions, at its top (F11-S51). */
+  readonly actions?: ReactNode
   /** What the section carries besides its fields; given the section's own draft setter. */
   readonly children?: ReactNode | ((onDraft: (key: string, draft: Draft) => void) => ReactNode)
 }
@@ -267,7 +336,7 @@ const carried = (
 ) => (typeof children === 'function' ? children(onDraft) : children)
 
 /** A section of plain registry fields and whatever it carries besides. */
-function PlainSection({ section, byKey, status, onDirty, children }: SectionProps) {
+function PlainSection({ section, byKey, status, onDirty, actions, children }: SectionProps) {
   const d = useDrafts(section.title)
   const edited = Object.keys(d.drafts).length > 0
   useEffect(() => onDirty?.(edited), [edited, onDirty])
@@ -280,6 +349,7 @@ function PlainSection({ section, byKey, status, onDirty, children }: SectionProp
       saving={d.saving}
       onSave={section.keys.length ? () => d.save(byKey) : undefined}
       onCancel={section.keys.length ? d.reset : undefined}
+      actions={actions}
     >
       <Fields
         section={section}
@@ -287,14 +357,17 @@ function PlainSection({ section, byKey, status, onDirty, children }: SectionProp
         drafts={d.drafts}
         errors={d.errors}
         onDraft={d.onDraft}
+        unlocked={d.unlocked}
+        onUnlock={d.unlock}
+        onRelock={d.relock}
       />
       {carried(children, d.onDraft)}
     </SettingsSection>
   )
 }
 
-/** Metadata: the credentials as their own control, the rest from the registry, and the passes. */
-function MetadataSection({ section, byKey, status, onDirty, children }: SectionProps) {
+/** Metadata: its one action at the top, the credentials as their own control, the rest from the registry. */
+function MetadataSection({ section, byKey, status, onDirty, actions, children }: SectionProps) {
   const d = useDrafts(section.title)
   const [secret, setSecret] = useState<SecretDraft>({ kind: 'keep' })
   const test = useTestCredentials()
@@ -333,10 +406,14 @@ function MetadataSection({ section, byKey, status, onDirty, children }: SectionP
         setSecret({ kind: 'keep' })
         setTested(null)
       }}
+      actions={actions}
     >
       <CredentialControl
         clientId={clientId}
         onClientId={(v) => d.onDraft(CLIENT, v)}
+        clientLocked={locks(CLIENT, clientId, d.drafts, d.unlocked)}
+        onUnlockClient={() => d.unlock(CLIENT)}
+        onLockClient={byKey.get(CLIENT)?.value ? () => d.relock(CLIENT) : undefined}
         secret={{
           present: stored?.present ?? false,
           length: stored?.length ?? 0,
@@ -373,6 +450,9 @@ function MetadataSection({ section, byKey, status, onDirty, children }: SectionP
         drafts={d.drafts}
         errors={d.errors}
         onDraft={d.onDraft}
+        unlocked={d.unlocked}
+        onUnlock={d.unlock}
+        onRelock={d.relock}
         skip={new Set([CLIENT, SECRET])}
       />
       {carried(children, d.onDraft)}
@@ -381,9 +461,10 @@ function MetadataSection({ section, byKey, status, onDirty, children }: SectionP
 }
 
 /**
- * The settings page (F11-S34), built to SETTINGS.md: setup first while it is
- * incomplete, then the sections in first-run order, each saving on its own,
- * every field drawn from the engine's registry.
+ * The settings page (F11-S34), built to SETTINGS.md: a tab per group in
+ * first-run order, each with what it does at its top and what it sets below,
+ * saving on its own; every field drawn from the engine's registry, saved
+ * values locked until opened, bounded numbers as scales and lists (F11-S51).
  */
 export function SettingsView() {
   const settings = useSettings()
@@ -449,8 +530,8 @@ export function SettingsView() {
   const metaJob = useSectionJob(refreshLibrary)
   const tagJob = useSectionJob(refreshLibrary)
   const scan = useLibraryJob('/api/v1/library/scan')
-  const match = useLibraryJob('/api/v1/library/match')
-  const covers = useLibraryJob('/api/v1/library/covers')
+  const metadata = useMetadataJob()
+  const [metaMode, setMetaMode] = useState<'update' | 'refresh'>('update')
   const franchises = useLibraryJob('/api/v1/library/franchises')
 
   if (settings.isError)
@@ -475,10 +556,40 @@ export function SettingsView() {
   const credentials =
     Boolean(byKey.get(CLIENT)?.value) && Boolean(byKey.get(SECRET)?.secret_state?.present)
   const pending = games.filter((g) => g.state === 'pending').length
-  const coverless = games.filter((g) => g.matched && !g.coverUrl).length
+  const matched = games.filter((g) => g.matched).length
+  const coverless = games.filter((g) => !g.coverUrl).length
+  // nothing looked up yet: the first run is the initial one (F11-S52)
+  const looked = games.some((g) => g.state !== 'pending')
+  const coversOn = byKey.get('match.auto_libretro_covers')?.value !== false
+  const rate = Number(byKey.get('igdb.requests_per_second')?.value ?? 4) || 4
   const metadataBusy = (jobs.data ?? []).some(
     (j) => METADATA_JOBS.has(j.kind) && !TERMINAL.has(j.state),
   )
+  const cannotRun = !games.length
+    ? 'Rescan the ROMs folder first'
+    : metadataBusy && !metaJob.running
+      ? 'A metadata pass is already running'
+      : !credentials && !coversOn
+        ? 'Add Twitch credentials, or turn on libretro covers'
+        : undefined
+  const runMetadata = (refresh: boolean) => {
+    setMetaMode(refresh ? 'refresh' : 'update')
+    metadata.mutate(refresh, {
+      onSuccess: (j) => {
+        metaJob.start(j.id)
+        void jobs.refetch()
+      },
+      onError: (e) => toast(e.message, true),
+    })
+  }
+  const refresh = () =>
+    setAsk({
+      title: 'Refresh metadata',
+      body: `Match all ${games.length.toLocaleString()} games again and replace the details, scores and covers each has now; a game you matched by hand keeps its match. This rebuilds the metadata, asking IGDB about every game at up to ${rate} a second: about ${Math.max(1, Math.ceil(games.length / rate / 60)).toLocaleString()} minutes.`,
+      confirm: 'Refresh',
+      danger: true,
+      run: () => runMetadata(true),
+    })
 
   const startJob = (
     m: {
@@ -557,20 +668,31 @@ export function SettingsView() {
                           }
                         : { tone: 'warn', word: 'no systems found here' }
                   }
+                  actions={
+                    <>
+                      <p>
+                        <StatusButton
+                          large
+                          variant="primary"
+                          label="Rescan ROMs folder"
+                          state={scanJob.outcome}
+                          disabled={!storeRoot}
+                          title={storeRoot ? undefined : 'Choose the ROMs folder first'}
+                          onClick={rescan}
+                        />
+                        {can(shell, 'reveal') && storeRoot && (
+                          <Button large onClick={() => reveal.mutate({ root: 'store' })}>
+                            <Icon name="open" />
+                            Reveal
+                          </Button>
+                        )}
+                      </p>
+                      {scanJob.line}
+                    </>
+                  }
                 >
                   {() => (
                     <>
-                      <p>
-                        {can(shell, 'reveal') && storeRoot && (
-                          <Button small onClick={() => reveal.mutate({ root: 'store' })}>
-                            Reveal
-                          </Button>
-                        )}{' '}
-                        <Button small disabled={!storeRoot || scanJob.running} onClick={rescan}>
-                          Rescan ROMs folder
-                        </Button>
-                      </p>
-                      {scanJob.line}
                       <DataTable
                         caption="Systems in the ROMs folder"
                         columns={[
@@ -615,33 +737,58 @@ export function SettingsView() {
                       ? { tone: 'ok', word: 'credentials set' }
                       : { tone: 'warn', word: 'no credentials' }
                   }
-                >
-                  <p>
-                    <Button
-                      small
-                      disabled={!pending || metadataBusy || !credentials}
-                      title={credentials ? undefined : 'Add credentials first'}
-                      onClick={() =>
-                        setAsk({
-                          title: 'Match new games',
-                          body: `Look up ${pending.toLocaleString()} unmatched games on IGDB, at up to ${String(byKey.get('igdb.requests_per_second')?.value ?? 4)} requests a second.`,
-                          confirm: 'Match',
-                          run: () => startJob(match, metaJob.start),
-                        })
-                      }
-                    >
-                      Match new ({pending.toLocaleString()})
-                    </Button>{' '}
-                    <Button
-                      small
-                      disabled={!coverless || metadataBusy}
-                      onClick={() => startJob(covers, metaJob.start)}
-                    >
-                      Fill missing covers ({coverless.toLocaleString()})
-                    </Button>
-                  </p>
-                  {metaJob.line}
-                </MetadataSection>
+                  actions={
+                    <>
+                      <p>
+                        <StatusButton
+                          large
+                          variant="primary"
+                          icon="play"
+                          label={looked ? 'Update Metadata' : 'Run Initial'}
+                          state={metaMode === 'update' ? metaJob.outcome : 'idle'}
+                          disabled={
+                            cannotRun !== undefined || (metaJob.running && metaMode !== 'update')
+                          }
+                          title={cannotRun}
+                          onClick={() => runMetadata(false)}
+                        />
+                        <StatusButton
+                          large
+                          label="Refresh Metadata"
+                          state={metaMode === 'refresh' ? metaJob.outcome : 'idle'}
+                          disabled={
+                            cannotRun !== undefined ||
+                            !looked ||
+                            !credentials ||
+                            (metaJob.running && metaMode !== 'refresh')
+                          }
+                          title={
+                            cannotRun ??
+                            (!credentials
+                              ? 'Add Twitch credentials first'
+                              : !looked
+                                ? 'Run the initial pass first'
+                                : undefined)
+                          }
+                          onClick={refresh}
+                        />
+                      </p>
+                      <Muted>
+                        {[
+                          `${pending.toLocaleString()} not looked up yet`,
+                          `${matched.toLocaleString()} matched`,
+                          `${coverless.toLocaleString()} without a cover`,
+                        ].join(' · ')}
+                        {credentials
+                          ? ''
+                          : coversOn
+                            ? '. Without Twitch credentials only libretro covers are filled.'
+                            : ''}
+                      </Muted>
+                      {metaJob.line}
+                    </>
+                  }
+                />
               ),
             },
             {
@@ -649,22 +796,32 @@ export function SettingsView() {
               label: section('tags').title,
               dirty: dirty.has('tags'),
               panel: (
-                <PlainSection section={section('tags')} byKey={byKey} onDirty={dirtyIn('tags')}>
-                  <p>
-                    <Button
-                      small
-                      disabled={metadataBusy || tagJob.running}
-                      onClick={() => startJob(franchises, tagJob.start)}
-                    >
-                      Propose franchise tags
-                    </Button>{' '}
-                    <Muted>
-                      Proposals wait for a decision in each game&apos;s details; a decision is never
-                      overwritten.
-                    </Muted>
-                  </p>
-                  {tagJob.line}
-                </PlainSection>
+                <PlainSection
+                  section={section('tags')}
+                  byKey={byKey}
+                  onDirty={dirtyIn('tags')}
+                  actions={
+                    <>
+                      <p>
+                        <StatusButton
+                          large
+                          variant="primary"
+                          icon="play"
+                          label="Propose franchise tags"
+                          state={tagJob.outcome}
+                          disabled={metadataBusy && !tagJob.running}
+                          title={metadataBusy ? 'A metadata pass is running' : undefined}
+                          onClick={() => startJob(franchises, tagJob.start)}
+                        />
+                      </p>
+                      <Muted>
+                        Proposals wait for a decision in each game&apos;s details; a decision is
+                        never overwritten.
+                      </Muted>
+                      {tagJob.line}
+                    </>
+                  }
+                />
               ),
             },
             {
@@ -676,9 +833,20 @@ export function SettingsView() {
                   section={section('transports')}
                   byKey={byKey}
                   onDirty={dirtyIn('transports')}
-                >
-                  <TransportList transports={attached.data?.transports ?? []} />
-                </PlainSection>
+                  actions={
+                    <>
+                      <p>
+                        <StatusButton
+                          large
+                          label="Look for devices again"
+                          state={attached.isFetching ? 'running' : 'idle'}
+                          onClick={() => void attached.refetch()}
+                        />
+                      </p>
+                      <TransportList transports={attached.data?.transports ?? []} />
+                    </>
+                  }
+                />
               ),
             },
             {
@@ -694,14 +862,21 @@ export function SettingsView() {
               label: section('data').title,
               dirty: dirty.has('data'),
               panel: (
-                <PlainSection section={section('data')} byKey={byKey} onDirty={dirtyIn('data')}>
-                  {can(shell, 'reveal') && (
-                    <p>
-                      <Button small onClick={() => reveal.mutate({ root: 'data' })}>
-                        Reveal the data folder
-                      </Button>
-                    </p>
-                  )}
+                <PlainSection
+                  section={section('data')}
+                  byKey={byKey}
+                  onDirty={dirtyIn('data')}
+                  actions={
+                    can(shell, 'reveal') && (
+                      <p>
+                        <Button large onClick={() => reveal.mutate({ root: 'data' })}>
+                          <Icon name="open" />
+                          Reveal the data folder
+                        </Button>
+                      </p>
+                    )
+                  }
+                >
                   {storage.isError ? (
                     <LoadError
                       what="the storage breakdown"
@@ -754,6 +929,17 @@ export function SettingsView() {
                   section={section('diagnostics')}
                   byKey={byKey}
                   onDirty={dirtyIn('diagnostics')}
+                  actions={
+                    <p>
+                      <LinkButton
+                        large
+                        href={`${baseUrl}/api/v1/diagnostics/bundle`}
+                        download="romsync-support.zip"
+                      >
+                        Export a support bundle
+                      </LinkButton>
+                    </p>
+                  }
                 >
                   {diagnostics.isError ? (
                     <LoadError
@@ -785,7 +971,6 @@ export function SettingsView() {
                           : null
                       }
                       errors={diagnostics.data?.recent_errors ?? []}
-                      bundleHref={`${baseUrl}/api/v1/diagnostics/bundle`}
                     />
                   )}
                   <JobsTable

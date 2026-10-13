@@ -8,6 +8,7 @@ import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/rea
 import { useCallback } from 'react'
 import type { components } from '../../lib/api/api'
 import { unwrap, useEngine, type Engine } from '../engine/engine'
+import { useSettings, type Setting } from '../settings/settings'
 
 export type Profile = components['schemas']['Profile']
 export type Attached = components['schemas']['AttachedDevice']
@@ -15,15 +16,22 @@ export type Blocked = components['schemas']['BlockedDevice']
 export type SelectionView = components['schemas']['SelectionView']
 export type PlanView = components['schemas']['PlanView']
 
-/** How often attached devices are asked for, in milliseconds: version 1's probe interval. */
+/** How often attached devices are asked for, in milliseconds, until the settings are read: the registry's default. */
 export const PROBE_MS = 15_000
+
+/** The probe interval the settings say (`device.probe_interval`, in seconds), in milliseconds. */
+export function probeMs(settings: readonly Setting[] | undefined): number {
+  const seconds = settings?.find((s) => s.key === 'device.probe_interval')?.value
+  return typeof seconds === 'number' && seconds > 0 ? seconds * 1000 : PROBE_MS
+}
 
 export function useAttached() {
   const { api } = useEngine()
+  const settings = useSettings().data
   return useQuery({
     queryKey: ['devices'],
     queryFn: async ({ signal }) => unwrap(await api.GET('/api/v1/devices', { signal })),
-    refetchInterval: PROBE_MS,
+    refetchInterval: probeMs(settings),
   })
 }
 

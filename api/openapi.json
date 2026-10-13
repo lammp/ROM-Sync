@@ -1131,6 +1131,18 @@
         "title": "Member",
         "type": "object"
       },
+      "MetadataRun": {
+        "additionalProperties": false,
+        "properties": {
+          "refresh": {
+            "default": false,
+            "title": "Refresh",
+            "type": "boolean"
+          }
+        },
+        "title": "MetadataRun",
+        "type": "object"
+      },
       "ModeChange": {
         "additionalProperties": false,
         "properties": {
@@ -6174,98 +6186,6 @@
         ]
       }
     },
-    "/api/v1/library/covers": {
-      "post": {
-        "description": "Fill missing box art from the libretro thumbnails, as a job.",
-        "operationId": "covers_api_v1_library_covers_post",
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/JobView"
-                }
-              }
-            },
-            "description": "Successful Response"
-          },
-          "400": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
-                }
-              }
-            },
-            "description": "Bad Request"
-          },
-          "403": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
-                }
-              }
-            },
-            "description": "Forbidden"
-          },
-          "404": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
-                }
-              }
-            },
-            "description": "Not Found"
-          },
-          "409": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
-                }
-              }
-            },
-            "description": "Conflict"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
-                }
-              }
-            },
-            "description": "Unprocessable Entity"
-          },
-          "502": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
-                }
-              }
-            },
-            "description": "Bad Gateway"
-          },
-          "503": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
-                }
-              }
-            },
-            "description": "Service Unavailable"
-          }
-        },
-        "summary": "Covers",
-        "tags": [
-          "metadata"
-        ]
-      }
-    },
     "/api/v1/library/franchises": {
       "post": {
         "description": "Propose franchise tags from the rules, as a job. Decisions are never overwritten.",
@@ -6358,10 +6278,20 @@
         ]
       }
     },
-    "/api/v1/library/match": {
+    "/api/v1/library/metadata": {
       "post": {
-        "description": "Match every game still pending against the metadata service, as a job.",
-        "operationId": "match_api_v1_library_match_post",
+        "description": "The one metadata action, as a job (F5-S12): match the games that need it\n(every game but a pin, on a refresh), then fill missing covers from libretro\nwhen that is on.",
+        "operationId": "metadata_api_v1_library_metadata_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MetadataRun"
+              }
+            }
+          },
+          "required": true
+        },
         "responses": {
           "200": {
             "content": {
@@ -6444,7 +6374,7 @@
             "description": "Service Unavailable"
           }
         },
-        "summary": "Match",
+        "summary": "Metadata",
         "tags": [
           "metadata"
         ]

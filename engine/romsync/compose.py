@@ -313,29 +313,9 @@ def scan_job(library: Library) -> Work:
     return work
 
 
-def match_job(passes: Passes) -> Work:
+def metadata_job(passes: Passes, refresh: bool) -> Work:
     def work(ctx: Context) -> dict[str, int]:
-        r = passes.match(ctx, ctx.cancel.is_set)
-        return {
-            "games": r.games,
-            "matched": r.matched,
-            "unmatched": r.unmatched,
-            "errors": r.errors,
-        }
-
-    return work
-
-
-def covers_job(passes: Passes) -> Work:
-    def work(ctx: Context) -> dict[str, int]:
-        r = passes.covers(ctx, ctx.cancel.is_set)
-        return {
-            "games": r.games,
-            "filled": r.filled,
-            "not_found": r.not_found,
-            "failed": r.failed,
-            "no_source": r.no_source,
-        }
+        return passes.metadata(ctx, ctx.cancel.is_set, refresh)
 
     return work
 

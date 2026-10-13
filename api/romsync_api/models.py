@@ -403,6 +403,11 @@ class Notified(Model):
     delivered: bool
 
 
+class MetadataRun(Model):
+    #: Match every game again but for a pin, rather than only those that need it.
+    refresh: bool = False
+
+
 class Rematch(Model):
     #: A metadata id, a slug, or the service's link to the game.
     ref: str

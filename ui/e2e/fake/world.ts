@@ -304,7 +304,7 @@ const REGISTRY: readonly Json[] = [
     description: 'Fill fraction at which the capacity meter turns to caution.',
     choices: [],
     minimum: 0.1,
-    maximum: 1.0,
+    maximum: 1,
     unit: '',
     restart: false,
     secret: false,
@@ -316,7 +316,7 @@ const REGISTRY: readonly Json[] = [
     description: 'Fill fraction at which it turns to alarm.',
     choices: [],
     minimum: 0.1,
-    maximum: 1.0,
+    maximum: 1,
     unit: '',
     restart: false,
     secret: false,
@@ -328,20 +328,8 @@ const REGISTRY: readonly Json[] = [
     description: 'A plan removing more than this many items asks twice.',
     choices: [],
     minimum: 0,
-    maximum: 100000,
+    maximum: 1000,
     unit: '',
-    restart: false,
-    secret: false,
-  },
-  {
-    key: 'sync.verify_percentage',
-    kind: 'int',
-    default: 100,
-    description: 'How much of a transfer is content-verified where the transport allows it.',
-    choices: [],
-    minimum: 0,
-    maximum: 100,
-    unit: ' %',
     restart: false,
     secret: false,
   },
@@ -375,8 +363,8 @@ const REGISTRY: readonly Json[] = [
     default: 4.0,
     description: 'Shared request budget across every concurrent pass. IGDB allows four.',
     choices: [],
-    minimum: 1.0,
-    maximum: 4.0,
+    minimum: 1,
+    maximum: 4,
     unit: '/s',
     restart: false,
     secret: false,
@@ -387,8 +375,8 @@ const REGISTRY: readonly Json[] = [
     default: 0.55,
     description: 'Score at or above which a candidate is accepted as a match.',
     choices: [],
-    minimum: 0.0,
-    maximum: 1.0,
+    minimum: 0,
+    maximum: 1,
     unit: '',
     restart: false,
     secret: false,
@@ -400,7 +388,7 @@ const REGISTRY: readonly Json[] = [
     description: 'A matching pass stops after this many failures in a row.',
     choices: [],
     minimum: 1,
-    maximum: 1000,
+    maximum: 100,
     unit: '',
     restart: false,
     secret: false,
@@ -410,18 +398,6 @@ const REGISTRY: readonly Json[] = [
     kind: 'bool',
     default: true,
     description: 'Fill a missing cover from the community thumbnail set. Never replaces one.',
-    choices: [],
-    minimum: null,
-    maximum: null,
-    unit: '',
-    restart: false,
-    secret: false,
-  },
-  {
-    key: 'match.auto_enrich',
-    kind: 'bool',
-    default: false,
-    description: 'Fetch screenshots and tags for a matched game without being asked.',
     choices: [],
     minimum: null,
     maximum: null,
@@ -472,7 +448,7 @@ const REGISTRY: readonly Json[] = [
     description: 'Terminal jobs kept before the oldest are evicted.',
     choices: [],
     minimum: 10,
-    maximum: 10000,
+    maximum: 1000,
     unit: '',
     restart: false,
     secret: false,
@@ -484,7 +460,7 @@ const REGISTRY: readonly Json[] = [
     description: 'Run folders kept on disk before the oldest are pruned.',
     choices: [],
     minimum: 1,
-    maximum: 1000,
+    maximum: 200,
     unit: '',
     restart: false,
     secret: false,
@@ -1355,12 +1331,21 @@ const ROUTES: Route[] = [
     w.unread.push({ system: String(b.system), name: String(b.name), size: Number(item.size ?? 0) })
     return job(w, 'recover', String(ref), { placed: 1, bytes: Number(item.size ?? 0) })
   }),
-  route('POST', '/api/v1/library/match', (w) => {
-    const pending = w.games.filter((g) => g.state === 'pending')
-    for (const g of pending) g.state = 'not_found'
-    return job(w, 'match', null, { matched: 0, not_found: pending.length })
+  route('POST', '/api/v1/library/metadata', (w, _p, b) => {
+    // the engine's one metadata action (F5-S12): an update looks up what was never
+    // looked up or failed; a refresh, every game; covers follow their setting
+    const refresh = b.refresh === true
+    const todo = w.games.filter((g) => refresh || g.state === 'pending' || g.state === 'error')
+    const credentials = Boolean(w.stored['igdb.client_id'] && w.secret)
+    const result: Record<string, number> = { refresh: refresh ? 1 : 0 }
+    if (credentials) {
+      for (const g of todo) g.state = 'unmatched'
+      Object.assign(result, { games: todo.length, matched: 0, unmatched: todo.length, errors: 0 })
+    } else result.no_credentials = 1
+    if (w.stored['match.auto_libretro_covers'] !== false)
+      Object.assign(result, { filled: 0, not_found: w.games.filter((g) => !g.cover).length })
+    return job(w, 'metadata', null, result)
   }),
-  route('POST', '/api/v1/library/covers', (w) => job(w, 'covers', null, { filled: 0 })),
   route('POST', '/api/v1/library/franchises', (w) => job(w, 'franchise', null, { proposed: 2 })),
   route('GET', '/api/v1/maintenance/{action}', (w, [action]) => {
     const counts: Record<string, [number, number]> = {

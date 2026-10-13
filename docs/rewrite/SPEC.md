@@ -152,7 +152,7 @@ effect only at startup, and a one-line description.
 | `POST /api/v1/settings` validates against the registry, applies only supplied keys, deletes a key sent as `null`, and returns a per-field error on rejection. |
 | No default is an absolute path. Path defaults are relative to the install or are empty. |
 | A secret is never returned. The response carries presence, length, when it was saved, and where it came from. |
-| Minimum registry coverage: store root, data directory, adb path, adb enabled, MTP enabled, device staging template, staged hash limit, device probe interval, free-space margin, warn thresholds, confirm-remove threshold, write marker after sync, verify percentage, IGDB client id, IGDB secret, IGDB requests per second, match acceptance threshold, auto libretro covers, auto enrich, preferred port, log level, rescan on launch, job history length, run folder retention. |
+| Minimum registry coverage: store root, data directory, adb path, adb enabled, MTP enabled, device staging template, staged hash limit, device probe interval, free-space margin, warn thresholds, confirm-remove threshold, write marker after sync, IGDB client id, IGDB secret, IGDB requests per second, match acceptance threshold, auto libretro covers, preferred port, log level, rescan on launch, job history length, run folder retention. Auto enrich and a verify percentage were removed with the settings redesign (F11-S51): nothing fetches screenshots or tags after a match, and every transfer is verified wherever its transport can, so neither setting changed anything. Each returns with the feature it would control. |
 
 ## 8. Jobs
 

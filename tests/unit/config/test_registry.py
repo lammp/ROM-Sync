@@ -15,6 +15,8 @@ from romsync.domain.errors import (
 from romsync.domain.planning import FULL_MARGIN
 
 #: SPEC section 7 names the minimum coverage. Each of these must be declared.
+#: Auto enrich and the verify percentage left it with the settings redesign
+#: (F11-S51): nothing read either, and a control that changes nothing misleads.
 REQUIRED_KEYS = (
     "store.root",
     "data.directory",
@@ -29,13 +31,11 @@ REQUIRED_KEYS = (
     "capacity.alarm_fraction",
     "sync.confirm_remove_threshold",
     "device.write_marker_after_sync",
-    "sync.verify_percentage",
     "igdb.client_id",
     "igdb.client_secret",
     "igdb.requests_per_second",
     "match.accept_threshold",
     "match.auto_libretro_covers",
-    "match.auto_enrich",
     "server.preferred_port",
     "log.level",
     "store.rescan_on_launch",
@@ -87,8 +87,8 @@ def test_validation_rejects_out_of_range() -> None:
 
 def test_validation_rejects_above_the_maximum() -> None:
     with pytest.raises(ConfigOutOfRange) as caught:
-        REGISTRY.validate_all({"sync.verify_percentage": 101})
-    assert caught.value.field == "sync.verify_percentage"
+        REGISTRY.validate_all({"match.abort_after_errors": 101})
+    assert caught.value.field == "match.abort_after_errors"
 
 
 def test_validation_rejects_a_value_outside_an_allowed_set() -> None:
@@ -187,9 +187,9 @@ def test_a_value_inside_both_bounds_is_returned() -> None:
 
 
 def test_a_value_at_a_bound_is_accepted() -> None:
-    setting = REGISTRY.get("sync.verify_percentage")
+    setting = REGISTRY.get("sync.confirm_remove_threshold")
     assert setting.validate(0) == 0
-    assert setting.validate(100) == 100
+    assert setting.validate(1000) == 1000
 
 
 def test_defaults_are_available_for_a_first_run() -> None:

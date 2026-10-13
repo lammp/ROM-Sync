@@ -45,7 +45,7 @@ test('announces_every_toast: a saved section is announced', async ({ page }) => 
   await page.goto('/settings/#sync')
   const r = await original(page)
   const sync = page.getByRole('region', { name: /^Sync behaviour/ })
-  await sync.getByRole('textbox', { name: 'Keep free on the device' }).fill('1 GB')
+  await sync.getByRole('combobox', { name: 'Keep free on the device' }).selectOption('1.00 GB')
   await sync.getByRole('button', { name: 'Save sync behaviour and guards' }).click()
   await announced(r, 'Sync behaviour and guards saved')
 })

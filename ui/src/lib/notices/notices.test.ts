@@ -41,6 +41,27 @@ describe('notices', () => {
     expect(jobNotice(job('franchise', { proposed: 12 }))?.title).toBe('Franchise tags proposed: 12')
   })
 
+  it('says the metadata action: an update, a refresh, and covers only without credentials', () => {
+    expect(
+      jobNotice(
+        job('metadata', { refresh: 0, matched: 40, unmatched: 2, filled: 3, not_found: 1 }),
+      ),
+    ).toMatchObject({
+      title: 'Metadata updated: 40 games matched',
+      body: '2 not matched, 3 covers filled, 1 covers not found',
+      tone: 'info',
+    })
+    expect(jobNotice(job('metadata', { refresh: 1, matched: 1, errors: 1 }))).toMatchObject({
+      title: 'Metadata refreshed: 1 game matched',
+      tone: 'warn',
+    })
+    expect(jobNotice(job('metadata', { refresh: 0, no_credentials: 1, filled: 1 }))).toMatchObject({
+      title: 'Metadata updated: 1 cover filled',
+      body: 'covers only, no credentials, 1 covers filled',
+    })
+    expect(jobNotice(job('metadata', {}, 'failed'))?.title).toBe('Metadata failed')
+  })
+
   it('says a sync with its failures as a warning, and names the device', () => {
     expect(jobNotice(job('sync', { send: 4, update: 1, remove: 2 }), 'Thor')).toMatchObject({
       title: 'Thor synced',

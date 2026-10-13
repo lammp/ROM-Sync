@@ -177,7 +177,7 @@ class SqliteGames:
     def meta(self, game_id: int) -> GameMeta | None:
         row = self._c.execute(
             "SELECT id, scrape_state, confidence, igdb_id, igdb_name, summary, release_date, "
-            "rating, rating_count, genres, cover_file FROM games WHERE id = ?",
+            "rating, rating_count, genres, cover_file, pinned FROM games WHERE id = ?",
             (game_id,),
         ).fetchone()
         return None if row is None else self._meta(row)
@@ -185,7 +185,7 @@ class SqliteGames:
     def metas(self) -> Mapping[int, GameMeta]:
         rows = self._c.execute(
             "SELECT id, scrape_state, confidence, igdb_id, igdb_name, summary, release_date, "
-            "rating, rating_count, genres, cover_file FROM games"
+            "rating, rating_count, genres, cover_file, pinned FROM games"
         )
         return {r["id"]: self._meta(r) for r in rows}
 
@@ -207,13 +207,14 @@ class SqliteGames:
             rating_count=row["rating_count"],
             genres=tuple(str(g) for g in genres) if isinstance(genres, list) else (),
             cover=row["cover_file"],
+            pinned=bool(row["pinned"]),
         )
 
     def set_meta(self, game_id: int, meta: GameMeta) -> None:
         self._c.execute(
             "UPDATE games SET scrape_state = ?, confidence = ?, igdb_id = ?, igdb_name = ?, "
             "summary = ?, release_date = ?, rating = ?, rating_count = ?, genres = ?, "
-            "cover_file = ? WHERE id = ?",
+            "cover_file = ?, pinned = ? WHERE id = ?",
             (
                 meta.state,
                 meta.confidence,
@@ -225,6 +226,7 @@ class SqliteGames:
                 meta.rating_count,
                 _json(list(meta.genres)),
                 meta.cover,
+                int(meta.pinned),
                 game_id,
             ),
         )

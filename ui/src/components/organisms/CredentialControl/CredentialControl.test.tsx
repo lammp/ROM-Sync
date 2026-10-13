@@ -1,23 +1,27 @@
 import { composeStories } from '@storybook/react'
 import { fireEvent, render, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
-import { savedOn, testWords } from './CredentialControl'
+import { testState, testWords } from './CredentialControl'
 import * as stories from './CredentialControl.stories'
 
-const { Saved, Imported, Unset, Typing, Removing, Tested, TestedThenEdited } =
+const { Saved, Imported, Unset, Testing, Passed, Failed, TestedThenEdited } =
   composeStories(stories)
 
+const glyph = () =>
+  screen
+    .getByRole('button', { name: 'Test connection' })
+    .querySelector('svg')
+    ?.getAttribute('data-icon')
+
 describe('CredentialControl', () => {
-  it('describes a saved secret without any of it, and offers Replace and Remove', () => {
+  it('locks both saved values, each with its own way to change it', () => {
     render(<Saved />)
-    expect(screen.getByText('Saved 8 Oct 2026 · 30 characters · not shown again')).toBeTruthy()
-    expect(document.querySelector('input[type="password"]')).toBeNull()
-    fireEvent.click(screen.getByRole('button', { name: 'Remove' }))
+    const id = screen.getByRole('textbox', { name: 'Twitch client ID' }) as HTMLInputElement
+    expect(id.readOnly).toBe(true)
+    expect((screen.getByLabelText('Client secret') as HTMLInputElement).readOnly).toBe(true)
+    expect(screen.getByText(/Saved 8 Oct 2026 · 30 characters/)).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: 'Remove the saved client secret' }))
     expect(Saved.args.onDraft).toHaveBeenCalledWith({ kind: 'remove' })
-    fireEvent.change(screen.getByRole('textbox', { name: 'Twitch client ID' }), {
-      target: { value: 'x' },
-    })
-    expect(Saved.args.onClientId).toHaveBeenCalledWith('x')
   })
 
   it('says where an imported secret came from', () => {
@@ -25,60 +29,53 @@ describe('CredentialControl', () => {
     expect(screen.getByText(/imported from RomCurator/)).toBeTruthy()
   })
 
-  it('says what is missing without credentials, and adds them', () => {
+  it('leaves both open when nothing is saved', () => {
     render(<Unset />)
-    expect(screen.getByText(/^Not set\./)).toBeTruthy()
-    fireEvent.click(screen.getByRole('button', { name: 'Add credentials' }))
-    expect(Unset.args.onDraft).toHaveBeenCalledWith({ kind: 'typed', text: '' })
-  })
-
-  it('takes a new secret in a password field, warns when short, and can go back', () => {
-    render(<Typing />)
-    const field = screen.getByLabelText('New client secret') as HTMLInputElement
-    expect(field.type).toBe('password')
-    expect(screen.getByText('That is shorter than a Twitch secret usually is.')).toBeTruthy()
-    fireEvent.change(field, { target: { value: 'a-much-longer-secret-typed' } })
-    expect(Typing.args.onDraft).toHaveBeenCalledWith({
-      kind: 'typed',
-      text: 'a-much-longer-secret-typed',
+    fireEvent.change(screen.getByRole('textbox', { name: 'Twitch client ID' }), {
+      target: { value: 'x' },
     })
-    fireEvent.click(screen.getByRole('button', { name: 'Keep the saved one' }))
-    expect(Typing.args.onDraft).toHaveBeenLastCalledWith({ kind: 'keep' })
+    expect(Unset.args.onClientId).toHaveBeenCalledWith('x')
+    expect((screen.getByLabelText('Client secret') as HTMLInputElement).readOnly).toBe(false)
   })
 
-  it('says a removal waits for the save', () => {
-    render(<Removing />)
-    expect(screen.getByText('Will be removed when this section is saved.')).toBeTruthy()
-  })
-
-  it('says which stage of the test failed, and when a result is stale', () => {
-    render(<Tested />)
+  it('turns while testing, then shows a tick or a cross with the outcome in words', () => {
+    const { unmount } = render(<Testing />)
+    expect(glyph()).toBe('recycle')
+    expect(screen.getByRole('button', { name: 'Test connection' }).getAttribute('aria-busy')).toBe(
+      'true',
+    )
+    unmount()
+    const passed = render(<Passed />)
+    expect(glyph()).toBe('tick')
+    expect(screen.getByRole('status').textContent).toBe('connected: token, api ok')
+    passed.unmount()
+    render(<Failed />)
+    expect(glyph()).toBe('cross')
     expect(screen.getByRole('status').textContent).toBe(
       'token failed: Twitch rejected the credentials',
     )
-    render(<TestedThenEdited />)
-    expect(screen.getByText('(edited since; test again)', { exact: false })).toBeTruthy()
   })
 
-  it('words dates and results', () => {
-    expect([savedOn(null), savedOn('2026-10-08T04:11:00+00:00'), savedOn('soon')]).toEqual([
-      '',
-      '8 Oct 2026',
-      'soon',
-    ])
+  it('drops the outcome from the button once the fields change', () => {
+    render(<TestedThenEdited />)
+    expect(glyph()).toBe('recycle')
+    expect(screen.getByText('(edited since; test again)', { exact: false })).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: 'Test connection' }))
+    expect(TestedThenEdited.args.onTest).toHaveBeenCalledOnce()
+  })
+
+  it('words results and states', () => {
     expect(
       testWords({
         ok: true,
         failedAt: null,
         stages: [{ name: 'token', outcome: 'ok', message: null }],
       }),
-    ).toEqual({
-      tone: 'ok',
-      text: 'connected: token ok',
-    })
+    ).toEqual({ tone: 'ok', text: 'connected: token ok' })
     expect(testWords({ ok: false, failedAt: 'missing', stages: [] })).toEqual({
       tone: 'bad',
       text: 'missing failed',
     })
+    expect(testState({ result: null, running: false, stale: false })).toBe('idle')
   })
 })

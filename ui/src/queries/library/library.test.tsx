@@ -10,6 +10,7 @@ import {
   useGame,
   useLibrary,
   useLibraryJob,
+  useMetadataJob,
   useRematch,
   useSystems,
 } from './library'
@@ -74,17 +75,16 @@ describe('library queries', () => {
     const { result } = renderHook(
       () => ({
         scan: useLibraryJob('/api/v1/library/scan'),
-        match: useLibraryJob('/api/v1/library/match'),
+        metadata: useMetadataJob(),
         after: useAfterLibraryJob(),
       }),
       { wrapper },
     )
     await act(async () => {
       expect((await result.current.scan.mutateAsync()).kind).toBe('scan')
-      expect((await result.current.match.mutateAsync()).result).toEqual({
-        matched: 0,
-        not_found: 8,
-      })
+      const ran = await result.current.metadata.mutateAsync(false)
+      expect([ran.kind, ran.result?.refresh]).toEqual(['metadata', 0])
+      expect((await result.current.metadata.mutateAsync(true)).result?.refresh).toBe(1)
     })
     for (const k of [['library'], ['systems'], ['jobs']])
       engine.client.setQueryData(k, { stale: true })

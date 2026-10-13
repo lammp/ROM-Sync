@@ -538,26 +538,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/library/covers": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Covers
-         * @description Fill missing box art from the libretro thumbnails, as a job.
-         */
-        post: operations["covers_api_v1_library_covers_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/v1/library/franchises": {
         parameters: {
             query?: never;
@@ -578,7 +558,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/library/match": {
+    "/api/v1/library/metadata": {
         parameters: {
             query?: never;
             header?: never;
@@ -588,10 +568,12 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * Match
-         * @description Match every game still pending against the metadata service, as a job.
+         * Metadata
+         * @description The one metadata action, as a job (F5-S12): match the games that need it
+         *     (every game but a pin, on a refresh), then fill missing covers from libretro
+         *     when that is on.
          */
-        post: operations["match_api_v1_library_match_post"];
+        post: operations["metadata_api_v1_library_metadata_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1329,6 +1311,14 @@ export interface components {
             name: string;
             /** Size */
             size: number;
+        };
+        /** MetadataRun */
+        MetadataRun: {
+            /**
+             * Refresh
+             * @default false
+             */
+            refresh: boolean;
         };
         /** ModeChange */
         ModeChange: {
@@ -4628,89 +4618,6 @@ export interface operations {
             };
         };
     };
-    covers_api_v1_library_covers_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["JobView"];
-                };
-            };
-            /** @description Bad Request */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-            /** @description Forbidden */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-            /** @description Not Found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-            /** @description Conflict */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-            /** @description Unprocessable Entity */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-            /** @description Bad Gateway */
-            502: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-            /** @description Service Unavailable */
-            503: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-        };
-    };
     franchises_api_v1_library_franchises_post: {
         parameters: {
             query?: never;
@@ -4794,14 +4701,18 @@ export interface operations {
             };
         };
     };
-    match_api_v1_library_match_post: {
+    metadata_api_v1_library_metadata_post: {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MetadataRun"];
+            };
+        };
         responses: {
             /** @description Successful Response */
             200: {

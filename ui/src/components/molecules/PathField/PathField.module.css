@@ -51,6 +51,9 @@
 }
 
 .choose {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   color: var(--accent);
   font-size: var(--text-base-sm);
   white-space: nowrap;

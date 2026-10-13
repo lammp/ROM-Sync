@@ -45,6 +45,8 @@ class GameMeta:
     rating_count: int | None = None
     genres: tuple[str, ...] = ()
     cover: str | None = None
+    #: Chosen by hand (a re-match): a refresh keeps it rather than matching again.
+    pinned: bool = False
 
 
 class GameRepo(Protocol):

@@ -4,6 +4,7 @@
  * section's edits into what is sent. The registry decides every kind and
  * range; a key the page has not placed still appears, under Diagnostics.
  */
+import type { Presentation } from '../../../components/molecules/SettingControl/SettingControl'
 import { fromText, type Def, type Scalar } from '../../../lib/settings/settings'
 
 export type Section = {
@@ -22,9 +23,8 @@ export const SECTIONS: readonly Section[] = [
       'igdb.client_secret',
       'match.accept_threshold',
       'igdb.requests_per_second',
-      'match.auto_libretro_covers',
-      'match.auto_enrich',
       'match.abort_after_errors',
+      'match.auto_libretro_covers',
     ],
   },
   { id: 'tags', title: 'Tag suggestions', keys: [] },
@@ -51,7 +51,6 @@ export const SECTIONS: readonly Section[] = [
       'capacity.alarm_fraction',
       'sync.confirm_remove_threshold',
       'device.write_marker_after_sync',
-      'sync.verify_percentage',
     ],
   },
   {
@@ -74,9 +73,8 @@ export const LABELS: Readonly<Record<string, string>> = {
   'igdb.client_secret': 'Client secret',
   'match.accept_threshold': 'Match acceptance threshold',
   'igdb.requests_per_second': 'Requests per second',
-  'match.auto_libretro_covers': 'Fill missing covers from libretro after a match',
-  'match.auto_enrich': 'Fetch screenshots and tags after a match',
-  'match.abort_after_errors': 'Stop a pass after this many errors',
+  'match.auto_libretro_covers': 'Also fill missing covers from libretro',
+  'match.abort_after_errors': 'Stop after this many failed lookups in a row',
   'adb.enabled': 'Enable ADB transport',
   'adb.path': 'ADB executable',
   'mtp.enabled': 'Enable MTP transport',
@@ -90,7 +88,6 @@ export const LABELS: Readonly<Record<string, string>> = {
   'capacity.alarm_fraction': 'Alarm at',
   'sync.confirm_remove_threshold': 'Confirm a sync that removes at least',
   'device.write_marker_after_sync': 'Write the device marker after every sync',
-  'sync.verify_percentage': 'Verify sent files by hash',
   'data.directory': 'Data folder',
   'runs.retention': 'Keep sync run folders',
   'jobs.history_length': 'Keep job history',
@@ -99,6 +96,35 @@ export const LABELS: Readonly<Record<string, string>> = {
   'server.bind_host': 'Listen on',
   'log.level': 'Log level',
 }
+
+/**
+ * How each bounded number is best drawn (F11-S51): a scale, with the step it
+ * moves in; a list of whole steps; or a list of sizes. The registry still
+ * gives the bounds.
+ */
+export const PRESENTATION: Readonly<Record<string, Presentation>> = {
+  'match.accept_threshold': { as: 'slider', step: 0.01 },
+  'igdb.requests_per_second': { as: 'steps' },
+  'match.abort_after_errors': { as: 'slider', step: 1 },
+  'mtp.arrival_floor': { as: 'slider', step: 30 },
+  'mtp.arrival_rate': { as: 'sizes' },
+  'sysfiles.hash_limit': { as: 'sizes' },
+  'device.probe_interval': { as: 'slider', step: 5 },
+  'plan.free_space_margin': { as: 'sizes' },
+  'capacity.warn_fraction': { as: 'slider', step: 0.01 },
+  'capacity.alarm_fraction': { as: 'slider', step: 0.01 },
+  'sync.confirm_remove_threshold': { as: 'slider', step: 1 },
+  'runs.retention': { as: 'slider', step: 1 },
+  'jobs.history_length': { as: 'slider', step: 10 },
+  'db.busy_timeout': { as: 'slider', step: 100 },
+}
+
+/** Typed values that lock once saved, opened again by their edit icon (F11-S51). */
+export const LOCKS: ReadonlySet<string> = new Set([
+  'igdb.client_id',
+  'device.staging_template',
+  'server.preferred_port',
+])
 
 /** The sections with every registry key placed: one the page does not know joins Diagnostics. */
 export function arrange(keys: readonly string[]): Section[] {

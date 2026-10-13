@@ -33,6 +33,9 @@ export const Active: Story = {
 
 export const Small: Story = { args: { small: true, children: 'Accept' } }
 
+/** A tab's main action, larger at its top (F11-S51). */
+export const Large: Story = { args: { large: true, variant: 'primary', children: 'Run Initial' } }
+
 export const Disabled: Story = {
   args: { disabled: true, children: 'Not connected' },
   play: async ({ canvas }) => {

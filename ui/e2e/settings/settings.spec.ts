@@ -30,7 +30,7 @@ test('a tab saves on its own, and the open tab and value are kept over a reload'
   await page.goto('/settings/')
   await page.getByRole('tab', { name: 'Sync behaviour and guards' }).click()
   const sync = page.getByRole('region', { name: /^Sync behaviour/ })
-  await sync.getByRole('textbox', { name: 'Keep free on the device' }).fill('1 GB')
+  await sync.getByRole('combobox', { name: 'Keep free on the device' }).selectOption('1.00 GB')
   await expect(
     page.getByRole('tab', { name: 'Sync behaviour and guards, unsaved changes' }),
   ).toBeVisible()
@@ -45,7 +45,7 @@ test('a tab saves on its own, and the open tab and value are kept over a reload'
   await expect(
     page
       .getByRole('region', { name: /^Sync behaviour/ })
-      .getByRole('textbox', { name: 'Keep free on the device' }),
+      .getByRole('combobox', { name: 'Keep free on the device' }),
   ).toHaveValue('1.00 GB')
 })
 
@@ -53,13 +53,19 @@ test('credentials are added, tested and saved without the secret coming back', a
   await page.goto('/settings/#metadata')
   const meta = page.getByRole('region', { name: /^Metadata and artwork/ })
   await meta.getByRole('textbox', { name: 'Twitch client ID' }).fill('my-client')
-  await meta.getByRole('button', { name: 'Add credentials' }).click()
-  await meta.getByLabel('New client secret').fill('a-secret-that-is-long-enough')
-  await meta.getByRole('button', { name: 'Test connection' }).click()
+  const secret = meta.getByLabel('Client secret', { exact: true })
+  await secret.fill('a-secret-that-is-long-enough')
+  const test = meta.getByRole('button', { name: 'Test connection' })
+  await test.click()
   await expect(meta.getByRole('status')).toHaveText('connected: token, api ok')
+  await expect(test.locator('svg')).toHaveAttribute('data-icon', 'tick')
   await meta.getByRole('button', { name: 'Save metadata and artwork' }).click()
-  await expect(meta).toContainText('28 characters · not shown again')
-  await expect(page.locator('input[type="password"]')).toHaveCount(0)
+  await expect(meta).toContainText('28 characters. A saved secret is never shown again.')
+  // saved: both locked, and the secret is dots, never its value
+  await expect(meta.getByRole('textbox', { name: 'Twitch client ID' })).toHaveAttribute('readonly')
+  await expect(secret).toHaveAttribute('readonly')
+  await expect(secret).not.toHaveValue(/a-secret/)
+  await expect(meta.getByRole('button', { name: 'Show the client secret' })).toHaveCount(0)
   // the setup step it answered leaves the notifications
   await page.getByRole('button', { name: /^Notifications/ }).click()
   await expect(page.getByRole('dialog', { name: 'Notifications' })).not.toContainText('IGDB')
@@ -161,4 +167,51 @@ test('every dialog closes by its close button, Escape, or a click outside (F11-S
   await expect(page.getByRole('dialog', { name: 'Rescan the ROMs folder' })).toBeVisible()
   await page.mouse.click(5, 300)
   await expect(page.getByRole('dialog')).toHaveCount(0)
+})
+
+test('the metadata runs from the top of its tab, and a refresh asks first (F11-S52)', async ({
+  page,
+}) => {
+  await page.goto('/settings/#metadata')
+  const meta = page.getByRole('region', { name: /^Metadata and artwork/ })
+  await meta.getByRole('textbox', { name: 'Twitch client ID' }).fill('my-client')
+  await meta.getByLabel('Client secret', { exact: true }).fill('a-secret-that-is-long-enough')
+  await meta.getByRole('button', { name: 'Save metadata and artwork' }).click()
+  const actions = meta.getByRole('group', { name: 'Metadata and artwork: actions' })
+  const update = actions.getByRole('button', { name: 'Update Metadata' })
+  await update.click()
+  await expect(update.locator('svg')).toHaveAttribute('data-icon', 'tick')
+  await actions.getByRole('button', { name: 'Refresh Metadata' }).click()
+  const ask = page.getByRole('dialog', { name: 'Refresh metadata' })
+  await expect(ask).toContainText('a game you matched by hand keeps its match')
+  await ask.getByRole('button', { name: 'Cancel' }).click()
+  await expect(ask).toHaveCount(0)
+})
+
+test('every tab keeps its main actions at its top (F11-S51)', async ({ page }) => {
+  await page.goto('/settings/')
+  for (const [tab, action] of [
+    ['Library', 'Rescan ROMs folder'],
+    ['Metadata and artwork', 'Update Metadata'],
+    ['Tag suggestions', 'Propose franchise tags'],
+    ['Transports and tools', 'Look for devices again'],
+  ] as const) {
+    await page.getByRole('tab', { name: tab }).click()
+    const actions = page.getByRole('group', { name: `${tab}: actions` })
+    await expect(actions.getByRole('button', { name: action })).toBeVisible()
+    // a tab that sets nothing (Tag suggestions) has only its actions
+    const fields = page
+      .getByRole('region', { name: new RegExp(`^${tab}`) })
+      .locator('input, select, button[aria-labelledby]')
+    if ((await fields.count()) === 0) continue
+    const top = await actions.boundingBox()
+    const last = await fields.last().boundingBox()
+    expect(top && last && top.y < last.y, `${tab}: the actions sit above the settings`).toBe(true)
+  }
+  await page.getByRole('tab', { name: 'Diagnostics' }).click()
+  await expect(
+    page
+      .getByRole('group', { name: 'Diagnostics: actions' })
+      .getByRole('link', { name: 'Export a support bundle' }),
+  ).toBeVisible()
 })

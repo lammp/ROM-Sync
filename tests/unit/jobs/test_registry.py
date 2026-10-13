@@ -189,21 +189,22 @@ def test_detects_out_of_process_worker(r: Repos, tmp_path: Path) -> None:
 def test_guard_by_kind_and_target() -> None:
     runner = Later()
     j = jobs(MemoryJobs(), runner=runner)
-    j.submit("match", None, lambda ctx: None)
+    j.submit("metadata", None, lambda ctx: None)
     with pytest.raises(JobConflict):
-        j.submit("match", None, lambda ctx: None)
+        j.submit("metadata", None, lambda ctx: None)
     with pytest.raises(JobConflict):
-        j.submit("covers", None, lambda ctx: None)
+        j.submit("scan", None, lambda ctx: None)
     j.submit("sync", "dev-a", lambda ctx: None)
     with pytest.raises(JobConflict):
         j.submit("sysfiles", "dev-a", lambda ctx: None)
     j.submit("sync", "dev-b", lambda ctx: None)
     runner.run_all()
-    j.submit("match", None, lambda ctx: None)
+    j.submit("metadata", None, lambda ctx: None)
 
 
 def test_conflict_rules() -> None:
-    assert conflicts("match", None, "scan", None)
+    assert conflicts("metadata", None, "scan", None)
+    assert conflicts("franchise", None, "maintenance", None)
     assert conflicts("sync", "a", "recover", "a")
     assert not conflicts("sync", "a", "sync", "b")
     assert conflicts("probe", None, "probe", None)

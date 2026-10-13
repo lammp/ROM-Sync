@@ -102,3 +102,56 @@ export const Choice: Story = {
     value: 'info',
   },
 }
+
+/** A bounded number drawn as a scale, its number to the left (F11-S51). */
+export const Scale: Story = {
+  args: {
+    label: 'Match acceptance threshold',
+    def: {
+      ...path,
+      kind: 'float',
+      minimum: 0,
+      maximum: 1,
+      description: 'A candidate scoring at least this is accepted.',
+    },
+    value: '0.55',
+    presentation: { as: 'slider', step: 0.01 },
+  },
+}
+
+/** A short range as a list of its steps: requests a second, 1 to 4. */
+export const Steps: Story = {
+  args: {
+    label: 'Requests per second',
+    def: {
+      ...path,
+      kind: 'float',
+      unit: '/s',
+      minimum: 1,
+      maximum: 4,
+      description: 'How fast the metadata service is asked.',
+    },
+    value: '4',
+    presentation: { as: 'steps' },
+  },
+}
+
+/** A size as a list of sizes. */
+export const Sizes: Story = {
+  args: { ...Size.args, presentation: { as: 'sizes' }, value: '512.0 MB' },
+}
+
+/** A saved value that locks until its edit icon opens it. */
+export const Locked: Story = {
+  args: {
+    label: 'Staging path on the device',
+    def: { ...path, kind: 'str', description: 'Where system files are staged.' },
+    value: 'ROM-Sync/{system}',
+    locked: true,
+    onUnlock: fn(),
+  },
+  play: async ({ canvas, args, userEvent }) => {
+    await userEvent.click(canvas.getByRole('button', { name: 'Change Staging path on the device' }))
+    await expect(args.onUnlock).toHaveBeenCalledOnce()
+  },
+}

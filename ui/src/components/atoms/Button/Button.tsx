@@ -8,6 +8,8 @@ export type ButtonProps = Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'classNa
   /** A toggle that is on; announced as pressed. */
   readonly active?: boolean
   readonly small?: boolean
+  /** A tab's main action, drawn larger at its top (F11-S51). */
+  readonly large?: boolean
   readonly children: ReactNode
 }
 
@@ -16,6 +18,7 @@ export function Button({
   variant = 'default',
   active,
   small = false,
+  large = false,
   type = 'button',
   children,
   ...rest
@@ -25,6 +28,7 @@ export function Button({
     variant !== 'default' && styles[variant],
     active && styles.active,
     small && styles.small,
+    large && styles.large,
   ]
   return (
     <button

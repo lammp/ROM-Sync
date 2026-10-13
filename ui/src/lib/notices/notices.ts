@@ -56,6 +56,7 @@ export function jobNotice(job: EndedJob, device?: string): Omit<Notice, 'at'> | 
   const who = device ?? 'the device'
   const what: Readonly<Record<string, string>> = {
     scan: 'Scan',
+    metadata: 'Metadata',
     match: 'Matching',
     covers: 'Cover fill',
     rematch: 'Rematch',
@@ -93,6 +94,31 @@ export function jobNotice(job: EndedJob, device?: string): Omit<Notice, 'at'> | 
         tone: (r.unreadable ?? 0) > 0 ? 'warn' : 'info',
         title: `Scan finished: ${plural(found, 'game')} found`,
         body: body || 'nothing changed',
+        href: '/',
+      }
+    }
+    case 'metadata': {
+      const verb = r.refresh ? 'refreshed' : 'updated'
+      const looked = r.no_credentials ? 'covers only, no credentials' : null
+      return {
+        id,
+        source: 'job',
+        tone: (r.errors ?? 0) + (r.failed ?? 0) > 0 ? 'warn' : 'info',
+        title: r.no_credentials
+          ? `Metadata ${verb}: ${plural(r.filled ?? 0, 'cover')} filled`
+          : `Metadata ${verb}: ${plural(r.matched ?? 0, 'game')} matched`,
+        body: [
+          looked,
+          parts(r, [
+            ['unmatched', 'not matched'],
+            ['errors', 'failed'],
+            ['filled', 'covers filled'],
+            ['not_found', 'covers not found'],
+            ['failed', 'covers failed'],
+          ]),
+        ]
+          .filter(Boolean)
+          .join(', '),
         href: '/',
       }
     }

@@ -1,5 +1,6 @@
 import { useId } from 'react'
 import { ActionLink } from '../../atoms/ActionLink/ActionLink'
+import { Icon } from '../../atoms/Icon/Icon'
 import { TextInput } from '../../atoms/TextInput/TextInput'
 import styles from './PathField.module.css'
 
@@ -65,6 +66,7 @@ export function PathField({ label, value, kind, help, error, onChoose, onChange 
             {value || none}
           </span>{' '}
           <span id={`${id}-choose`} className={styles.choose}>
+            <Icon name={kind === 'folder' ? 'folder' : 'open'} />
             {kind === 'folder' ? 'Choose folder…' : 'Choose file…'}
           </span>
         </button>
