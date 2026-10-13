@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/nextjs-vite'
 import { expect, fn } from 'storybook/test'
 import { MetadataTracker } from './MetadataTracker'
 
-const COVERAGE = { total: 7913, matched: 564, pending: 7311, coverless: 7350 }
+const COVERAGE = { total: 7913, matched: 564, unmatched: 38, pending: 7311, coverless: 7350 }
 
 const meta = {
   title: 'Organisms/MetadataTracker',
@@ -53,13 +53,14 @@ export const Covers: Story = {
   },
 }
 
-/** Finished: a tick, and what it did. */
+/** Finished: a full ring and a tick, what the run did, and the library's coverage in words. */
 export const Finished: Story = {
   args: {
+    coverage: { total: 7913, matched: 7282, unmatched: 631, pending: 0, coverless: 121 },
     job: {
       state: 'done',
       progress: null,
-      result: { refresh: 0, matched: 7100, unmatched: 211, filled: 320 },
+      result: { refresh: 0, games: 7311, matched: 7100, unmatched: 211, filled: 320 },
       error: null,
       started: null,
     },

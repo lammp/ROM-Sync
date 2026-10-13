@@ -12,6 +12,8 @@ describe('MetadataTracker', () => {
     expect(screen.getByRole('img', { name: '7% of the library matched' })).toBeTruthy()
     expect(screen.getByText('7,311')).toBeTruthy()
     expect(screen.getByText('Not looked up')).toBeTruthy()
+    expect(screen.getByText('of games matched')).toBeTruthy()
+    expect(screen.getByText('Not matched').nextElementSibling?.textContent).toBe('38')
   })
 
   it('shows a running pass as progress, with the game, and offers Stop', () => {
@@ -32,7 +34,15 @@ describe('MetadataTracker', () => {
 
   it('says how a pass ended, with a tick or a cross', () => {
     const done = render(<Finished />)
-    expect(screen.getByText('7,100 games matched, 320 covers filled')).toBeTruthy()
+    // a finished run is a full ring, never the library's coverage
+    expect(screen.getByRole('img', { name: 'Run complete' })).toBeTruthy()
+    expect(document.querySelector('[class*="fill"]')?.getAttribute('stroke-dasharray')).toMatch(
+      /^439\.8/,
+    )
+    expect(screen.getByText('7,311 games looked up: 7,100 matched, 211 not')).toBeTruthy()
+    expect(screen.getByText('320 covers filled')).toBeTruthy()
+    expect(screen.getByText('92% of the library matched')).toBeTruthy()
+    expect(screen.getByText('Not matched').nextElementSibling?.textContent).toBe('631')
     const tick = document.querySelector('[data-icon="tick"]')
     expect(tick).not.toBeNull()
     // the tick is an icon in the ring, not drawn as the ring: it keeps its size and is not turned

@@ -147,11 +147,15 @@ The systems table is the highest-value single addition on the page: it answers
 
 Beside the tab's settings, or under its actions where the tab is narrow, a
 **tracker** shows the metadata as one graphic (F11-S53): at rest, a ring of how
-much of the library is matched, with three coloured counts (matched, not looked
-up, without a cover); while a pass runs, the ring is its progress, turning and
-glowing, with the phase (matching games, filling covers), the count, the game
-being looked up, the time left at the pace so far, and Stop; when it ends, a
-tick or a cross and what it did. A pass already running when the tab opens, or
+much of the library is matched ("of games matched"), with four coloured counts
+(matched; not matched, meaning looked up with no candidate accepted; not looked
+up; without a cover); while a pass runs, the ring is the run's progress, turning
+and glowing, with the phase (matching games, filling covers), the count, the
+game being looked up, the time left at the pace so far, and Stop; when it ends,
+a full ring with a tick ("run complete"), or the run's progress with a cross,
+what the run did, and the library's coverage in words. The ring never shows
+coverage while it stands for a run, so a finished run cannot read as stopped
+part way. A pass already running when the tab opens, or
 started elsewhere, is followed, so leaving Settings never loses its progress. Without credentials only libretro covers are
 filled, and the line says so. The match skipped for want of credentials is said
 in the job's result, never as a failure. A game matched by hand is **pinned**,

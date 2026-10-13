@@ -128,7 +128,7 @@
 
 .counts {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   gap: 8px;
   width: 100%;
   margin: 0;
@@ -143,6 +143,10 @@
 
 .counts > div[data-kind='matched'] {
   border-top-color: var(--accent);
+}
+
+.counts > div[data-kind='unmatched'] {
+  border-top-color: var(--bad);
 }
 
 .counts > div[data-kind='pending'] {

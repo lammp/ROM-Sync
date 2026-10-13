@@ -226,6 +226,8 @@ describe('SettingsView', () => {
     await waitFor(() => expect(update.querySelector('svg')?.getAttribute('data-icon')).toBe('tick'))
     const tracker = screen.getByRole('region', { name: 'Metadata progress' })
     expect(within(tracker).getByText('Not looked up').nextElementSibling?.textContent).toBe('0')
+    expect(within(tracker).getByText('Not matched').nextElementSibling?.textContent).toBe('40')
+    expect(within(tracker).getByRole('img', { name: 'Run complete' })).toBeTruthy()
     fireEvent.click(within(actions).getByRole('button', { name: 'Refresh Metadata' }))
     const ask = screen.getByRole('dialog', { name: 'Refresh metadata' })
     expect(ask.textContent).toContain('Match all 40 games again')

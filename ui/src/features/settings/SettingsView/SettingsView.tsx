@@ -595,6 +595,8 @@ export function SettingsView() {
     Boolean(byKey.get(CLIENT)?.value) && Boolean(byKey.get(SECRET)?.secret_state?.present)
   const pending = games.filter((g) => g.state === 'pending').length
   const matched = games.filter((g) => g.matched).length
+  // looked up, and nothing accepted: unmatched, or the lookup failed
+  const unmatched = games.filter((g) => g.state !== 'pending' && !g.matched).length
   const coverless = games.filter((g) => !g.coverUrl).length
   // nothing looked up yet: the first run is the initial one (F11-S52)
   const looked = games.some((g) => g.state !== 'pending')
@@ -818,7 +820,7 @@ export function SettingsView() {
                   }
                   aside={
                     <MetadataTracker
-                      coverage={{ total: games.length, matched, pending, coverless }}
+                      coverage={{ total: games.length, matched, unmatched, pending, coverless }}
                       job={
                         metaJob.job
                           ? {

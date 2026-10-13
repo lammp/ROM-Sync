@@ -7,6 +7,8 @@ import styles from './MetadataTracker.module.css'
 export type Coverage = {
   readonly total: number
   readonly matched: number
+  /** Looked up, and no candidate was accepted (or the lookup failed). */
+  readonly unmatched: number
   readonly pending: number
   readonly coverless: number
 }
@@ -85,29 +87,44 @@ export function MetadataTracker({ coverage, job, onStop }: MetadataTrackerProps)
   const now = useClock(live)
   const gradient = `${useId()}-arc`
   const p = job?.progress ?? null
-  const share = live
-    ? p?.total
-      ? p.done / p.total
-      : 0
-    : coverage.total
-      ? coverage.matched / coverage.total
-      : 0
+  const ended = job !== null && !live ? job.state : null
+  // the ring is the run while there is one to show, and the library's
+  // coverage only at rest: a finished run is a full ring, never the coverage
+  const ran = p?.total ? p.done / p.total : 0
+  const share =
+    live || ended === 'failed' || ended === 'cancelled'
+      ? ran
+      : ended === 'done'
+        ? 1
+        : coverage.total
+          ? coverage.matched / coverage.total
+          : 0
   const percent = Math.round(Math.min(1, Math.max(0, share)) * 100)
+  const matchedShare = coverage.total ? Math.round((coverage.matched / coverage.total) * 100) : 0
   const phase = p ? (PHASES[p.phase] ?? p.phase) : 'Starting'
   const left = live && p ? secondsLeft(p.done, p.total, job.started, now) : null
-  const ended = job !== null && !live ? job.state : null
   const tone = live ? 'running' : ended === 'failed' ? 'failed' : ended === 'done' ? 'done' : 'rest'
   const words = live
     ? job.state === 'cancelling'
       ? 'Stopping'
       : `${phase}${p?.total ? `: ${p.done.toLocaleString()} of ${p.total.toLocaleString()}` : ''}`
-    : `${percent}% of the library matched`
+    : `${matchedShare}% of the library matched`
   return (
     <section className={styles.tracker} data-tone={tone} aria-label="Metadata progress">
       <div
         className={styles.ring}
         role={live ? 'progressbar' : 'img'}
-        aria-label={live ? phase : words}
+        aria-label={
+          live
+            ? phase
+            : ended === 'done'
+              ? 'Run complete'
+              : ended === 'failed'
+                ? 'Run failed'
+                : ended === 'cancelled'
+                  ? 'Run stopped'
+                  : words
+        }
         aria-valuemin={live ? 0 : undefined}
         aria-valuemax={live ? 100 : undefined}
         aria-valuenow={live ? percent : undefined}
@@ -141,12 +158,14 @@ export function MetadataTracker({ coverage, job, onStop }: MetadataTrackerProps)
           )}
           <span className={styles.caption}>
             {live
-              ? 'done'
+              ? 'of this run'
               : ended === 'done'
-                ? 'finished'
+                ? 'run complete'
                 : ended === 'failed'
-                  ? 'failed'
-                  : 'matched'}
+                  ? 'run failed'
+                  : ended === 'cancelled'
+                    ? 'run stopped'
+                    : 'of games matched'}
           </span>
         </span>
       </div>
@@ -166,11 +185,17 @@ export function MetadataTracker({ coverage, job, onStop }: MetadataTrackerProps)
         ) : ended === 'cancelled' ? (
           <b className={styles.phase}>Stopped before the end</b>
         ) : ended === 'done' && job?.result ? (
-          <b className={styles.phase}>
-            {job.result.no_credentials
-              ? `${count(job.result.filled ?? 0, 'cover')} filled; matching needs credentials`
-              : `${count(job.result.matched ?? 0, 'game')} matched, ${count(job.result.filled ?? 0, 'cover')} filled`}
-          </b>
+          <>
+            <b className={styles.phase}>
+              {job.result.no_credentials
+                ? `${count(job.result.filled ?? 0, 'cover')} filled; matching needs credentials`
+                : `${count(job.result.games ?? 0, 'game')} looked up: ${(job.result.matched ?? 0).toLocaleString()} matched, ${(job.result.unmatched ?? 0).toLocaleString()} not`}
+            </b>
+            {!job.result.no_credentials && job.result.filled !== undefined && (
+              <span className={styles.left}>{count(job.result.filled, 'cover')} filled</span>
+            )}
+            <span className={styles.left}>{words}</span>
+          </>
         ) : (
           <b className={styles.phase}>{words}</b>
         )}
@@ -179,6 +204,10 @@ export function MetadataTracker({ coverage, job, onStop }: MetadataTrackerProps)
         <div data-kind="matched">
           <dt>Matched</dt>
           <dd>{coverage.matched.toLocaleString()}</dd>
+        </div>
+        <div data-kind="unmatched">
+          <dt>Not matched</dt>
+          <dd>{coverage.unmatched.toLocaleString()}</dd>
         </div>
         <div data-kind="pending">
           <dt>Not looked up</dt>
