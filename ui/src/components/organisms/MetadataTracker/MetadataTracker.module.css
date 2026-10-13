@@ -29,7 +29,8 @@
   height: 180px;
 }
 
-.ring svg {
+/* the ring's own drawing only: the tick or cross inside it keeps its size and way up */
+.dial {
   width: 100%;
   height: 100%;
   transform: rotate(-90deg);

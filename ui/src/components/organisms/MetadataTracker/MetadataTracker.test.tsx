@@ -33,7 +33,11 @@ describe('MetadataTracker', () => {
   it('says how a pass ended, with a tick or a cross', () => {
     const done = render(<Finished />)
     expect(screen.getByText('7,100 games matched, 320 covers filled')).toBeTruthy()
-    expect(document.querySelector('[data-icon="tick"]')).not.toBeNull()
+    const tick = document.querySelector('[data-icon="tick"]')
+    expect(tick).not.toBeNull()
+    // the tick is an icon in the ring, not drawn as the ring: it keeps its size and is not turned
+    expect(tick?.getAttribute('width')).toBe('36')
+    expect(tick?.getAttribute('class') ?? '').not.toMatch(/dial/)
     done.unmount()
     render(<Failed />)
     expect(screen.getByText(/^Stopped: stopped after 25 failures/)).toBeTruthy()

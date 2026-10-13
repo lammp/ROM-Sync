@@ -113,7 +113,7 @@ export function MetadataTracker({ coverage, job, onStop }: MetadataTrackerProps)
         aria-valuenow={live ? percent : undefined}
         aria-valuetext={live ? words : undefined}
       >
-        <svg viewBox="0 0 160 160" aria-hidden="true" focusable="false">
+        <svg className={styles.dial} viewBox="0 0 160 160" aria-hidden="true" focusable="false">
           <defs>
             <linearGradient id={gradient} x1="0" y1="0" x2="1" y2="1">
               <stop offset="0%" className={styles.from} />
