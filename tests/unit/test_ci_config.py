@@ -57,6 +57,15 @@ def test_nightly_workflow_randomises_the_test_order() -> None:
     assert "-p randomly" in text or "--randomly-seed" in text
 
 
+def test_nightly_installs_the_interface_from_its_own_folder() -> None:
+    """The nightly's fresh install runs in ui/, not by --prefix from the root,
+    which on the Windows runner read the root's package.json and failed."""
+    text = _text("nightly.yml")
+    assert "npm install --no-package-lock --prefix" not in text
+    install = text.index("npm install --no-package-lock")
+    assert "working-directory: ui" in text[text.rindex("- name:", 0, install) : install]
+
+
 @pytest.mark.parametrize("name", ["gate.yml", "nightly.yml", "release.yml"])
 def test_workflows_pin_their_actions(name: str) -> None:
     """An unpinned action is a dependency that can change under us."""
