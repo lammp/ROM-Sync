@@ -15,6 +15,7 @@ import { CardGrid } from '../../../components/templates/CardGrid/CardGrid'
 import { PageLayout } from '../../../components/templates/PageLayout/PageLayout'
 import { isSelected, onDeviceKeys } from '../../../lib/selection/selection'
 import {
+  attachedFor,
   useAdopt,
   useAttached,
   useCapacities,
@@ -56,14 +57,13 @@ export function DevicesView() {
   const [making, setMaking] = useState<Attached | null>(null)
 
   const live = new Map(devices.map((d, i) => [d.ref, capacities[i]?.data]))
-  const here = new Map(devices.flatMap((d) => (d.profile ? [[d.profile.id, d] as const] : [])))
   const toast = (text: string, bad = false) =>
     appStore.getState().ui.toast(text, bad ? 'bad' : 'info')
   const open = (id: string) => router.push(deviceHref(id))
 
   const cards: (DeviceCardProps & { key: string })[] = [
     ...profiles.map((p, i): DeviceCardProps & { key: string } => {
-      const device = here.get(p.id)
+      const device = attachedFor(devices, p.id) ?? undefined
       const selection = selections[i]?.data
       const items = inventories[i]?.data
       const games_ = items?.filter((x) => x.system.toLowerCase() !== 'bios')

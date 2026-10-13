@@ -47,10 +47,11 @@ export function NoticeWatcher() {
 
   useEffect(() => {
     if (!attached.isSuccess) return
+    // keyed by profile: the same device back over another transport is not a new one (F11-S53)
     const now = new Map(
-      attached.data.devices
-        .filter((d) => d.profile !== null)
-        .map((d) => [d.ref, d.profile?.name ?? d.ref] as const),
+      attached.data.devices.flatMap((d) =>
+        d.profile ? [[d.profile.id, d.profile.name] as const] : [],
+      ),
     )
     const before = online.current
     online.current = now

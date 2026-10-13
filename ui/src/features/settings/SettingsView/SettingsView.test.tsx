@@ -4,7 +4,8 @@ import { beforeEach, describe, expect, it } from 'vitest'
 import { appStore } from '../../../store/store'
 import * as stories from './SettingsView.stories'
 
-const { FirstRun, InTheDesktop, OffLoopback, MetadataActions } = composeStories(stories)
+const { FirstRun, InTheDesktop, OffLoopback, MetadataActions, PassAlreadyRunning } =
+  composeStories(stories)
 
 const region = (name: RegExp) => screen.getByRole('region', { name })
 const toast = () => appStore.getState().ui.toasts.at(-1)?.text
@@ -223,7 +224,8 @@ describe('SettingsView', () => {
     fireEvent.click(initial)
     const update = await within(actions).findByRole('button', { name: 'Update Metadata' })
     await waitFor(() => expect(update.querySelector('svg')?.getAttribute('data-icon')).toBe('tick'))
-    expect(actions.textContent).toContain('0 not looked up yet')
+    const tracker = screen.getByRole('region', { name: 'Metadata progress' })
+    expect(within(tracker).getByText('Not looked up').nextElementSibling?.textContent).toBe('0')
     fireEvent.click(within(actions).getByRole('button', { name: 'Refresh Metadata' }))
     const ask = screen.getByRole('dialog', { name: 'Refresh metadata' })
     expect(ask.textContent).toContain('Match all 40 games again')
@@ -279,5 +281,19 @@ describe('SettingsView', () => {
     expect(ask.textContent).toContain('3 items, 585.9 KB')
     act(() => fireEvent.click(within(ask).getByRole('button', { name: 'Run' })))
     await waitFor(() => expect(toast()).toBe('Delete unreferenced covers: started'))
+  })
+
+  it('follows a metadata pass that was running before the page opened, and stops it', async () => {
+    render(<PassAlreadyRunning />)
+    fireEvent.click(await screen.findByRole('tab', { name: 'Metadata and artwork' }))
+    const ring = await screen.findByRole('progressbar', { name: 'Matching games' })
+    expect(ring.getAttribute('aria-valuetext')).toBe('Matching games: 10 of 40')
+    expect(screen.getByText('Alpha Quest')).toBeTruthy()
+    const actions = screen.getByRole('group', { name: 'Metadata and artwork: actions' })
+    expect(
+      within(actions).getByRole('button', { name: 'Update Metadata' }).getAttribute('aria-busy'),
+    ).toBe('true')
+    fireEvent.click(screen.getByRole('button', { name: 'Stop' }))
+    await waitFor(() => expect(screen.queryByRole('progressbar')).toBeNull())
   })
 })

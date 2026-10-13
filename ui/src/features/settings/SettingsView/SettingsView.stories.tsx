@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/nextjs-vite'
 import { expect, waitFor, within } from 'storybook/test'
-import { fakeFetch, freshWorld, type World } from '../../../../e2e/fake/world'
+import { fakeFetch, freshWorld, seed, type World } from '../../../../e2e/fake/world'
 import { EngineProvider, createEngine } from '../../../queries/engine/engine'
 import { resetAppStore } from '../../../store/store'
 import { SettingsView } from './SettingsView'
@@ -15,6 +15,7 @@ const meta = {
       // a library nothing has been looked up for yet, with credentials saved
       if (parameters.untouched)
         for (const g of world.games) Object.assign(g, { state: 'pending', matched: false })
+      if (parameters.passRunning) seed(world, 'metadata-running')
       if (parameters.credentials) {
         world.stored['igdb.client_id'] = 'abcd1234'
         world.secret = 'a-saved-secret-of-thirty-chars'
@@ -154,5 +155,20 @@ export const MetadataActions: Story = {
     await expect(ask).toHaveTextContent('a game you matched by hand keeps its match')
     await userEvent.click(within(ask).getByRole('button', { name: 'Refresh' }))
     await expect(canvas.queryByRole('dialog')).toBeNull()
+  },
+}
+
+/**
+ * A metadata pass already running when the page opens is followed: its
+ * progress is in the tracker beside the settings, with Stop (F11-S53).
+ */
+export const PassAlreadyRunning: Story = {
+  parameters: { passRunning: true, credentials: true },
+  play: async ({ canvas, userEvent }) => {
+    await userEvent.click(await canvas.findByRole('tab', { name: 'Metadata and artwork' }))
+    const ring = await canvas.findByRole('progressbar', { name: 'Matching games' })
+    await expect(ring).toHaveAttribute('aria-valuenow', '25')
+    await userEvent.click(canvas.getByRole('button', { name: 'Stop' }))
+    await waitFor(() => expect(canvas.queryByRole('progressbar')).toBeNull())
   },
 }

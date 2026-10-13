@@ -29,6 +29,7 @@ import {
   type TestResult,
 } from '../../../components/organisms/CredentialControl/CredentialControl'
 import { JobsTable } from '../../../components/organisms/JobsTable/JobsTable'
+import { MetadataTracker } from '../../../components/organisms/MetadataTracker/MetadataTracker'
 import { MaintenanceTable } from '../../../components/organisms/MaintenanceTable/MaintenanceTable'
 import { SettingsSection } from '../../../components/organisms/SettingsSection/SettingsSection'
 import { StorageTable } from '../../../components/organisms/StorageTable/StorageTable'
@@ -75,7 +76,18 @@ const toast = (text: string, bad = false) =>
   appStore.getState().ui.toast(text, bad ? 'bad' : 'info')
 const SECRET = 'igdb.client_secret'
 const CLIENT = 'igdb.client_id'
-const METADATA_JOBS = new Set(['metadata', 'match', 'covers', 'rematch', 'franchise'])
+/** The jobs each section follows, whoever started them. */
+const SCAN_JOBS: ReadonlySet<string> = new Set(['scan'])
+const METADATA_JOBS: ReadonlySet<string> = new Set(['metadata', 'match', 'covers'])
+const TAG_JOBS: ReadonlySet<string> = new Set(['franchise'])
+/** Jobs that write game metadata, and so hold the metadata actions while they run. */
+const METADATA_WRITERS: ReadonlySet<string> = new Set([
+  'metadata',
+  'match',
+  'covers',
+  'rematch',
+  'franchise',
+])
 
 const MAINTENANCE: Readonly<Record<Action, readonly [string, string]>> = {
   compact: ['Compact the database', 'Gives back space the database no longer uses.'],
@@ -120,9 +132,24 @@ function startAt(current: string, kind: 'folder' | 'file'): string | null {
 }
 
 /** A job a section started: its line while it runs, its sentence when it ends, how it went. */
-function useSectionJob(done: () => void) {
+function useSectionJob(
+  kinds: ReadonlySet<string>,
+  jobs:
+    readonly { readonly id: string; readonly kind: string; readonly state: string }[] | undefined,
+  done: () => void,
+) {
   const [id, setId] = useState<string | null>(null)
   const job = useJob(id).data
+  // a job of this section's kinds already running, when the page opens or from
+  // elsewhere, is followed as if started here: leaving the page and coming back
+  // keeps its progress in view (F11-S53)
+  const elsewhere = jobs?.find((j) => kinds.has(j.kind) && !TERMINAL.has(j.state))
+  if (
+    elsewhere &&
+    elsewhere.id !== id &&
+    (id === null || (job !== undefined && TERMINAL.has(job.state)))
+  )
+    setId(elsewhere.id)
   const announce = useAnnounce()
   const ended = useRef<string | null>(null)
   useEffect(() => {
@@ -161,7 +188,7 @@ function useSectionJob(done: () => void) {
         : job.state === 'failed'
           ? 'failed'
           : 'idle'
-  return { start: setId, line, running, outcome }
+  return { start: setId, line, running, outcome, job: job ?? null }
 }
 
 type FieldsProps = {
@@ -326,6 +353,8 @@ type SectionProps = {
   readonly status?: { readonly tone: 'ok' | 'warn' | 'bad'; readonly word: string }
   /** The section's main actions, at its top (F11-S51). */
   readonly actions?: ReactNode
+  /** A graphic of the section's state, beside its settings (F11-S53). */
+  readonly aside?: ReactNode
   /** What the section carries besides its fields; given the section's own draft setter. */
   readonly children?: ReactNode | ((onDraft: (key: string, draft: Draft) => void) => ReactNode)
 }
@@ -367,7 +396,15 @@ function PlainSection({ section, byKey, status, onDirty, actions, children }: Se
 }
 
 /** Metadata: its one action at the top, the credentials as their own control, the rest from the registry. */
-function MetadataSection({ section, byKey, status, onDirty, actions, children }: SectionProps) {
+function MetadataSection({
+  section,
+  byKey,
+  status,
+  onDirty,
+  actions,
+  aside,
+  children,
+}: SectionProps) {
   const d = useDrafts(section.title)
   const [secret, setSecret] = useState<SecretDraft>({ kind: 'keep' })
   const test = useTestCredentials()
@@ -407,6 +444,7 @@ function MetadataSection({ section, byKey, status, onDirty, actions, children }:
         setTested(null)
       }}
       actions={actions}
+      aside={aside}
     >
       <CredentialControl
         clientId={clientId}
@@ -526,9 +564,9 @@ export function SettingsView() {
   }>(null)
 
   const refreshLibrary = useAfterLibraryJob()
-  const scanJob = useSectionJob(refreshLibrary)
-  const metaJob = useSectionJob(refreshLibrary)
-  const tagJob = useSectionJob(refreshLibrary)
+  const scanJob = useSectionJob(SCAN_JOBS, jobs.data, refreshLibrary)
+  const metaJob = useSectionJob(METADATA_JOBS, jobs.data, refreshLibrary)
+  const tagJob = useSectionJob(TAG_JOBS, jobs.data, refreshLibrary)
   const scan = useLibraryJob('/api/v1/library/scan')
   const metadata = useMetadataJob()
   const [metaMode, setMetaMode] = useState<'update' | 'refresh'>('update')
@@ -563,7 +601,7 @@ export function SettingsView() {
   const coversOn = byKey.get('match.auto_libretro_covers')?.value !== false
   const rate = Number(byKey.get('igdb.requests_per_second')?.value ?? 4) || 4
   const metadataBusy = (jobs.data ?? []).some(
-    (j) => METADATA_JOBS.has(j.kind) && !TERMINAL.has(j.state),
+    (j) => METADATA_WRITERS.has(j.kind) && !TERMINAL.has(j.state),
   )
   const cannotRun = !games.length
     ? 'Rescan the ROMs folder first'
@@ -773,20 +811,30 @@ export function SettingsView() {
                           onClick={refresh}
                         />
                       </p>
-                      <Muted>
-                        {[
-                          `${pending.toLocaleString()} not looked up yet`,
-                          `${matched.toLocaleString()} matched`,
-                          `${coverless.toLocaleString()} without a cover`,
-                        ].join(' · ')}
-                        {credentials
-                          ? ''
-                          : coversOn
-                            ? '. Without Twitch credentials only libretro covers are filled.'
-                            : ''}
-                      </Muted>
-                      {metaJob.line}
+                      {!credentials && coversOn && (
+                        <Muted>Without Twitch credentials only libretro covers are filled.</Muted>
+                      )}
                     </>
+                  }
+                  aside={
+                    <MetadataTracker
+                      coverage={{ total: games.length, matched, pending, coverless }}
+                      job={
+                        metaJob.job
+                          ? {
+                              state: metaJob.job.state,
+                              progress: metaJob.job.progress,
+                              result: metaJob.job.result,
+                              error: metaJob.job.error_message,
+                              started: metaJob.job.started,
+                            }
+                          : null
+                      }
+                      onStop={() => {
+                        const id = metaJob.job?.id
+                        if (id) cancelJob.mutate(id, { onSuccess: () => void jobs.refetch() })
+                      }}
+                    />
                   }
                 />
               ),

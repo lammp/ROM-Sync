@@ -25,6 +25,29 @@ export function probeMs(settings: readonly Setting[] | undefined): number {
   return typeof seconds === 'number' && seconds > 0 ? seconds * 1000 : PROBE_MS
 }
 
+/** The faster transport first, when one device is attached over more than one. */
+const PREFERRED: readonly string[] = ['adb', 'volume', 'mtp']
+
+/**
+ * The device attached for a profile: the one the engine recognised as it,
+ * over whichever transport it came back on. A profile's stored reference
+ * names the transport it was made over, so a device plugged back in over
+ * another (the Thor over MTP when ADB is not answering) is still this
+ * profile. The one rule for "online" on every page (F11-S53).
+ */
+export function attachedFor(
+  devices: readonly Attached[],
+  profileId: string | null,
+): Attached | null {
+  if (!profileId) return null
+  const mine = devices.filter((d) => d.profile?.id === profileId)
+  const rank = (d: Attached) => {
+    const i = PREFERRED.indexOf(d.kind)
+    return i < 0 ? PREFERRED.length : i
+  }
+  return [...mine].sort((a, b) => rank(a) - rank(b))[0] ?? null
+}
+
 export function useAttached() {
   const { api } = useEngine()
   const settings = useSettings().data

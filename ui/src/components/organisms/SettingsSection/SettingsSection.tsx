@@ -18,6 +18,11 @@ export type SettingsSectionProps = {
   readonly onCancel?: () => void
   /** The section's main actions, drawn prominently at its top, above its settings (F11-S51). */
   readonly actions?: ReactNode
+  /**
+   * A graphic of the section's state, beside its settings where the section
+   * is wide and under its actions where it is not (F11-S53).
+   */
+  readonly aside?: ReactNode
   readonly children: ReactNode
 }
 
@@ -37,34 +42,42 @@ export function SettingsSection({
   onSave,
   onCancel,
   actions,
+  aside,
   children,
 }: SettingsSectionProps) {
   const head = `${id}-title`
   return (
-    <section id={id} className={styles.section} aria-labelledby={head}>
-      <h2 id={head} className={styles.title}>
-        {title}
-        {dirty && <span className={styles.dirty}>edited</span>}
-        {status && <Pill tone={status.tone}>{status.word}</Pill>}
-      </h2>
-      {actions && (
-        <div className={styles.actions} role="group" aria-label={`${title}: actions`}>
-          {actions}
-        </div>
-      )}
-      {children}
-      {onSave && (
-        <div className={styles.save}>
-          {onCancel && (
-            <Button small disabled={!dirty || saving} onClick={onCancel}>
-              Cancel
+    <section
+      id={id}
+      className={[styles.section, aside !== undefined && styles.wide].filter(Boolean).join(' ')}
+      aria-labelledby={head}
+    >
+      <div className={styles.grid}>
+        <h2 id={head} className={styles.title}>
+          {title}
+          {dirty && <span className={styles.dirty}>edited</span>}
+          {status && <Pill tone={status.tone}>{status.word}</Pill>}
+        </h2>
+        {actions && (
+          <div className={styles.actions} role="group" aria-label={`${title}: actions`}>
+            {actions}
+          </div>
+        )}
+        {aside !== undefined && <div className={styles.aside}>{aside}</div>}
+        <div className={styles.body}>{children}</div>
+        {onSave && (
+          <div className={styles.save}>
+            {onCancel && (
+              <Button small disabled={!dirty || saving} onClick={onCancel}>
+                Cancel
+              </Button>
+            )}
+            <Button variant="primary" small disabled={!dirty || saving} onClick={onSave}>
+              {saving ? 'Saving…' : `Save ${title.toLowerCase()}`}
             </Button>
-          )}
-          <Button variant="primary" small disabled={!dirty || saving} onClick={onSave}>
-            {saving ? 'Saving…' : `Save ${title.toLowerCase()}`}
-          </Button>
-        </div>
-      )}
+          </div>
+        )}
+      </div>
     </section>
   )
 }

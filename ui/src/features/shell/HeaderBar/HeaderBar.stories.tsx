@@ -84,3 +84,15 @@ export const SomethingToRecover: Story = {
     await expect(await canvas.findByRole('link', { name: 'Recover' })).toBeVisible()
   },
 }
+
+/**
+ * Thor back over MTP with ADB not answering: the engine knows it, so the
+ * picker says it is here, not offline (F11-S53).
+ */
+export const BackOverAnotherTransport: Story = {
+  parameters: { scenario: 'thor-over-mtp' },
+  play: async ({ canvas }) => {
+    await expect(await canvas.findByRole('option', { name: 'Thor' })).toBeTruthy()
+    await expect(canvas.queryByRole('option', { name: 'Thor (offline)' })).toBeNull()
+  },
+}
