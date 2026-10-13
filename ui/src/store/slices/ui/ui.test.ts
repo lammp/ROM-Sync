@@ -32,4 +32,26 @@ describe('ui slice', () => {
     store.getState().ui.compare(null)
     expect(store.getState().ui.twin).toBeNull()
   })
+
+  it('keeps notifications newest first, once each, and remembers what was cleared', () => {
+    const store = make()
+    const at = 1
+    const n = (id: string) => ({ id, source: 'job' as const, tone: 'info' as const, title: id, at })
+    expect(store.getState().ui.notify(n('a'))).toBe(true)
+    expect(store.getState().ui.notify(n('b'))).toBe(true)
+    expect(store.getState().ui.notify(n('a'))).toBe(false)
+    expect(store.getState().ui.notices.map((x) => [x.id, x.read])).toEqual([
+      ['b', false],
+      ['a', false],
+    ])
+    store.getState().ui.readNotices()
+    expect(store.getState().ui.notices.every((x) => x.read)).toBe(true)
+    store.getState().ui.clearNotice('a')
+    expect(store.getState().ui.notify(n('a'))).toBe(false)
+    store.getState().ui.retract('b')
+    expect(store.getState().ui.notify(n('b'))).toBe(true)
+    store.getState().ui.clearNotices()
+    expect(store.getState().ui.notices).toEqual([])
+    expect(store.getState().ui.cleared).toEqual(['b', 'a'])
+  })
 })

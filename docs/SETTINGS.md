@@ -41,10 +41,11 @@ page should say so rather than spraying restart warnings it does not need.
 
 ## Principles
 
-- One page, one scroll, sections in first-run order.
+- One page, its groups as tabs in first-run order; one tab shown at a time.
 - Every section states its own readiness. Only a section with a problem is loud.
-- Saving is explicit and **per section**, so one section's job cannot discard
-  another's edit.
+- Saving is explicit and **per tab**: Save and Cancel act on the tab they sit
+  in, and nothing else. Edits in a tab survive a visit to another, and a tab
+  with unsaved edits carries a dot.
 - Destructive and long actions share one confirmation component, with a
   typed-word gate reserved for the irreversible two.
 - A running job is visible from anywhere on the page, not only from the card
@@ -55,36 +56,31 @@ page should say so rather than spraying restart warnings it does not need.
 ## Information architecture
 
 ```
-Settings
-├─ 0  Setup                 shown only while incomplete
-├─ 1  Library
-├─ 2  Metadata and artwork
-├─ 3  Tag suggestions
-├─ 4  Transports and tools
-├─ 5  Sync behaviour and guards
-├─ 6  Data and storage
-├─ 7  Diagnostics
-└─ 8  Suggested tags review  the existing list, moved last
+Settings  (a cog in the header)
+├─ Library
+├─ Metadata and artwork
+├─ Tag suggestions
+├─ Transports and tools
+├─ Sync behaviour and guards
+├─ Data and storage
+└─ Diagnostics
 ```
 
-Single column, about 900px wide, `<section>` with an `<h2>` and a status pill.
-Keep `.card`, `.field`, `.stat`, `.pill` and `.job` exactly as they are; the
-only new CSS is a two-column label/control grid and a sticky section nav on wide
-viewports. Section 8 stays full width because it is a work queue, not a setting,
-and it is already good.
+Each group is a tab; the address names the open one (`/settings#metadata`), so
+a link can open a tab and a reload keeps it. Each tab's panel is a `<section>`
+with an `<h2>` and a status pill. The arrow keys, Home and End move between
+tabs.
 
-### Section 0, Setup
+### Setup, as notifications
 
-A view over existing data, no new state. Shown while any of three conditions
-holds: no store root, zero systems, no credentials.
+The setup steps are notifications in the header's bell, not a section. Each is
+listed while it is to do, points at its tab, and leaves the bell once done.
 
-| Step | Complete when | Action |
+| Notification | Listed while | Opens |
 |---|---|---|
-| 1. Point at your ROMs folder | `counts.systems > 0` | scrolls to Library |
-| 2. Read the library | `counts.games > 0` | runs Rescan store |
-| 3. Add IGDB credentials for covers and details | `has_secret && client_id` | scrolls to Metadata, with one line noting libretro box art needs no account |
-
-Collapses to a single dismissible "Setup complete" line when all three are met.
+| Choose your ROMs folder | no ROMs folder is chosen | the Library tab |
+| Read the library | a ROMs folder is chosen and no system is read | the Library tab |
+| Add IGDB credentials for covers and details | no client ID and secret are saved; libretro box art needs no account | the Metadata and artwork tab |
 
 ## Field specifications
 
@@ -312,11 +308,11 @@ Three cross-cutting server changes this depends on:
 
 | Situation | Behaviour |
 |---|---|
-| A field is edited | that section's Save enables and a dot marks the section |
+| A field is edited | that tab's Save and Cancel enable, and a dot marks the tab |
 | Save succeeds | toast, and only that section's status pill refreshes. **No full page re-render**, so no other section loses an edit |
 | Save fails validation | inline message under the field, field focused, no toast |
 | A job starts | the section's own job line shows progress, and a row appears in Diagnostics; both fed by one poller, not one per card |
-| A job finishes | a sentence, not raw JSON; a notification if it ran over 30 seconds; only the affected counts refetch |
+| A job finishes | a sentence, not raw JSON, as a toast and as a notification in the bell, wherever the person is; a system notification if it ran over 30 seconds; only the affected counts refetch |
 | A job fails | the line goes red with the first message, and Details opens the full traceback with Copy |
 | The settings fetch fails | an error with Retry, not a permanent `loading…` |
 | Navigating away mid-job | the poller keeps running against the Diagnostics model, not a detached DOM node |

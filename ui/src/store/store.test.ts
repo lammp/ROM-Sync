@@ -4,6 +4,7 @@ import { check, readTree } from '../../structure/layering/layering'
 import {
   DEVICE_KEY,
   FACETS_KEY,
+  NOTICES_KEY,
   SLICES,
   appStore,
   createAppStore,
@@ -97,6 +98,26 @@ describe('store', () => {
     })
     store.getState().selection.choose(null)
     expect(storage.getItem(DEVICE_KEY)).toBe('')
+  })
+
+  it('keeps the notifications and the ids cleared across a reload (F11-S47)', () => {
+    const storage = new Memory()
+    const store = createAppStore(storage)
+    const at = 1_760_000_000_000
+    store
+      .getState()
+      .ui.notify({ id: 'job:a', source: 'job', tone: 'info', title: 'Scan finished', at })
+    store
+      .getState()
+      .ui.notify({ id: 'job:b', source: 'job', tone: 'bad', title: 'Sync failed', at })
+    store.getState().ui.clearNotice('job:a')
+    const again = createAppStore(storage).getState().ui
+    expect(again.notices.map((n) => n.id)).toEqual(['job:b'])
+    expect(again.cleared).toEqual(['job:a'])
+    expect(again.notify({ id: 'job:a', source: 'job', tone: 'info', title: 'x', at })).toBe(false)
+    const garbage = new Memory()
+    garbage.setItem(NOTICES_KEY, '{not json')
+    expect(createAppStore(garbage).getState().ui.notices).toEqual([])
   })
 
   it('works when storage is missing, refused or holds garbage', () => {

@@ -69,6 +69,8 @@ export type World = {
     kind: 'desktop' | 'browser'
     capabilities: ('reveal' | 'pick_folder' | 'browse_folders' | 'open_url' | 'notify')[]
   }
+  /** Devices pulled out, kept to be plugged back in. */
+  unplugged: World['attached']
   /** System files missing from the store's bios folder, by name; the rest are there. */
   biosMissing: string[]
   /** This computer's folders, by full path: what each holds, for browsing (F11-S45). */
@@ -662,6 +664,7 @@ export function freshWorld(): World {
       capabilities: ['reveal', 'pick_folder', 'browse_folders', 'open_url', 'notify'],
     },
     biosMissing: [],
+    unplugged: [],
     computer: {
       'C:\\': { folders: ['Users'], files: [] },
       'C:\\Users': { folders: [], files: [] },
@@ -859,6 +862,22 @@ function startSync(w: World, ref: string, confirm: unknown): Answer {
  * name the store's folder already has, unread.
  */
 export function seed(w: World, scenario: string): void {
+  // Thor pulled out, then plugged back in
+  if (scenario === 'thor-unplugged') {
+    w.unplugged.push(...w.attached.filter((a) => a.ref === THOR_REF))
+    w.attached = w.attached.filter((a) => a.ref !== THOR_REF)
+    return
+  }
+  if (scenario === 'thor-plugged') {
+    w.attached.push(...w.unplugged)
+    w.unplugged = []
+    return
+  }
+  // a scan the engine ran on its own, as at launch: nothing on screen started it
+  if (scenario === 'scan-ended') {
+    answer(w, 'POST', '/api/v1/library/scan', {})
+    return
+  }
   // the GBA BIOS taken out of the store's bios folder, then put back
   if (scenario === 'bios-removed') {
     w.biosMissing.push('gba_bios.bin')
@@ -1295,7 +1314,12 @@ const ROUTES: Route[] = [
       })
     }
     w.unread = []
-    return job(w, 'scan', null, { added: added.length, updated: 0, removed: 0 })
+    return job(w, 'scan', null, {
+      added: added.length,
+      updated: 0,
+      removed: 0,
+      unchanged: w.games.length - added.length,
+    })
   }),
   route('GET', '/api/v1/devices/{ref}/recover', (w, [ref]) => recoverList(w, String(ref))),
   route('POST', '/api/v1/devices/{ref}/recover', (w, [ref], b) => {

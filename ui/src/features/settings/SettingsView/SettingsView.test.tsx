@@ -1,6 +1,6 @@
 import { composeStories } from '@storybook/react'
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
-import { describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it } from 'vitest'
 import { appStore } from '../../../store/store'
 import * as stories from './SettingsView.stories'
 
@@ -9,49 +9,65 @@ const { FirstRun, InTheDesktop, OffLoopback } = composeStories(stories)
 const region = (name: RegExp) => screen.getByRole('region', { name })
 const toast = () => appStore.getState().ui.toasts.at(-1)?.text
 
+/** Opens a settings tab and gives its section. */
+function tab(name: RegExp): HTMLElement {
+  fireEvent.click(screen.getByRole('tab', { name }))
+  return region(name)
+}
+
 async function page() {
   render(<FirstRun />)
-  await screen.findByRole('list', { name: 'Setup' })
+  await screen.findByRole('tablist', { name: 'Settings groups' })
   await waitFor(() => expect(region(/^Library/).textContent).toContain('4 systems · 40 games'))
 }
 
 describe('SettingsView', () => {
+  // the open tab is kept in the address; each test starts on the first
+  beforeEach(() => window.history.replaceState(null, '', window.location.pathname))
+
   it('test_shell_reported: upgrades from browser to desktop mode when the engine says so', async () => {
     render(<InTheDesktop />)
-    const diagnostics = await screen.findByRole('region', { name: /^Diagnostics/ })
+    await screen.findByRole('tablist', { name: 'Settings groups' })
+    const diagnostics = tab(/^Diagnostics/)
     await waitFor(() => expect(diagnostics.textContent).toContain('Shelldesktop window'))
-    const library = region(/^Library/)
+    const library = tab(/^Library/)
     expect(within(library).getByRole('button', { name: /^ROMs folder/ })).toBeTruthy()
     expect(within(library).queryByRole('textbox', { name: 'ROMs folder' })).toBeNull()
     expect(within(library).getByRole('button', { name: 'Reveal' })).toBeTruthy()
     expect(
-      within(region(/^Data and storage/)).getByRole('button', { name: 'Reveal the data folder' }),
+      within(tab(/^Data and storage/)).getByRole('button', { name: 'Reveal the data folder' }),
     ).toBeTruthy()
   })
 
   it('offers no shell action where the engine says none answers', async () => {
     render(<OffLoopback />)
     await waitFor(() => expect(region(/^Library/).textContent).toContain('4 systems · 40 games'))
-    expect(region(/^Diagnostics/).textContent).toContain('Shellbrowser')
     // nothing here may read this computer's folders, so the path is typed
     expect(within(region(/^Library/)).getByRole('textbox', { name: 'ROMs folder' })).toBeTruthy()
+    expect(tab(/^Diagnostics/).textContent).toContain('Shellbrowser')
     expect(screen.queryByRole('button', { name: /^Reveal/ })).toBeNull()
   })
 
-  it('setup_steps: shows the steps in first-run order while one is left, and says which', async () => {
+  it('tabs: one per group in first-run order, the first shown, the setup steps gone to notifications', async () => {
     await page()
-    const steps = within(screen.getByRole('list', { name: 'Setup' })).getAllByRole('listitem')
-    expect(steps.map((s) => s.textContent?.match(/(done|to do)/)?.[1])).toEqual([
-      'done',
-      'done',
-      'to do',
+    expect(screen.getAllByRole('tab').map((t) => t.textContent)).toEqual([
+      'Library',
+      'Metadata and artwork',
+      'Tag suggestions',
+      'Transports and tools',
+      'Sync behaviour and guards',
+      'Data and storage',
+      'Diagnostics',
     ])
-    expect(region(/^Metadata and artwork/).textContent).toContain('no credentials')
+    expect(screen.getByRole('tab', { name: 'Library' }).getAttribute('aria-selected')).toBe('true')
+    expect(screen.getAllByRole('tabpanel')).toHaveLength(1)
+    expect(screen.queryByRole('list', { name: 'Setup' })).toBeNull()
+    expect(tab(/^Metadata and artwork/).textContent).toContain('no credentials')
   })
 
   it('test_fields: says the address, folders, last sync and recent errors (F15-S1)', async () => {
     await page()
-    const diagnostics = region(/^Diagnostics/)
+    const diagnostics = tab(/^Diagnostics/)
     await waitFor(() => expect(diagnostics.textContent).toContain('Addresshttp://127.0.0.1:8765/'))
     expect(diagnostics.textContent).toContain('Log folderX:/LocalAppData/ROM-Sync/data/logs')
     expect(diagnostics.textContent).toContain('Last syncno sync yet')
@@ -60,7 +76,7 @@ describe('SettingsView', () => {
 
   it('test_breakdown_matches_fixture: shows the data folder by part (F15-S2)', async () => {
     await page()
-    const data = region(/^Data and storage/)
+    const data = tab(/^Data and storage/)
     const table = await within(data).findByRole('table', { name: /^Storage:/ })
     await waitFor(() => expect(within(table).getAllByRole('row')).toHaveLength(8))
     expect(within(table).getAllByRole('row').at(-1)?.textContent).toContain(
@@ -70,7 +86,7 @@ describe('SettingsView', () => {
 
   it('states each detected transport in the transports section (F13-S8)', async () => {
     await page()
-    const transports = region(/^Transports and tools/)
+    const transports = tab(/^Transports and tools/)
     const list = await within(transports).findByRole('list', { name: 'Detected transports' })
     expect(
       within(list)
@@ -79,44 +95,42 @@ describe('SettingsView', () => {
     ).toEqual(['Drivesavailable1 drive(s)', 'MTPavailable0 storage(s)', 'ADBavailable2 device(s)'])
   })
 
-  it('draws every section in first-run order from the registry, with its fields', async () => {
+  it("draws each tab's section from the registry, with its fields", async () => {
     await page()
     expect(
-      screen
-        .getAllByRole('heading', { level: 2 })
-        .map((h) => h.textContent?.replace(/(edited|no .*|\d+ systems.*|credentials set)$/, '')),
-    ).toEqual([
-      'Setup',
-      'Library',
-      'Metadata and artwork',
-      'Tag suggestions',
-      'Transports and tools',
-      'Sync behaviour and guards',
-      'Data and storage',
-      'Diagnostics',
-    ])
-    expect(
-      within(region(/^Sync behaviour/)).getByRole('textbox', { name: 'Keep free on the device' }),
+      within(tab(/^Sync behaviour/)).getByRole('textbox', { name: 'Keep free on the device' }),
     ).toHaveProperty('value', '512.0 MB')
-    expect(
-      within(region(/^Diagnostics/)).getByRole('combobox', { name: 'Log level' }),
-    ).toHaveProperty('value', 'info')
+    expect(within(tab(/^Diagnostics/)).getByRole('combobox', { name: 'Log level' })).toHaveProperty(
+      'value',
+      'info',
+    )
   })
 
-  it('per_section_save: saves one section’s edits only, and leaves another section’s edit standing', async () => {
+  it('per_section_save: Save saves the tab it is in, and an edit in another tab stands, marked', async () => {
     await page()
-    const transports = region(/^Transports and tools/)
-    const sync = region(/^Sync behaviour/)
-    fireEvent.change(within(transports).getByRole('textbox', { name: 'Device probe interval' }), {
-      target: { value: '30' },
-    })
-    fireEvent.change(within(sync).getByRole('textbox', { name: 'Keep free on the device' }), {
-      target: { value: '1 GB' },
-    })
+    fireEvent.change(
+      within(tab(/^Transports and tools/)).getByRole('textbox', { name: 'Device probe interval' }),
+      { target: { value: '30' } },
+    )
+    fireEvent.change(
+      within(tab(/^Sync behaviour/)).getByRole('textbox', { name: 'Keep free on the device' }),
+      { target: { value: '1 GB' } },
+    )
+    await waitFor(() =>
+      expect(
+        screen.getByRole('tab', { name: 'Sync behaviour and guards, unsaved changes' }),
+      ).toBeTruthy(),
+    )
+    expect(screen.getByRole('tab', { name: 'Transports and tools, unsaved changes' })).toBeTruthy()
+    const transports = tab(/^Transports and tools/)
     expect(within(transports).getByText('edited')).toBeTruthy()
     fireEvent.click(within(transports).getByRole('button', { name: 'Save transports and tools' }))
     await waitFor(() => expect(toast()).toBe('Transports and tools saved'))
     expect(within(transports).queryByText('edited')).toBeNull()
+    await waitFor(() =>
+      expect(screen.getByRole('tab', { name: 'Transports and tools' })).toBeTruthy(),
+    )
+    const sync = tab(/^Sync behaviour/)
     expect(within(sync).getByRole('textbox', { name: 'Keep free on the device' })).toHaveProperty(
       'value',
       '1 GB',
@@ -124,9 +138,25 @@ describe('SettingsView', () => {
     expect(within(sync).getByText('edited')).toBeTruthy()
   })
 
+  it("Cancel drops the tab's edits and its mark", async () => {
+    await page()
+    const sync = tab(/^Sync behaviour/)
+    fireEvent.change(within(sync).getByRole('textbox', { name: 'Keep free on the device' }), {
+      target: { value: '1 GB' },
+    })
+    fireEvent.click(within(sync).getByRole('button', { name: 'Cancel' }))
+    expect(within(sync).getByRole('textbox', { name: 'Keep free on the device' })).toHaveProperty(
+      'value',
+      '512.0 MB',
+    )
+    await waitFor(() =>
+      expect(screen.getByRole('tab', { name: 'Sync behaviour and guards' })).toBeTruthy(),
+    )
+  })
+
   it('refuses a value on its field and sends nothing', async () => {
     await page()
-    const transports = region(/^Transports and tools/)
+    const transports = tab(/^Transports and tools/)
     fireEvent.change(within(transports).getByRole('textbox', { name: 'Device probe interval' }), {
       target: { value: '1' },
     })
@@ -137,11 +167,11 @@ describe('SettingsView', () => {
 
   it('edit_survives_job: a rescan ending does not discard what is typed in another section', async () => {
     await page()
-    const sync = region(/^Sync behaviour/)
+    const sync = tab(/^Sync behaviour/)
     fireEvent.change(within(sync).getByRole('textbox', { name: 'Keep free on the device' }), {
       target: { value: '2 GB' },
     })
-    fireEvent.click(within(region(/^Library/)).getByRole('button', { name: 'Rescan ROMs folder' }))
+    fireEvent.click(within(tab(/^Library/)).getByRole('button', { name: 'Rescan ROMs folder' }))
     fireEvent.click(
       within(screen.getByRole('dialog', { name: 'Rescan the ROMs folder' })).getByRole('button', {
         name: 'Rescan',
@@ -149,13 +179,13 @@ describe('SettingsView', () => {
     )
     await waitFor(() => expect(toast()).toMatch(/^scan done/))
     expect(
-      within(region(/^Sync behaviour/)).getByRole('textbox', { name: 'Keep free on the device' }),
+      within(tab(/^Sync behaviour/)).getByRole('textbox', { name: 'Keep free on the device' }),
     ).toHaveProperty('value', '2 GB')
   })
 
-  it('takes the credentials without ever showing the secret, tests them, and completes setup', async () => {
+  it('takes the credentials without ever showing the secret, and tests them', async () => {
     await page()
-    const meta = region(/^Metadata and artwork/)
+    const meta = tab(/^Metadata and artwork/)
     fireEvent.change(within(meta).getByRole('textbox', { name: 'Twitch client ID' }), {
       target: { value: 'my-client' },
     })
@@ -170,12 +200,12 @@ describe('SettingsView', () => {
     fireEvent.click(within(meta).getByRole('button', { name: 'Save metadata and artwork' }))
     await waitFor(() => expect(toast()).toBe('Metadata and artwork saved'))
     expect(await within(meta).findByText(/· 28 characters · not shown again/)).toBeTruthy()
-    await waitFor(() => expect(screen.getByText(/^Setup complete\./)).toBeTruthy())
+    await waitFor(() => expect(meta.textContent).toContain('credentials set'))
   })
 
   it('asks before upkeep that deletes, with what its dry run found', async () => {
     await page()
-    const data = region(/^Data and storage/)
+    const data = tab(/^Data and storage/)
     const covers = await within(data).findByRole('button', { name: 'Delete unreferenced covers' })
     await waitFor(() => expect(covers.hasAttribute('disabled')).toBe(false))
     fireEvent.click(covers)

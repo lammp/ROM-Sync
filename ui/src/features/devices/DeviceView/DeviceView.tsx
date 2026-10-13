@@ -108,15 +108,6 @@ export function DeviceView({ id }: { id: string }) {
   const [jobId, setJobId] = useState<string | null>(null)
   const job = useJob(jobId).data
 
-  // The watcher: a device plugged in or pulled out while the page is open is said.
-  const was = useRef<boolean | null>(null)
-  useEffect(() => {
-    if (!attached.isSuccess || !profile) return
-    if (was.current !== null && was.current !== connected)
-      toast(connected ? `${profile.name} connected` : `${profile.name} disconnected`)
-    was.current = connected
-  }, [attached.isSuccess, connected, profile])
-
   // A device job (scan, marker) that has ended reads the device's figures again.
   const ended = useRef<string | null>(null)
   useEffect(() => {

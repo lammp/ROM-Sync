@@ -104,7 +104,7 @@ const PAGES: {
   },
   {
     name: 'settings',
-    path: '/settings/',
+    path: '/settings/#data',
     ready: (page) => expect(page.getByRole('table', { name: 'Upkeep' })).toContainText('·'),
   },
   {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { LABELS, SECTIONS, arrange, setupDone, toValues } from './model'
+import { LABELS, SECTIONS, arrange, toValues } from './model'
 
 const def = (kind: string, over: object = {}) => ({
   kind,
@@ -60,23 +60,5 @@ describe('the settings page model', () => {
     expect(toValues({ 'device.probe_interval': '1', 'adb.path': 'x' }, defs)).toEqual({
       errors: { 'device.probe_interval': 'At least 5' },
     })
-  })
-
-  it('setup_steps: a store with systems, a read library, and credentials, in that order', () => {
-    expect(setupDone({ storeSet: false, systems: 0, games: 0, credentials: false })).toEqual([
-      false,
-      false,
-      false,
-    ])
-    expect(setupDone({ storeSet: true, systems: 0, games: 0, credentials: true })).toEqual([
-      false,
-      false,
-      true,
-    ])
-    expect(setupDone({ storeSet: true, systems: 4, games: 40, credentials: false })).toEqual([
-      true,
-      true,
-      false,
-    ])
   })
 })

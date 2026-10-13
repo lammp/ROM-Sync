@@ -1,12 +1,21 @@
 'use client'
 
-import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react'
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from 'react'
 import { Button } from '../../../components/atoms/Button/Button'
 import { Muted } from '../../../components/atoms/Muted/Muted'
 import { DataTable } from '../../../components/molecules/DataTable/DataTable'
 import { JobLine, type JobState } from '../../../components/molecules/JobLine/JobLine'
 import { LoadError } from '../../../components/molecules/LoadError/LoadError'
 import { SettingControl } from '../../../components/molecules/SettingControl/SettingControl'
+import { Tabs } from '../../../components/molecules/Tabs/Tabs'
 import { TransportList } from '../../../components/molecules/TransportList/TransportList'
 import { ConfirmDialog } from '../../../components/organisms/ConfirmDialog/ConfirmDialog'
 import { DiagnosticsSummary } from '../../../components/organisms/DiagnosticsSummary/DiagnosticsSummary'
@@ -19,7 +28,6 @@ import {
 import { JobsTable } from '../../../components/organisms/JobsTable/JobsTable'
 import { MaintenanceTable } from '../../../components/organisms/MaintenanceTable/MaintenanceTable'
 import { SettingsSection } from '../../../components/organisms/SettingsSection/SettingsSection'
-import { SetupSteps } from '../../../components/organisms/SetupSteps/SetupSteps'
 import { StorageTable } from '../../../components/organisms/StorageTable/StorageTable'
 import { PageLayout } from '../../../components/templates/PageLayout/PageLayout'
 import { formatBytes } from '../../../lib/format/format'
@@ -57,7 +65,7 @@ import {
   type Setting,
 } from '../../../queries/settings/settings'
 import { appStore } from '../../../store/store'
-import { LABELS, arrange, setupDone, toValues, type Draft, type Section } from './model'
+import { LABELS, arrange, toValues, type Draft, type Section } from './model'
 
 const toast = (text: string, bad = false) =>
   appStore.getState().ui.toast(text, bad ? 'bad' : 'info')
@@ -85,6 +93,15 @@ type Choice = {
 
 /** Opens the chooser for a path setting; null where nothing can be chosen. */
 const Chooser = createContext<((choice: Choice) => void) | null>(null)
+
+/** The tabs, in first-run order, as SETTINGS.md arranges the sections. */
+const TABS = ['library', 'metadata', 'tags', 'transports', 'sync', 'data', 'diagnostics']
+
+/** The tab the address names (`/settings#metadata`), else the first. */
+function tabOfHash(): string {
+  const named = typeof window === 'undefined' ? '' : window.location.hash.replace(/^#/, '')
+  return TABS.includes(named) ? named : 'library'
+}
 
 /** A label inside a sentence: "Data folder" reads "data folder"; "ROMs folder" and "ADB executable" keep their capitals. */
 const lowerFirst = (label: string) =>
@@ -237,6 +254,8 @@ function useDrafts(title: string) {
 type SectionProps = {
   readonly section: Section
   readonly byKey: ReadonlyMap<string, Setting>
+  /** Told whenever the section's edits start or stop being unsaved, for its tab's mark. */
+  readonly onDirty?: (edited: boolean) => void
   readonly status?: { readonly tone: 'ok' | 'warn' | 'bad'; readonly word: string }
   /** What the section carries besides its fields; given the section's own draft setter. */
   readonly children?: ReactNode | ((onDraft: (key: string, draft: Draft) => void) => ReactNode)
@@ -248,8 +267,10 @@ const carried = (
 ) => (typeof children === 'function' ? children(onDraft) : children)
 
 /** A section of plain registry fields and whatever it carries besides. */
-function PlainSection({ section, byKey, status, children }: SectionProps) {
+function PlainSection({ section, byKey, status, onDirty, children }: SectionProps) {
   const d = useDrafts(section.title)
+  const edited = Object.keys(d.drafts).length > 0
+  useEffect(() => onDirty?.(edited), [edited, onDirty])
   return (
     <SettingsSection
       id={section.id}
@@ -273,7 +294,7 @@ function PlainSection({ section, byKey, status, children }: SectionProps) {
 }
 
 /** Metadata: the credentials as their own control, the rest from the registry, and the passes. */
-function MetadataSection({ section, byKey, status, children }: SectionProps) {
+function MetadataSection({ section, byKey, status, onDirty, children }: SectionProps) {
   const d = useDrafts(section.title)
   const [secret, setSecret] = useState<SecretDraft>({ kind: 'keep' })
   const test = useTestCredentials()
@@ -289,6 +310,7 @@ function MetadataSection({ section, byKey, status, children }: SectionProps) {
     Object.keys(d.drafts).length > 0 ||
     secret.kind === 'remove' ||
     (secret.kind === 'typed' && secret.text.trim() !== '')
+  useEffect(() => onDirty?.(dirty), [dirty, onDirty])
   return (
     <SettingsSection
       id={section.id}
@@ -379,7 +401,35 @@ export function SettingsView() {
   const reports = useMaintenanceReports()
   const storage = useStorage()
   const runMaintenance = useRunMaintenance()
-  const [dismissed, setDismissed] = useState(false)
+  // the first tab until the page is in the browser, then the one the address names
+  const [tab, setTab] = useState('library')
+  const [dirty, setDirty] = useState<ReadonlySet<string>>(new Set())
+  // a notification that points at a tab, followed while this page is open
+  useEffect(() => {
+    const follow = () => setTab(tabOfHash())
+    queueMicrotask(follow)
+    window.addEventListener('hashchange', follow)
+    return () => window.removeEventListener('hashchange', follow)
+  }, [])
+  const selectTab = (id: string) => {
+    setTab(id)
+    try {
+      window.history.replaceState(null, '', `#${id}`)
+    } catch {
+      // no history to write: the tab is still shown
+    }
+  }
+  const dirtyIn = useCallback(
+    (id: string) => (edited: boolean) =>
+      setDirty((now) => {
+        if (now.has(id) === edited) return now
+        const next = new Set(now)
+        if (edited) next.add(id)
+        else next.delete(id)
+        return next
+      }),
+    [],
+  )
   const [browsing, setBrowsing] = useState<(Choice & { readonly path: string | null }) | null>(null)
   const folders = useFolders(
     browsing?.path ?? null,
@@ -424,19 +474,11 @@ export function SettingsView() {
   const games = library.data?.games ?? []
   const credentials =
     Boolean(byKey.get(CLIENT)?.value) && Boolean(byKey.get(SECRET)?.secret_state?.present)
-  const [step1, step2, step3] = setupDone({
-    storeSet: storeRoot !== '',
-    systems: sys.length,
-    games: games.length,
-    credentials,
-  })
   const pending = games.filter((g) => g.state === 'pending').length
   const coverless = games.filter((g) => g.matched && !g.coverUrl).length
   const metadataBusy = (jobs.data ?? []).some(
     (j) => METADATA_JOBS.has(j.kind) && !TERMINAL.has(j.state),
   )
-  const scroll = (id: string) =>
-    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
 
   const startJob = (
     m: {
@@ -491,240 +533,279 @@ export function SettingsView() {
   return (
     <Chooser.Provider value={choose}>
       <PageLayout heading="Settings">
-        {!(dismissed && step1 && step2 && step3) && (
-          <SettingsSection id="setup" title="Setup">
-            <SetupSteps
-              steps={[
-                {
-                  label: '1. Point at your ROMs folder',
-                  done: step1,
-                  action: { label: 'Go to Library', onClick: () => scroll('library') },
-                },
-                {
-                  label: '2. Read the library',
-                  done: step2,
-                  action: { label: 'Rescan ROMs folder', onClick: rescan },
-                },
-                {
-                  label: '3. Add IGDB credentials for covers and details',
-                  done: step3,
-                  note: 'libretro box art needs no account.',
-                  action: { label: 'Go to Metadata', onClick: () => scroll('metadata') },
-                },
-              ]}
-              onDismiss={() => setDismissed(true)}
-            />
-          </SettingsSection>
-        )}
-
-        <PlainSection
-          section={section('library')}
-          byKey={byKey}
-          status={
-            !storeRoot
-              ? { tone: 'bad', word: 'no ROMs folder chosen' }
-              : sys.length
-                ? {
-                    tone: 'ok',
-                    word: `${sys.length} systems · ${games.length.toLocaleString()} games`,
+        <Tabs
+          label="Settings groups"
+          selected={tab}
+          onSelect={selectTab}
+          tabs={[
+            {
+              id: 'library',
+              label: section('library').title,
+              dirty: dirty.has('library'),
+              panel: (
+                <PlainSection
+                  section={section('library')}
+                  byKey={byKey}
+                  onDirty={dirtyIn('library')}
+                  status={
+                    !storeRoot
+                      ? { tone: 'bad', word: 'no ROMs folder chosen' }
+                      : sys.length
+                        ? {
+                            tone: 'ok',
+                            word: `${sys.length} systems · ${games.length.toLocaleString()} games`,
+                          }
+                        : { tone: 'warn', word: 'no systems found here' }
                   }
-                : { tone: 'warn', word: 'no systems found here' }
-          }
-        >
-          {() => (
-            <>
-              <p>
-                {can(shell, 'reveal') && storeRoot && (
-                  <Button small onClick={() => reveal.mutate({ root: 'store' })}>
-                    Reveal
-                  </Button>
-                )}{' '}
-                <Button small disabled={!storeRoot || scanJob.running} onClick={rescan}>
-                  Rescan ROMs folder
-                </Button>
-              </p>
-              {scanJob.line}
-              <DataTable
-                caption="Systems in the ROMs folder"
-                columns={[
-                  {
-                    key: 'system',
-                    label: 'System',
-                    cell: (s: (typeof sys)[number]) => `${s.label} (${s.key})`,
-                  },
-                  {
-                    key: 'games',
-                    label: 'Games',
-                    numeric: true,
-                    cell: (s: (typeof sys)[number]) => s.games.toLocaleString(),
-                  },
-                  {
-                    key: 'bytes',
-                    label: 'Size',
-                    numeric: true,
-                    cell: (s: (typeof sys)[number]) => formatBytes(s.bytes),
-                  },
-                ]}
-                rows={sys}
-                rowKey={(s) => s.key}
-                empty="No systems found. Check the ROMs folder, then rescan."
-              />
-            </>
-          )}
-        </PlainSection>
-
-        <MetadataSection
-          section={section('metadata')}
-          byKey={byKey}
-          status={
-            credentials
-              ? { tone: 'ok', word: 'credentials set' }
-              : { tone: 'warn', word: 'no credentials' }
-          }
-        >
-          <p>
-            <Button
-              small
-              disabled={!pending || metadataBusy || !credentials}
-              title={credentials ? undefined : 'Add credentials first'}
-              onClick={() =>
-                setAsk({
-                  title: 'Match new games',
-                  body: `Look up ${pending.toLocaleString()} unmatched games on IGDB, at up to ${String(byKey.get('igdb.requests_per_second')?.value ?? 4)} requests a second.`,
-                  confirm: 'Match',
-                  run: () => startJob(match, metaJob.start),
-                })
-              }
-            >
-              Match new ({pending.toLocaleString()})
-            </Button>{' '}
-            <Button
-              small
-              disabled={!coverless || metadataBusy}
-              onClick={() => startJob(covers, metaJob.start)}
-            >
-              Fill missing covers ({coverless.toLocaleString()})
-            </Button>
-          </p>
-          {metaJob.line}
-        </MetadataSection>
-
-        <PlainSection section={section('tags')} byKey={byKey}>
-          <p>
-            <Button
-              small
-              disabled={metadataBusy || tagJob.running}
-              onClick={() => startJob(franchises, tagJob.start)}
-            >
-              Propose franchise tags
-            </Button>{' '}
-            <Muted>
-              Proposals wait for a decision in each game&apos;s details; a decision is never
-              overwritten.
-            </Muted>
-          </p>
-          {tagJob.line}
-        </PlainSection>
-
-        <PlainSection section={section('transports')} byKey={byKey}>
-          <TransportList transports={attached.data?.transports ?? []} />
-        </PlainSection>
-        <PlainSection section={section('sync')} byKey={byKey} />
-
-        <PlainSection section={section('data')} byKey={byKey}>
-          {can(shell, 'reveal') && (
-            <p>
-              <Button small onClick={() => reveal.mutate({ root: 'data' })}>
-                Reveal the data folder
-              </Button>
-            </p>
-          )}
-          {storage.isError ? (
-            <LoadError
-              what="the storage breakdown"
-              message={storage.error.message}
-              retrying={storage.isFetching}
-              onRetry={() => void storage.refetch()}
-            />
-          ) : (
-            <StorageTable parts={storage.data?.components ?? []} />
-          )}
-          <MaintenanceTable
-            busy={runMaintenance.isPending}
-            rows={ACTIONS.map((action, i) => {
-              const r = reports[i]?.data
-              const [label, what] = MAINTENANCE[action]
-              return {
-                action,
-                label,
-                what,
-                count: r ? r.count : null,
-                bytes: r?.bytes ?? 0,
-                onRun: () =>
-                  r &&
-                  setAsk({
-                    title: label,
-                    body: `${label}: ${r.count.toLocaleString()} item${r.count === 1 ? '' : 's'}, ${formatBytes(r.bytes)}.`,
-                    confirm: 'Run',
-                    danger: action !== 'compact',
-                    run: () =>
-                      runMaintenance.mutate(
-                        { action, expected: r.count },
-                        {
-                          onSuccess: () => toast(`${label}: started`),
-                          onError: (e) => toast(e.message, true),
-                        },
-                      ),
-                  }),
-              }
-            })}
-          />
-        </PlainSection>
-
-        <PlainSection section={section('diagnostics')} byKey={byKey}>
-          {diagnostics.isError ? (
-            <LoadError
-              what="the diagnostics"
-              message={diagnostics.error.message}
-              retrying={diagnostics.isFetching}
-              onRetry={() => void diagnostics.refetch()}
-            />
-          ) : (
-            <DiagnosticsSummary
-              version={
-                version ? `${version.application} ${version.version} · API ${version.api}` : ''
-              }
-              host={hostOf(shell)}
-              address={diagnostics.data?.address ?? ''}
-              dataFolder={diagnostics.data?.data_folder ?? ''}
-              logFolder={diagnostics.data?.log_folder ?? ''}
-              lastSync={
-                diagnostics.data?.last_sync
-                  ? {
-                      device: diagnostics.data.last_sync.device,
-                      started: diagnostics.data.last_sync.run.started,
-                      state: diagnostics.data.last_sync.run.state,
-                      counts: diagnostics.data.last_sync.run.counts ?? {},
-                      bytes: diagnostics.data.last_sync.run.bytes_moved ?? null,
+                >
+                  {() => (
+                    <>
+                      <p>
+                        {can(shell, 'reveal') && storeRoot && (
+                          <Button small onClick={() => reveal.mutate({ root: 'store' })}>
+                            Reveal
+                          </Button>
+                        )}{' '}
+                        <Button small disabled={!storeRoot || scanJob.running} onClick={rescan}>
+                          Rescan ROMs folder
+                        </Button>
+                      </p>
+                      {scanJob.line}
+                      <DataTable
+                        caption="Systems in the ROMs folder"
+                        columns={[
+                          {
+                            key: 'system',
+                            label: 'System',
+                            cell: (s: (typeof sys)[number]) => `${s.label} (${s.key})`,
+                          },
+                          {
+                            key: 'games',
+                            label: 'Games',
+                            numeric: true,
+                            cell: (s: (typeof sys)[number]) => s.games.toLocaleString(),
+                          },
+                          {
+                            key: 'bytes',
+                            label: 'Size',
+                            numeric: true,
+                            cell: (s: (typeof sys)[number]) => formatBytes(s.bytes),
+                          },
+                        ]}
+                        rows={sys}
+                        rowKey={(s) => s.key}
+                        empty="No systems found. Check the ROMs folder, then rescan."
+                      />
+                    </>
+                  )}
+                </PlainSection>
+              ),
+            },
+            {
+              id: 'metadata',
+              label: section('metadata').title,
+              dirty: dirty.has('metadata'),
+              panel: (
+                <MetadataSection
+                  section={section('metadata')}
+                  byKey={byKey}
+                  onDirty={dirtyIn('metadata')}
+                  status={
+                    credentials
+                      ? { tone: 'ok', word: 'credentials set' }
+                      : { tone: 'warn', word: 'no credentials' }
+                  }
+                >
+                  <p>
+                    <Button
+                      small
+                      disabled={!pending || metadataBusy || !credentials}
+                      title={credentials ? undefined : 'Add credentials first'}
+                      onClick={() =>
+                        setAsk({
+                          title: 'Match new games',
+                          body: `Look up ${pending.toLocaleString()} unmatched games on IGDB, at up to ${String(byKey.get('igdb.requests_per_second')?.value ?? 4)} requests a second.`,
+                          confirm: 'Match',
+                          run: () => startJob(match, metaJob.start),
+                        })
+                      }
+                    >
+                      Match new ({pending.toLocaleString()})
+                    </Button>{' '}
+                    <Button
+                      small
+                      disabled={!coverless || metadataBusy}
+                      onClick={() => startJob(covers, metaJob.start)}
+                    >
+                      Fill missing covers ({coverless.toLocaleString()})
+                    </Button>
+                  </p>
+                  {metaJob.line}
+                </MetadataSection>
+              ),
+            },
+            {
+              id: 'tags',
+              label: section('tags').title,
+              dirty: dirty.has('tags'),
+              panel: (
+                <PlainSection section={section('tags')} byKey={byKey} onDirty={dirtyIn('tags')}>
+                  <p>
+                    <Button
+                      small
+                      disabled={metadataBusy || tagJob.running}
+                      onClick={() => startJob(franchises, tagJob.start)}
+                    >
+                      Propose franchise tags
+                    </Button>{' '}
+                    <Muted>
+                      Proposals wait for a decision in each game&apos;s details; a decision is never
+                      overwritten.
+                    </Muted>
+                  </p>
+                  {tagJob.line}
+                </PlainSection>
+              ),
+            },
+            {
+              id: 'transports',
+              label: section('transports').title,
+              dirty: dirty.has('transports'),
+              panel: (
+                <PlainSection
+                  section={section('transports')}
+                  byKey={byKey}
+                  onDirty={dirtyIn('transports')}
+                >
+                  <TransportList transports={attached.data?.transports ?? []} />
+                </PlainSection>
+              ),
+            },
+            {
+              id: 'sync',
+              label: section('sync').title,
+              dirty: dirty.has('sync'),
+              panel: (
+                <PlainSection section={section('sync')} byKey={byKey} onDirty={dirtyIn('sync')} />
+              ),
+            },
+            {
+              id: 'data',
+              label: section('data').title,
+              dirty: dirty.has('data'),
+              panel: (
+                <PlainSection section={section('data')} byKey={byKey} onDirty={dirtyIn('data')}>
+                  {can(shell, 'reveal') && (
+                    <p>
+                      <Button small onClick={() => reveal.mutate({ root: 'data' })}>
+                        Reveal the data folder
+                      </Button>
+                    </p>
+                  )}
+                  {storage.isError ? (
+                    <LoadError
+                      what="the storage breakdown"
+                      message={storage.error.message}
+                      retrying={storage.isFetching}
+                      onRetry={() => void storage.refetch()}
+                    />
+                  ) : (
+                    <StorageTable parts={storage.data?.components ?? []} />
+                  )}
+                  <MaintenanceTable
+                    busy={runMaintenance.isPending}
+                    rows={ACTIONS.map((action, i) => {
+                      const r = reports[i]?.data
+                      const [label, what] = MAINTENANCE[action]
+                      return {
+                        action,
+                        label,
+                        what,
+                        count: r ? r.count : null,
+                        bytes: r?.bytes ?? 0,
+                        onRun: () =>
+                          r &&
+                          setAsk({
+                            title: label,
+                            body: `${label}: ${r.count.toLocaleString()} item${r.count === 1 ? '' : 's'}, ${formatBytes(r.bytes)}.`,
+                            confirm: 'Run',
+                            danger: action !== 'compact',
+                            run: () =>
+                              runMaintenance.mutate(
+                                { action, expected: r.count },
+                                {
+                                  onSuccess: () => toast(`${label}: started`),
+                                  onError: (e) => toast(e.message, true),
+                                },
+                              ),
+                          }),
+                      }
+                    })}
+                  />
+                </PlainSection>
+              ),
+            },
+            {
+              id: 'diagnostics',
+              label: section('diagnostics').title,
+              dirty: dirty.has('diagnostics'),
+              panel: (
+                <PlainSection
+                  section={section('diagnostics')}
+                  byKey={byKey}
+                  onDirty={dirtyIn('diagnostics')}
+                >
+                  {diagnostics.isError ? (
+                    <LoadError
+                      what="the diagnostics"
+                      message={diagnostics.error.message}
+                      retrying={diagnostics.isFetching}
+                      onRetry={() => void diagnostics.refetch()}
+                    />
+                  ) : (
+                    <DiagnosticsSummary
+                      version={
+                        version
+                          ? `${version.application} ${version.version} · API ${version.api}`
+                          : ''
+                      }
+                      host={hostOf(shell)}
+                      address={diagnostics.data?.address ?? ''}
+                      dataFolder={diagnostics.data?.data_folder ?? ''}
+                      logFolder={diagnostics.data?.log_folder ?? ''}
+                      lastSync={
+                        diagnostics.data?.last_sync
+                          ? {
+                              device: diagnostics.data.last_sync.device,
+                              started: diagnostics.data.last_sync.run.started,
+                              state: diagnostics.data.last_sync.run.state,
+                              counts: diagnostics.data.last_sync.run.counts ?? {},
+                              bytes: diagnostics.data.last_sync.run.bytes_moved ?? null,
+                            }
+                          : null
+                      }
+                      errors={diagnostics.data?.recent_errors ?? []}
+                      bundleHref={`${baseUrl}/api/v1/diagnostics/bundle`}
+                    />
+                  )}
+                  <JobsTable
+                    jobs={(jobs.data ?? []).map((j) => ({
+                      id: j.id,
+                      kind: j.kind,
+                      started: j.started,
+                      state: j.state,
+                      progress: j.progress,
+                      error: j.error_message,
+                    }))}
+                    onCancel={(id) =>
+                      cancelJob.mutate(id, { onSuccess: () => void jobs.refetch() })
                     }
-                  : null
-              }
-              errors={diagnostics.data?.recent_errors ?? []}
-              bundleHref={`${baseUrl}/api/v1/diagnostics/bundle`}
-            />
-          )}
-          <JobsTable
-            jobs={(jobs.data ?? []).map((j) => ({
-              id: j.id,
-              kind: j.kind,
-              started: j.started,
-              state: j.state,
-              progress: j.progress,
-              error: j.error_message,
-            }))}
-            onCancel={(id) => cancelJob.mutate(id, { onSuccess: () => void jobs.refetch() })}
-          />
-        </PlainSection>
+                  />
+                </PlainSection>
+              ),
+            },
+          ]}
+        />
 
         {ask && (
           <ConfirmDialog

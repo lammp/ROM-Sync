@@ -56,3 +56,20 @@ export function useJobs() {
       (query.state.data ?? []).some((j) => !TERMINAL.has(j.state)) ? pollMs : false,
   })
 }
+
+/**
+ * Every job the engine holds, read on a steady beat whether or not one is
+ * running, so a job that ends anywhere is noticed (F11-S47): one started on
+ * another page, before this page loaded, or by the engine on its own.
+ */
+export function useJobFeed() {
+  const { api, pollMs } = useEngine()
+  return useQuery({
+    queryKey: ['jobs', 'feed'],
+    queryFn: async ({ signal }) => unwrap(await api.GET('/api/v1/jobs', { signal })).jobs,
+    refetchInterval: pollMs * FEED_BEATS,
+  })
+}
+
+/** The feed is read once every this many job polls: every five seconds in the application. */
+export const FEED_BEATS = 5

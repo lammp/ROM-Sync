@@ -14,6 +14,9 @@ it('names the views in a main navigation, marks the current one, and links setti
       .map((a) => a.textContent),
   ).toEqual(['Library', 'Devices', 'System files'])
   expect(screen.getByRole('link', { name: 'Library' }).getAttribute('aria-current')).toBe('page')
-  expect(screen.getByRole('link', { name: 'Settings' })).toBeTruthy()
+  const settings = screen.getByRole('link', { name: 'Settings' })
+  expect(settings.textContent).toBe('')
+  expect(settings.querySelector('svg')).not.toBeNull()
+  expect(settings.getAttribute('title')).toBe('Settings')
   expect(screen.getByRole('searchbox')).toBeTruthy()
 })

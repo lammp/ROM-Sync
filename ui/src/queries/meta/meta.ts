@@ -1,6 +1,7 @@
 /** What the engine says about itself: its version, and who hosts the page. */
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { useCallback } from 'react'
+import type { Notice } from '../../lib/notices/notices'
 import { BROWSER, can, ranLong, shellOf } from '../../lib/platform/platform'
 import { appStore } from '../../store/store'
 import { unwrap, useEngine } from '../engine/engine'
@@ -74,20 +75,38 @@ export function useReveal() {
   })
 }
 
-type Ended = { readonly started: string | null; readonly finished: string | null }
+type Ended = {
+  readonly id?: string
+  readonly started: string | null
+  readonly finished: string | null
+}
+
+/** What `useAnnounce` is given: a sentence, or the notification itself. */
+type Said = string | Omit<Notice, 'at'>
 
 /**
- * Says how a job ended (F12-S5). The toast is always shown and is the record
- * of what happened; a job that ran over thirty seconds is also announced as a
- * system notification where the shell can show one. A notification that
- * fails, or is not delivered, changes nothing: the toast is already up.
+ * Says how a job ended (F12-S5, F11-S47). It is recorded once as a
+ * notification, under the job's id, and said once as a toast: whichever of
+ * the page that ran the job or the notification watcher says it first, the
+ * other finds it said. A job that ran over thirty seconds is also announced
+ * as a system notification where the shell can show one; one that fails, or
+ * is not delivered, changes nothing.
  */
 export function useAnnounce() {
   const { api } = useEngine()
   const shell = useShell().data ?? BROWSER
   return useCallback(
-    (job: Ended | undefined, text: string, bad = false) => {
-      appStore.getState().ui.toast(text, bad ? 'bad' : 'info')
+    (job: Ended | undefined, said: Said, bad = false) => {
+      const notice: Omit<Notice, 'at'> | null =
+        typeof said !== 'string'
+          ? said
+          : job?.id
+            ? { id: `job:${job.id}`, source: 'job', tone: bad ? 'bad' : 'info', title: said }
+            : null
+      const ui = appStore.getState().ui
+      if (notice && !ui.notify({ ...notice, at: Date.now() })) return
+      const text = notice ? [notice.title, notice.body].filter(Boolean).join('. ') : String(said)
+      ui.toast(text, notice ? (notice.tone === 'bad' ? 'bad' : 'info') : bad ? 'bad' : 'info')
       if (!job || !can(shell, 'notify') || !ranLong(job)) return
       api
         .POST('/api/v1/shell/notify', { body: { title: 'ROM-Sync', body: text } })

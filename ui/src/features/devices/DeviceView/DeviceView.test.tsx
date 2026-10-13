@@ -107,7 +107,7 @@ describe('DeviceView', () => {
     expect(push).toHaveBeenCalledWith('/devices')
   })
 
-  it('watcher_is_a_query: asks at the probe interval, says a pull-out, and stops when the page goes', async () => {
+  it('watcher_is_a_query: asks at the probe interval, shows a pull-out, and stops when the page goes', async () => {
     vi.useFakeTimers({ shouldAdvanceTime: true })
     try {
       const world = freshWorld()
@@ -132,7 +132,7 @@ describe('DeviceView', () => {
       await act(() => vi.advanceTimersByTimeAsync(PROBE_MS))
       await screen.findByText('not plugged in')
       expect(probes).toBe(2)
-      expect(appStore.getState().ui.toasts.at(-1)?.text).toBe('Thor disconnected')
+      // saying it is the notification watcher's, wherever the person is (F11-S47)
       unmount()
       await act(() => vi.advanceTimersByTimeAsync(PROBE_MS * 3))
       expect(probes).toBe(2)

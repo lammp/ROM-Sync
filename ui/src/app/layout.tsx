@@ -4,6 +4,7 @@ import '../design/tokens/tokens.css'
 import '../design/base/base.css'
 import { AppShell } from '../components/templates/AppShell/AppShell'
 import { HeaderBar } from '../features/shell/HeaderBar/HeaderBar'
+import { NoticeWatcher } from '../features/shell/NoticeWatcher/NoticeWatcher'
 import { Providers } from '../features/shell/Providers/Providers'
 import { SyncWatcher } from '../features/shell/SyncWatcher/SyncWatcher'
 import { Toasts } from '../features/shell/Toasts/Toasts'
@@ -19,6 +20,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       <body>
         <Providers>
           <SyncWatcher />
+          <NoticeWatcher />
           <AppShell header={<HeaderBar />} toasts={<Toasts />}>
             {children}
           </AppShell>

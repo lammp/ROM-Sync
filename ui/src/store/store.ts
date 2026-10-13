@@ -2,9 +2,10 @@
  * The one client store (D22, F11-S6).
  *
  * Six slices in one Zustand container; server state lives in the query layer,
- * not here. Two things persist in the browser, under version 1's keys: the
+ * not here. Three things persist in the browser: under version 1's keys, the
  * device last chosen (`romsync.device`) and the facets opened or closed
- * (`romsync.facets`). Storage can be missing or throw, so every read and
+ * (`romsync.facets`); and the notifications with the ids cleared
+ * (`romsync.notices`). Storage can be missing or throw, so every read and
  * write is guarded and the store works without it.
  */
 import { useStore } from 'zustand'
@@ -28,6 +29,7 @@ export type KeyValue = Pick<Storage, 'getItem' | 'setItem'>
 export const SLICES = ['library', 'filters', 'selection', 'sync', 'capacity', 'ui'] as const
 export const DEVICE_KEY = 'romsync.device'
 export const FACETS_KEY = 'romsync.facets'
+export const NOTICES_KEY = 'romsync.notices'
 
 function read(storage: KeyValue | undefined, key: string): string | null {
   try {
@@ -65,6 +67,24 @@ function restore(store: AppStore, storage: KeyValue | undefined): void {
   } catch {
     // unreadable: start fresh, as version 1 did
   }
+  try {
+    const saved = JSON.parse(read(storage, NOTICES_KEY) ?? '{}') as {
+      notices?: unknown
+      cleared?: unknown
+    }
+    const { ui } = store.getState()
+    store.setState({
+      ui: {
+        ...ui,
+        notices: Array.isArray(saved.notices) ? (saved.notices as AppState['ui']['notices']) : [],
+        cleared: Array.isArray(saved.cleared)
+          ? saved.cleared.filter((c): c is string => typeof c === 'string')
+          : [],
+      },
+    })
+  } catch {
+    // unreadable: no notifications kept
+  }
 }
 
 export function createAppStore(storage?: KeyValue): AppStore {
@@ -89,6 +109,12 @@ export function createAppStore(storage?: KeyValue): AppStore {
         FACETS_KEY,
         JSON.stringify({ expanded: now.filters.expanded, collapsed: now.filters.collapsed }),
       )
+    if (now.ui.notices !== before.ui.notices || now.ui.cleared !== before.ui.cleared)
+      write(
+        storage,
+        NOTICES_KEY,
+        JSON.stringify({ notices: now.ui.notices, cleared: now.ui.cleared }),
+      )
   })
   return store
 }
@@ -111,7 +137,12 @@ const FIRST = appStore.getState()
  * and stories, which share one store across many renders.
  */
 export function resetAppStore(): void {
-  appStore.setState(FIRST, true)
+  // no notification carried over from what the browser kept: each test starts with none
+  const kept = FIRST.ui.notices.length > 0 || FIRST.ui.cleared.length > 0
+  appStore.setState(
+    kept ? { ...FIRST, ui: { ...FIRST.ui, notices: [], cleared: [] } } : FIRST,
+    true,
+  )
 }
 
 /** Subscribes a component to the part of the state it selects, and nothing more. */

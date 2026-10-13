@@ -4,6 +4,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import { SearchInput } from '../../../components/atoms/SearchInput/SearchInput'
 import { AppHeader } from '../../../components/organisms/AppHeader/AppHeader'
 import { DevicePicker } from '../../../components/organisms/DevicePicker/DevicePicker'
+import { NotificationCentre } from '../../../components/organisms/NotificationCentre/NotificationCentre'
 import { useAttached, useProfiles } from '../../../queries/devices/devices'
 import { useRecoverLists } from '../../../queries/recover/recover'
 import { appStore, useAppStore } from '../../../store/store'
@@ -35,6 +36,7 @@ export function HeaderBar() {
   const lists = useRecoverLists(attached.filter((d) => d.profile !== null).map((d) => d.ref))
   const recover = lists.some((l) => (l.data?.length ?? 0) > 0)
   const views = recover || route === RECOVER.href ? [...VIEWS, RECOVER] : VIEWS
+  const notices = useAppStore((s) => s.ui.notices)
   return (
     <AppHeader
       nav={views.map((v) => ({ ...v, current: route === v.href }))}
@@ -56,6 +58,20 @@ export function HeaderBar() {
           }))}
           value={device}
           onChange={(id) => appStore.getState().selection.choose(id)}
+        />
+      }
+      notices={
+        <NotificationCentre
+          notices={notices}
+          onOpen={() => appStore.getState().ui.readNotices()}
+          onClear={(id) => appStore.getState().ui.clearNotice(id)}
+          onClearAll={() => appStore.getState().ui.clearNotices()}
+          onFollow={(href) => {
+            const [path, hash] = href.split('#')
+            // a tab of the page already open: the address's hash changes, and the page follows it
+            if (hash && routeOf(path ?? '/') === route) window.location.hash = hash
+            else router.push(href)
+          }}
         />
       }
       settings={{ href: '/settings', label: 'Settings', current: route === '/settings' }}

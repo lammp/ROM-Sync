@@ -136,15 +136,3 @@ export function toValues(
   }
   return Object.keys(errors).length ? { errors } : { values }
 }
-
-export type SetupFacts = {
-  readonly storeSet: boolean
-  readonly systems: number
-  readonly games: number
-  readonly credentials: boolean
-}
-
-/** Setup's three steps in first-run order, and whether each is done (SETTINGS.md section 0). */
-export function setupDone(f: SetupFacts): readonly [boolean, boolean, boolean] {
-  return [f.storeSet && f.systems > 0, f.games > 0, f.credentials]
-}

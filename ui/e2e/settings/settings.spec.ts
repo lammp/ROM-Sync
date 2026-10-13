@@ -4,29 +4,44 @@ test.beforeEach(async ({ request }) => {
   await request.post('/__reset')
 })
 
-test('settings opens on setup, then the sections in first-run order', async ({ page }) => {
+test('settings opens on its first tab, the groups as tabs in first-run order (F11-S48)', async ({
+  page,
+}) => {
   await page.goto('/settings/')
-  await expect(page.getByRole('link', { name: 'Settings' })).toHaveAttribute('aria-current', 'page')
-  await expect(page.getByRole('list', { name: 'Setup' })).toContainText('to do')
-  await expect(page.getByRole('heading', { level: 2 })).toHaveText([
-    'Setup',
-    /^Library/,
-    /^Metadata and artwork/,
-    /^Tag suggestions/,
-    /^Transports and tools/,
-    /^Sync behaviour and guards/,
-    /^Data and storage/,
-    /^Diagnostics/,
+  const cog = page.getByRole('link', { name: 'Settings' })
+  await expect(cog).toHaveAttribute('aria-current', 'page')
+  await expect(cog).toHaveText('')
+  await expect(page.getByRole('tab')).toHaveText([
+    'Library',
+    'Metadata and artwork',
+    'Tag suggestions',
+    'Transports and tools',
+    'Sync behaviour and guards',
+    'Data and storage',
+    'Diagnostics',
   ])
+  await expect(page.getByRole('tab', { name: 'Library' })).toHaveAttribute('aria-selected', 'true')
+  await expect(page.getByRole('list', { name: 'Setup' })).toHaveCount(0)
 })
 
-test('a section saves on its own and the value is kept over a reload', async ({ page }) => {
+test('a tab saves on its own, and the open tab and value are kept over a reload', async ({
+  page,
+}) => {
   await page.goto('/settings/')
+  await page.getByRole('tab', { name: 'Sync behaviour and guards' }).click()
   const sync = page.getByRole('region', { name: /^Sync behaviour/ })
   await sync.getByRole('textbox', { name: 'Keep free on the device' }).fill('1 GB')
+  await expect(
+    page.getByRole('tab', { name: 'Sync behaviour and guards, unsaved changes' }),
+  ).toBeVisible()
   await sync.getByRole('button', { name: 'Save sync behaviour and guards' }).click()
   await expect(page.getByText('Sync behaviour and guards saved')).toBeVisible()
+  await expect(page.getByRole('tab', { name: 'Sync behaviour and guards' })).toBeVisible()
   await page.reload()
+  await expect(page.getByRole('tab', { name: 'Sync behaviour and guards' })).toHaveAttribute(
+    'aria-selected',
+    'true',
+  )
   await expect(
     page
       .getByRole('region', { name: /^Sync behaviour/ })
@@ -35,7 +50,7 @@ test('a section saves on its own and the value is kept over a reload', async ({ 
 })
 
 test('credentials are added, tested and saved without the secret coming back', async ({ page }) => {
-  await page.goto('/settings/')
+  await page.goto('/settings/#metadata')
   const meta = page.getByRole('region', { name: /^Metadata and artwork/ })
   await meta.getByRole('textbox', { name: 'Twitch client ID' }).fill('my-client')
   await meta.getByRole('button', { name: 'Add credentials' }).click()
@@ -45,18 +60,19 @@ test('credentials are added, tested and saved without the secret coming back', a
   await meta.getByRole('button', { name: 'Save metadata and artwork' }).click()
   await expect(meta).toContainText('28 characters · not shown again')
   await expect(page.locator('input[type="password"]')).toHaveCount(0)
-  await expect(page.getByText(/^Setup complete\./)).toBeVisible()
+  // the setup step it answered leaves the notifications
+  await page.getByRole('button', { name: /^Notifications/ }).click()
+  await expect(page.getByRole('dialog', { name: 'Notifications' })).not.toContainText('IGDB')
 })
 
 test('the header stays in reach wherever Settings is scrolled to (F11-S45)', async ({ page }) => {
   await page.setViewportSize({ width: 900, height: 520 })
-  await page.goto('/settings/')
-  await page.getByRole('list', { name: 'Setup' }).waitFor()
-  // jump to a section, then move focus down the page, as a person does
-  await page.getByRole('button', { name: 'Go to Metadata' }).click()
-  await page.getByRole('region', { name: /^Diagnostics/ }).scrollIntoViewIfNeeded()
-  await page.getByRole('button', { name: /^ROMs folder/ }).focus()
-  await page.keyboard.press('Tab')
+  await page.goto('/settings/#data')
+  await page.getByRole('table', { name: 'Upkeep' }).waitFor()
+  // move focus to the foot of a long tab, as a person does
+  await page.getByRole('table', { name: 'Upkeep' }).scrollIntoViewIfNeeded()
+  await page.getByRole('button', { name: 'Reveal the data folder' }).focus()
+  for (let i = 0; i < 12; i++) await page.keyboard.press('Tab')
   const scrolled = await page.evaluate(() => [
     document.documentElement.scrollTop,
     document.body.scrollTop,
@@ -103,7 +119,7 @@ test('a folder is chosen by browsing, never typed, and Cancel puts it back (F11-
 })
 
 test('the ADB executable is chosen as a file (F11-S45)', async ({ page }) => {
-  await page.goto('/settings/')
+  await page.goto('/settings/#transports')
   const transports = page.getByRole('region', { name: /^Transports and tools/ })
   await transports.getByRole('button', { name: /^ADB executable/ }).click()
   const dialog = page.getByRole('dialog', { name: 'Choose the ADB executable' })

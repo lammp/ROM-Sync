@@ -42,7 +42,7 @@ test('announces_every_toast: every page holds the one live region from the start
 })
 
 test('announces_every_toast: a saved section is announced', async ({ page }) => {
-  await page.goto('/settings/')
+  await page.goto('/settings/#sync')
   const r = await original(page)
   const sync = page.getByRole('region', { name: /^Sync behaviour/ })
   await sync.getByRole('textbox', { name: 'Keep free on the device' }).fill('1 GB')

@@ -27,23 +27,36 @@ const meta = {
     },
   ],
   parameters: { layout: 'fullscreen' },
-  beforeEach: () => resetAppStore(),
+  beforeEach: () => {
+    resetAppStore()
+    window.history.replaceState(null, '', window.location.pathname + window.location.search)
+  },
 } satisfies Meta<typeof SettingsView>
 
 export default meta
 type Story = StoryObj<typeof meta>
 
-/** First run with a store and its games, but no credentials: setup says what is left. */
+/**
+ * Settings in tabs (F11-S48): the Library tab first; an edit marks its tab,
+ * and Save in that tab saves it alone.
+ */
 export const FirstRun: Story = {
   play: async ({ canvas, userEvent }) => {
-    const setup = await canvas.findByRole('list', { name: 'Setup' })
-    await waitFor(() =>
-      expect(within(setup).getAllByRole('listitem')[2]).toHaveTextContent('to do'),
+    await canvas.findByRole('tablist', { name: 'Settings groups' })
+    await expect(canvas.getByRole('tab', { name: 'Library' })).toHaveAttribute(
+      'aria-selected',
+      'true',
     )
+    await userEvent.click(canvas.getByRole('tab', { name: 'Transports and tools' }))
     const transports = canvas.getByRole('region', { name: /^Transports and tools/ })
     const probe = within(transports).getByRole('textbox', { name: 'Device probe interval' })
     await userEvent.clear(probe)
     await userEvent.type(probe, '30')
+    await waitFor(() =>
+      expect(
+        canvas.getByRole('tab', { name: 'Transports and tools, unsaved changes' }),
+      ).toBeVisible(),
+    )
     await userEvent.click(
       within(transports).getByRole('button', { name: 'Save transports and tools' }),
     )
@@ -52,6 +65,7 @@ export const FirstRun: Story = {
         within(transports).getByRole('button', { name: 'Save transports and tools' }),
       ).toBeDisabled(),
     )
+    await expect(canvas.getByRole('tab', { name: 'Transports and tools' })).toBeVisible()
   },
 }
 
@@ -63,23 +77,25 @@ export const InTheDesktop: Story = {
       capabilities: ['reveal', 'pick_folder', 'browse_folders', 'open_url', 'notify'],
     },
   },
-  play: async ({ canvas }) => {
-    const diagnostics = await canvas.findByRole('region', { name: /^Diagnostics/ })
-    await waitFor(() => expect(diagnostics).toHaveTextContent('desktop window'))
-    const library = canvas.getByRole('region', { name: /^Library/ })
-    await expect(within(library).getByRole('button', { name: /^ROMs folder/ })).toBeVisible()
+  play: async ({ canvas, userEvent }) => {
+    const library = await canvas.findByRole('region', { name: /^Library/ })
+    await expect(await within(library).findByRole('button', { name: /^ROMs folder/ })).toBeVisible()
     await expect(within(library).queryByRole('textbox', { name: 'ROMs folder' })).toBeNull()
+    await userEvent.click(canvas.getByRole('tab', { name: 'Diagnostics' }))
+    const diagnostics = canvas.getByRole('region', { name: /^Diagnostics/ })
+    await waitFor(() => expect(diagnostics).toHaveTextContent('desktop window'))
   },
 }
 
 /** A browser reaching an engine bound off loopback: no shell action, and paths are typed. */
 export const OffLoopback: Story = {
   parameters: { shell: { kind: 'browser', capabilities: [] } },
-  play: async ({ canvas }) => {
-    const diagnostics = await canvas.findByRole('region', { name: /^Diagnostics/ })
-    await waitFor(() => expect(diagnostics).toHaveTextContent('browser'))
-    await expect(canvas.getByRole('textbox', { name: 'ROMs folder' })).toBeVisible()
+  play: async ({ canvas, userEvent }) => {
+    await expect(await canvas.findByRole('textbox', { name: 'ROMs folder' })).toBeVisible()
     await expect(canvas.queryByRole('button', { name: /^Reveal/ })).toBeNull()
+    await userEvent.click(canvas.getByRole('tab', { name: 'Diagnostics' }))
+    const diagnostics = canvas.getByRole('region', { name: /^Diagnostics/ })
+    await waitFor(() => expect(diagnostics).toHaveTextContent('browser'))
   },
 }
 
