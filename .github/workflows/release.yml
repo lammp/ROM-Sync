@@ -62,7 +62,7 @@ jobs:
       - name: Install, self-test, start and uninstall
         run: python tools/smoke_install.py
       - name: Keep the artefacts for the publishing job
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: release
           path: reports/release/artefacts/
