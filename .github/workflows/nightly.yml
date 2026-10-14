@@ -26,7 +26,7 @@ jobs:
           python-version: "3.12"
       - name: Install the development toolchain, resolved fresh
         run: python -m pip install --upgrade pip && python -m pip install -e ".[dev]" --upgrade
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: "22"
       # run from ui/ itself: on the Windows runner `npm install --prefix ui`
