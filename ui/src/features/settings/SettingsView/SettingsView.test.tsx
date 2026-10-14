@@ -217,6 +217,7 @@ describe('SettingsView', () => {
     fireEvent.click(await screen.findByRole('tab', { name: 'Metadata and artwork' }))
     const actions = screen.getByRole('group', { name: 'Metadata and artwork: actions' })
     const initial = await within(actions).findByRole('button', { name: 'Run Initial' })
+    expect(screen.getByText('Not run yet')).toBeTruthy()
     await waitFor(() => expect(initial.hasAttribute('disabled')).toBe(false))
     expect(
       within(actions).getByRole('button', { name: 'Refresh Metadata' }).getAttribute('title'),
@@ -225,7 +226,10 @@ describe('SettingsView', () => {
     const update = await within(actions).findByRole('button', { name: 'Update Metadata' })
     await waitFor(() => expect(update.querySelector('svg')?.getAttribute('data-icon')).toBe('tick'))
     const tracker = screen.getByRole('region', { name: 'Metadata progress' })
+    expect(tracker.querySelector('[data-status]')?.getAttribute('data-status')).toBe('complete')
     expect(within(tracker).getByText('Not looked up').nextElementSibling?.textContent).toBe('0')
+    expect(within(tracker).getByText('Not matched').nextElementSibling?.textContent).toBe('40')
+    expect(within(tracker).getByRole('img', { name: 'Run complete' })).toBeTruthy()
     fireEvent.click(within(actions).getByRole('button', { name: 'Refresh Metadata' }))
     const ask = screen.getByRole('dialog', { name: 'Refresh metadata' })
     expect(ask.textContent).toContain('Match all 40 games again')

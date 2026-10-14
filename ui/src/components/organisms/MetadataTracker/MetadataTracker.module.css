@@ -23,13 +23,51 @@
   border-color: var(--bad);
 }
 
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  padding: 4px 12px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--border);
+  background: var(--tint-1);
+  font-size: var(--text-body-sm);
+  font-weight: 600;
+  color: var(--fg-soft);
+}
+
+.badge[data-status='running'] {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.badge[data-status='complete'] {
+  border-color: var(--ok);
+  background: var(--pill-ok-bg);
+  color: var(--pill-ok-fg);
+}
+
+.badge[data-status='failed'] {
+  border-color: var(--bad);
+  background: var(--pill-bad-bg);
+  color: var(--pill-bad-fg);
+}
+
+.badge[data-status='stopped'] {
+  border-color: var(--warn);
+  background: var(--pill-warn-bg);
+  color: var(--pill-warn-fg);
+}
+
 .ring {
   position: relative;
   width: 180px;
   height: 180px;
 }
 
-.ring svg {
+/* the ring's own drawing only: the tick or cross inside it keeps its size and way up */
+.dial {
   width: 100%;
   height: 100%;
   transform: rotate(-90deg);
@@ -66,6 +104,14 @@
 
 .tracker[data-tone='failed'] .fill {
   stroke: var(--bad);
+}
+
+.tracker[data-tone='stopped'] {
+  border-color: var(--warn);
+}
+
+.tracker[data-tone='stopped'] .fill {
+  stroke: var(--warn);
 }
 
 .tracker[data-tone='running'] .percent {
@@ -127,7 +173,7 @@
 
 .counts {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   gap: 8px;
   width: 100%;
   margin: 0;
@@ -142,6 +188,10 @@
 
 .counts > div[data-kind='matched'] {
   border-top-color: var(--accent);
+}
+
+.counts > div[data-kind='unmatched'] {
+  border-top-color: var(--bad);
 }
 
 .counts > div[data-kind='pending'] {

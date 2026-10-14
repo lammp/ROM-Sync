@@ -595,6 +595,8 @@ export function SettingsView() {
     Boolean(byKey.get(CLIENT)?.value) && Boolean(byKey.get(SECRET)?.secret_state?.present)
   const pending = games.filter((g) => g.state === 'pending').length
   const matched = games.filter((g) => g.matched).length
+  // looked up, and nothing accepted: unmatched, or the lookup failed
+  const unmatched = games.filter((g) => g.state !== 'pending' && !g.matched).length
   const coverless = games.filter((g) => !g.coverUrl).length
   // nothing looked up yet: the first run is the initial one (F11-S52)
   const looked = games.some((g) => g.state !== 'pending')
@@ -603,6 +605,13 @@ export function SettingsView() {
   const metadataBusy = (jobs.data ?? []).some(
     (j) => METADATA_WRITERS.has(j.kind) && !TERMINAL.has(j.state),
   )
+  // the run the tracker shows: one in view on this page, else the last the engine ended
+  const shownRun =
+    metaJob.job ??
+    [...(jobs.data ?? [])]
+      .filter((j) => METADATA_JOBS.has(j.kind) && TERMINAL.has(j.state))
+      .sort((a, b) => (b.finished ?? '').localeCompare(a.finished ?? ''))[0] ??
+    null
   const cannotRun = !games.length
     ? 'Rescan the ROMs folder first'
     : metadataBusy && !metaJob.running
@@ -818,15 +827,16 @@ export function SettingsView() {
                   }
                   aside={
                     <MetadataTracker
-                      coverage={{ total: games.length, matched, pending, coverless }}
+                      coverage={{ total: games.length, matched, unmatched, pending, coverless }}
                       job={
-                        metaJob.job
+                        shownRun
                           ? {
-                              state: metaJob.job.state,
-                              progress: metaJob.job.progress,
-                              result: metaJob.job.result,
-                              error: metaJob.job.error_message,
-                              started: metaJob.job.started,
+                              state: shownRun.state,
+                              progress: shownRun.progress,
+                              result: shownRun.result,
+                              error: shownRun.error_message,
+                              started: shownRun.started,
+                              finished: shownRun.finished,
                             }
                           : null
                       }

@@ -17,6 +17,7 @@ const PATHS = {
   open: 'M14 3v2h3.6l-9.8 9.8 1.4 1.4L19 6.4V10h2V3h-7ZM5 5h6V3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-6h-2v6H5V5Z',
   download: 'M5 20h14v-2H5v2Zm7-3 6-6-1.4-1.4L13 13.2V4h-2v9.2L7.4 9.6 6 11l6 6Z',
   play: 'M8 5v14l11-7L8 5Z',
+  stop: 'M6 6h12v12H6V6Z',
 } as const
 
 export type IconName = keyof typeof PATHS
