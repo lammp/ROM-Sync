@@ -11,4 +11,4 @@ uvicorn>=0.30
 # import it. scripts/memory.py parses and writes OKF frontmatter with it, so
 # without it every memory command fails and the hook reports it cannot read
 # memory. Not needed to run ROM-Sync itself.
-PyYAML>=6.0
+PyYAML>=6.0.3
