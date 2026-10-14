@@ -161,6 +161,20 @@ for credentials and personal paths. [SECURITY.md](SECURITY.md) explains what mus
 never be committed, how to verify it rather than trust it, and the application's
 own security model.
 
+## Contributing
+
+The repository is public and read by anyone; changes are by invitation.
+
+- **Open an issue first** describing what you want to change and why. If it
+  fits, you will be invited or asked to send a pull request.
+- **Pull requests come from your own fork.** `main` changes only through a pull
+  request that the owner has reviewed and approved, with the `gate` check
+  passing on it. A workflow from a fork runs only once the owner approves it.
+- **Releases are immutable.** A published release, its files and its tag
+  cannot be changed or deleted, by anyone. A correction is a new release.
+- **Security problems** go through the repository's private vulnerability
+  reporting, never a public issue. See [SECURITY.md](SECURITY.md).
+
 ## Licence
 
 MIT. See [LICENSE](LICENSE).
