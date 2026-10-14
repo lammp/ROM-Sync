@@ -167,6 +167,7 @@ The repository is public and read by anyone; changes are by invitation.
 
 - **Open an issue first** describing what you want to change and why. If it
   fits, you will be invited or asked to send a pull request.
+  [.github/CONTRIBUTING.md](.github/CONTRIBUTING.md) has the detail.
 - **Pull requests come from your own fork.** `main` changes only through a pull
   request that the owner has reviewed and approved, with the `gate` check
   passing on it. A workflow from a fork runs only once the owner approves it.

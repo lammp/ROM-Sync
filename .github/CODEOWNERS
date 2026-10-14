@@ -1,0 +1,3 @@
+# Every change needs the owner's review: main's ruleset requires a code owner's
+# approval, and the owner is the only code owner.
+* @lammp

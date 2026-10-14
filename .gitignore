@@ -225,6 +225,11 @@
 !/.github/workflows/
 /.github/workflows/*
 !/.github/workflows/*.yml
+# Repository governance, approved by the owner (13 October 2026): the reviewer of
+# record, how to contribute, and Dependabot's update schedule. Named one by one.
+!/.github/CODEOWNERS
+!/.github/CONTRIBUTING.md
+!/.github/dependabot.yml
 
 # The interface. Source, configuration and fixtures only. Dependencies, build
 # output, Storybook output and test results stay out.

@@ -114,13 +114,13 @@ section 8.
 
 | Control | Holds |
 |---|---|
-| `main` | Changes only through a pull request with one approving review and the `gate` check passing; stale approvals are dismissed by a new push; conversations must be resolved; never force-pushed or deleted. |
+| `main` | Changes only through a pull request with one approving review from the code owner (`.github/CODEOWNERS`) and the `gate` check passing; stale approvals are dismissed by a new push; conversations must be resolved; never force-pushed or deleted. |
 | `v2` | Never force-pushed or deleted. |
 | Release tags (`v*`) | Created only by the owner; never moved or deleted. |
 | Releases | Immutable once published: the files and the tag cannot be changed. |
 | Pull requests from forks | Their workflows run only after the owner approves them. |
 | GitHub Actions | Only GitHub's own actions may run; the default token is read-only and cannot approve pull requests. |
-| Scanning | Secret scanning with push protection, Dependabot alerts and security updates, and CodeQL code scanning. |
+| Scanning | Secret scanning with push protection, Dependabot alerts and security updates, weekly Dependabot update pull requests (`.github/dependabot.yml`), and CodeQL code scanning. |
 
 The owner may bypass the branch and tag rules, and is expected to follow them
 regardless.

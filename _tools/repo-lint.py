@@ -249,6 +249,10 @@ def scan_content(root, path, terms):
             # used as `github.com/<term>/` is this repository's own address.
             if ("github.com/" + t) in low:
                 continue
+            # CODEOWNERS names the reviewer of record by that same account,
+            # as `@<term>`; that form, in that file only (owner-approved).
+            if path == ".github/CODEOWNERS" and ("@" + t) in low:
+                continue
             findings.append(("machine-local identifier", redact(term), n))
     return findings
 
