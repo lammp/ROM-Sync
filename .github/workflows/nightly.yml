@@ -41,7 +41,7 @@ jobs:
         run: python tools/verify.py
       - name: Random test order
         run: python -m pytest tests -p randomly -q
-      - uses: actions/github-script@v7
+      - uses: actions/github-script@v9
         if: failure()
         with:
           script: |
