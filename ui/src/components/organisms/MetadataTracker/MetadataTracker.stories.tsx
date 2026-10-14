@@ -13,9 +13,10 @@ const meta = {
 export default meta
 type Story = StoryObj<typeof meta>
 
-/** At rest: a ring of how much of the library is matched, and the counts beside it. */
+/** Never run: a ring of how much of the library is matched, the counts beside it, and "Not run yet". */
 export const AtRest: Story = {
   play: async ({ canvas }) => {
+    await expect(canvas.getByText('Not run yet')).toBeVisible()
     await expect(canvas.getByRole('img', { name: '7% of the library matched' })).toBeVisible()
     await expect(canvas.queryByRole('button', { name: 'Stop' })).toBeNull()
   },
@@ -30,6 +31,7 @@ export const Running: Story = {
       result: null,
       error: null,
       started: '2026-10-13T10:00:00Z',
+      finished: null,
     },
   },
   play: async ({ canvas, args, userEvent }) => {
@@ -49,6 +51,7 @@ export const Covers: Story = {
       result: null,
       error: null,
       started: null,
+      finished: null,
     },
   },
 }
@@ -63,6 +66,7 @@ export const Finished: Story = {
       result: { refresh: 0, games: 7311, matched: 7100, unmatched: 211, filled: 320 },
       error: null,
       started: null,
+      finished: '2026-10-14T09:05:00Z',
     },
   },
 }
@@ -76,6 +80,21 @@ export const Failed: Story = {
       result: null,
       error: 'stopped after 25 failures in a row; 40 of 7311 looked up',
       started: null,
+      finished: '2026-10-14T09:05:00Z',
+    },
+  },
+}
+
+/** Stopped by hand part way. */
+export const Stopped: Story = {
+  args: {
+    job: {
+      state: 'cancelled',
+      progress: { phase: 'match', done: 300, total: 7311, current: null },
+      result: null,
+      error: null,
+      started: '2026-10-14T08:00:00Z',
+      finished: '2026-10-14T08:10:00Z',
     },
   },
 }

@@ -605,6 +605,13 @@ export function SettingsView() {
   const metadataBusy = (jobs.data ?? []).some(
     (j) => METADATA_WRITERS.has(j.kind) && !TERMINAL.has(j.state),
   )
+  // the run the tracker shows: one in view on this page, else the last the engine ended
+  const shownRun =
+    metaJob.job ??
+    [...(jobs.data ?? [])]
+      .filter((j) => METADATA_JOBS.has(j.kind) && TERMINAL.has(j.state))
+      .sort((a, b) => (b.finished ?? '').localeCompare(a.finished ?? ''))[0] ??
+    null
   const cannotRun = !games.length
     ? 'Rescan the ROMs folder first'
     : metadataBusy && !metaJob.running
@@ -822,13 +829,14 @@ export function SettingsView() {
                     <MetadataTracker
                       coverage={{ total: games.length, matched, unmatched, pending, coverless }}
                       job={
-                        metaJob.job
+                        shownRun
                           ? {
-                              state: metaJob.job.state,
-                              progress: metaJob.job.progress,
-                              result: metaJob.job.result,
-                              error: metaJob.job.error_message,
-                              started: metaJob.job.started,
+                              state: shownRun.state,
+                              progress: shownRun.progress,
+                              result: shownRun.result,
+                              error: shownRun.error_message,
+                              started: shownRun.started,
+                              finished: shownRun.finished,
                             }
                           : null
                       }

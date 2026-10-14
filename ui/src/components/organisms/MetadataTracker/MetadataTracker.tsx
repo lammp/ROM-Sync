@@ -25,11 +25,13 @@ export type TrackedJob = {
   readonly error: string | null
   /** When it started, as the engine records it. */
   readonly started: string | null
+  /** When it ended, as the engine records it; null while it runs. */
+  readonly finished: string | null
 }
 
 export type MetadataTrackerProps = {
   readonly coverage: Coverage
-  /** The metadata job in view: running, or the last one this page saw end. */
+  /** The metadata job in view: running, or the last one the engine has ended; null if none ever ran. */
   readonly job: TrackedJob | null
   readonly onStop?: () => void
 }
@@ -44,6 +46,42 @@ const ARC = 2 * Math.PI * R
 
 /** A count with its word: "1 game", "7,311 games". */
 const count = (n: number, one: string) => `${n.toLocaleString()} ${one}${n === 1 ? '' : 's'}`
+
+/** "14 Oct 09:05", in the reader's own time. */
+export function at(iso: string | null): string {
+  if (!iso) return ''
+  const d = new Date(iso)
+  return Number.isNaN(d.getTime())
+    ? ''
+    : d.toLocaleString('en-GB', {
+        day: 'numeric',
+        month: 'short',
+        hour: '2-digit',
+        minute: '2-digit',
+      })
+}
+
+/** Which view the tracker is: what the run in it is doing or did, in words and a glyph. */
+export function status(job: TrackedJob | null): {
+  readonly kind: 'none' | 'running' | 'complete' | 'failed' | 'stopped'
+  readonly words: string
+} {
+  if (job === null) return { kind: 'none', words: 'Not run yet' }
+  const since = (word: string, iso: string | null) => (at(iso) ? `${word} · ${at(iso)}` : word)
+  if (LIVE.has(job.state))
+    return {
+      kind: 'running',
+      words:
+        job.state === 'cancelling'
+          ? 'Stopping'
+          : at(job.started)
+            ? `Running since ${at(job.started)}`
+            : 'Running',
+    }
+  if (job.state === 'done') return { kind: 'complete', words: since('Complete', job.finished) }
+  if (job.state === 'failed') return { kind: 'failed', words: since('Failed', job.finished) }
+  return { kind: 'stopped', words: since('Stopped', job.finished) }
+}
 
 /** Seconds left at the pace so far, or null while there is no pace yet. */
 export function secondsLeft(
@@ -103,7 +141,15 @@ export function MetadataTracker({ coverage, job, onStop }: MetadataTrackerProps)
   const matchedShare = coverage.total ? Math.round((coverage.matched / coverage.total) * 100) : 0
   const phase = p ? (PHASES[p.phase] ?? p.phase) : 'Starting'
   const left = live && p ? secondsLeft(p.done, p.total, job.started, now) : null
-  const tone = live ? 'running' : ended === 'failed' ? 'failed' : ended === 'done' ? 'done' : 'rest'
+  const tone = live
+    ? 'running'
+    : ended === 'failed'
+      ? 'failed'
+      : ended === 'done'
+        ? 'done'
+        : ended === 'cancelled'
+          ? 'stopped'
+          : 'rest'
   const words = live
     ? job.state === 'cancelling'
       ? 'Stopping'
@@ -111,6 +157,27 @@ export function MetadataTracker({ coverage, job, onStop }: MetadataTrackerProps)
     : `${matchedShare}% of the library matched`
   return (
     <section className={styles.tracker} data-tone={tone} aria-label="Metadata progress">
+      {(() => {
+        const st = status(job)
+        const glyph =
+          st.kind === 'running' ? (
+            <Icon name="recycle" turning />
+          ) : st.kind === 'complete' ? (
+            <Icon name="tick" />
+          ) : st.kind === 'failed' ? (
+            <Icon name="cross" />
+          ) : st.kind === 'stopped' ? (
+            <Icon name="stop" />
+          ) : (
+            <Icon name="play" />
+          )
+        return (
+          <p className={styles.badge} data-status={st.kind}>
+            {glyph}
+            <span>{st.words}</span>
+          </p>
+        )
+      })()}
       <div
         className={styles.ring}
         role={live ? 'progressbar' : 'img'}
