@@ -48,6 +48,7 @@ from tools.installer import (
     pyinstaller_args,
     refuse_content,
     release_version,
+    same_version,
     stray,
 )
 
@@ -385,3 +386,16 @@ def test_a_release_tag_that_is_not_a_version_is_refused(tag: str) -> None:
     with pytest.raises(ValueError, match="is not a release version"):
         release_version(tag)
     assert release_version("v2.0.0-rc.1") == "2.0.0-rc.1"
+
+
+def test_a_release_must_name_the_applications_own_version() -> None:
+    """A tag that disagrees with the application's version stops the release,
+    and the project's version and the engine's agree."""
+    same_version("2.0.0", "2.0.0")
+    with pytest.raises(ValueError, match=re.escape("names 2.0.1 but the application is 2.0.0")):
+        same_version("2.0.1", "2.0.0")
+    project = re.search(r'^version = "([^"]+)"', (ROOT / "pyproject.toml").read_text(), re.M)
+    engine = re.search(
+        r'__version__ = "([^"]+)"', (ROOT / "engine" / "romsync" / "__init__.py").read_text()
+    )
+    assert project and engine and project.group(1) == engine.group(1)

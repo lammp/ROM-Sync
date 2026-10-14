@@ -1,22 +1,23 @@
 # ROM-Sync user guide
 
-Written for someone who will never open the source. If a step needs a file path
-or a command, it is given in full.
+For ROM-Sync 2.0.0. Written for someone who will never open the source.
 
 - [1. What this is for](#1-what-this-is-for)
-- [2. What you need first](#2-what-you-need-first)
+- [2. What you need](#2-what-you-need)
 - [3. Installing](#3-installing)
 - [4. First run](#4-first-run)
-- [5. Scanning your library](#5-scanning-your-library)
-- [6. Artwork and game details](#6-artwork-and-game-details)
+- [5. The library](#5-the-library)
+- [6. Game details and covers](#6-game-details-and-covers)
 - [7. Connecting a device](#7-connecting-a-device)
 - [8. Choosing what goes on the device](#8-choosing-what-goes-on-the-device)
 - [9. Syncing](#9-syncing)
 - [10. BIOS, firmware and keys](#10-bios-firmware-and-keys)
-- [11. When a game does not work](#11-when-a-game-does-not-work)
-- [12. Troubleshooting](#12-troubleshooting)
-- [13. Where your data lives](#13-where-your-data-lives)
-- [14. Command line reference](#14-command-line-reference)
+- [11. Recovering a game from a device](#11-recovering-a-game-from-a-device)
+- [12. Notifications](#12-notifications)
+- [13. Settings](#13-settings)
+- [14. Troubleshooting](#14-troubleshooting)
+- [15. Where your data lives](#15-where-your-data-lives)
+- [16. Moving from version 1](#16-moving-from-version-1)
 
 ---
 
@@ -27,274 +28,300 @@ on. ROM-Sync lets you browse the library by cover art, mark the games you want
 on a particular device, and then make that device match your choices in one
 action.
 
-The important word is **selection**. ROM-Sync does not mirror a folder. It keeps
-a per-device record of what you chose, works out the difference between that and
-what is actually on the device, and moves only the difference.
+The important word is **selection**. ROM-Sync does not mirror a folder. It
+keeps a record, per device, of what you chose, works out the difference between
+that and what is actually on the device, and moves only the difference.
 
 It is equally careful about what it leaves alone. Folders on your device that
-are not part of your library are never touched, and neither are an emulator's
-own saves, cheats or system memory.
+are not systems in your library are never touched, and neither are an
+emulator's own saves, cheats or system memory.
 
-## 2. What you need first
+## 2. What you need
 
 | | |
 |---|---|
-| A Windows PC | 10 or 11 |
-| Your games, sorted into folders by system | One folder per system, for example `psx`, `snes`, `gc`. This is the layout ES-DE uses. |
-| Python | 3.11 or newer, from python.org or the Microsoft Store |
-| A handheld, memory card or drive | Android over USB, or any drive letter |
-| Optional: a Twitch developer account | Free. Only needed for cover art and descriptions. |
-
-If your games are not already in per-system folders, sort them first. ROM-Sync
-reads the folder name to decide what system a game belongs to.
+| A Windows PC | Windows 10 (1809 or later) or 11, 64-bit. |
+| Your games, in folders by system | One folder per system, for example `psx`, `snes`, `gc`, all inside one folder: your **ROMs folder**. This is the layout ES-DE uses. ROM-Sync reads the folder name to know the system. |
+| A device to sync to | An Android handheld over USB, or any drive with a letter (an SD card, a USB drive). |
+| Optional: Android platform tools | `adb.exe`, for the faster Android transport. Without it ROM-Sync uses MTP, the same connection Explorer uses. |
+| Optional: a Twitch developer application | Free. Needed for game details (summary, year, rating, genres). Box art works without it. |
 
 ## 3. Installing
 
-```
-git clone https://github.com/lammp/ROM-Sync.git
-cd ROM-Sync
-python -m venv .venv
-.venv\Scripts\python -m pip install -r requirements.txt
-```
+1. Download `ROM-Sync-2.0.0-setup.exe` from the
+   [2.0.0 release](https://github.com/lammp/ROM-Sync/releases/tag/v2.0.0).
+2. Run it. It installs for you alone and needs no administrator rights.
+3. The installer is not code-signed, so Windows SmartScreen may say the
+   publisher is unknown. Choose **More info**, then **Run anyway**. To check the
+   file first, compare its SHA-256 with the one in the release's
+   `SHA256SUMS.txt`.
+4. If the Microsoft Edge WebView2 runtime is missing, the installer offers to
+   open Microsoft's download page. Install the runtime, then run setup again.
 
-**Then the part that is currently manual.** Open `ROM-Sync\ROM-Sync.bat` in
-Notepad. It contains three lines with `D:\Games` in them. Change them so they
-point at where you put the clone and its `.venv`. Do the same in
-`ROM-Sync\ROM-Sync (browser).bat`.
-
-This is a known rough edge and is being fixed. See
-[KNOWN-LIMITATIONS.md](KNOWN-LIMITATIONS.md) for the full list of paths that are
-still fixed in the code.
-
-Start it by double-clicking `ROM-Sync.bat`. You get a desktop window. If the
-window does not appear, use `ROM-Sync (browser).bat` instead, which serves the
-same interface at `http://127.0.0.1:8765` in your normal browser; that also
-tells you whether the problem is the window or the app.
+Start ROM-Sync from the Start menu. To uninstall, use **Settings > Apps** in
+Windows; your library database and covers are kept (see
+[section 15](#15-where-your-data-lives)).
 
 ## 4. First run
 
-Open **Settings**, the cog in the toolbar.
+The bell at the top right of the window holds what still needs doing. On a
+first run it says:
 
-**Store root.** The folder that holds your per-system game folders. Everything
-else follows from this.
+- **Choose your ROMs folder.** Click it to open **Settings > Library**, then
+  choose your ROMs folder with the folder chooser and press **Save library**.
+- **Read the library.** Press **Rescan ROMs folder** at the top of the Library
+  tab. The table underneath lists each system found, with its game count and
+  size. If a system you expected is missing, its folder name is not one
+  ROM-Sync recognises.
+- **Add IGDB credentials for covers and details.** Optional; see
+  [section 6](#6-game-details-and-covers).
 
-**IGDB credentials.** Two values, a Client ID and a Client Secret. To get them:
+Each of these leaves the bell once it is done.
 
-1. Go to the Twitch developer console and register a new application.
-2. Set the OAuth redirect URL to `http://localhost` (it is not used, but the
-   form requires one).
-3. Choose any category.
-4. Copy the Client ID, then generate a Client Secret and copy that.
+## 5. The library
 
-Paste both into Settings. They are stored in ROM-Sync's own database on your
-machine and are never written into the source or sent anywhere except Twitch and
-IGDB.
+The **Library** page shows every game as a cover, or as a list with the
+grid/list switch. The tile size slider sets how large the covers are.
 
-You can skip this. Everything works without it; you just get a catalogue with
-filenames and no artwork.
+**Search** with the box in the header. Plain words match titles. Fields narrow
+it down, and combine:
 
-## 5. Scanning your library
+| Example | Finds |
+|---|---|
+| `zelda` | Titles containing "zelda" |
+| `system:snes` | Games for one system |
+| `year>1995`, `year<=2001` | By release year |
+| `rating>=80` | By IGDB rating |
+| `genre:rpg` | By genre |
+| `tag:metroidvania` | By tag, including franchise tags |
+| `region:usa` | By region |
+| `size>2gb` | By size |
+| `files>1` | Multi-file games |
 
-In Settings, run a **scan**. ROM-Sync walks your store root, reads each system
-folder, and records every game it finds with its size and region.
+The **filter sidebar** narrows by system, genre, franchise, decade and more,
+with counts, and has smart lists (Top rated, Modern, Retro, Big games, RPGs,
+Platformers). The flags at its top keep only games that have cover and
+details, are in the device's selection, are on the device now, or are
+multi-file.
 
-The scan is also how the library stays current. When you add or remove games on
-disk, scan again; there is no separate index to keep in step.
+**Details.** Click a game for its details: cover, summary, screenshots, tags,
+and its files. **Fix match** sets the right IGDB entry by its ID, its slug or
+its IGDB link, when the automatic match is wrong. A game matched by hand stays
+matched.
 
-What the scan understands:
+**The same game on two systems** is marked as a twin; the comparison shows the
+versions side by side so you can choose one.
 
-- One folder per system, named the way ES-DE names them.
-- Multi-disc sets, where an `.m3u` playlist sits beside the discs.
-- A `bios` folder, which it treats as system files rather than games and never
-  counts as library titles.
-- `.nomedia`, `systeminfo.txt` and `systems.txt`, which belong to the front end
-  and are not games.
+**Tags.** Franchise tags are proposed for you (**Settings > Tag suggestions >
+Propose franchise tags**) and wait in each game's details for you to accept or
+reject. A decision you make is never overwritten.
 
-## 6. Artwork and game details
+## 6. Game details and covers
 
-Three steps, all in Settings, all safe to re-run:
+Covers and details come from two places:
 
-**Scrape** matches your games against IGDB and brings back a cover, a summary
-and a rating. It works through games that have not been matched yet; use the
-"all" option to re-run over everything.
+| Source | Gives | Needs |
+|---|---|---|
+| **IGDB** | Details (summary, release year, rating, genres) and a cover | A free Twitch developer application |
+| **libretro thumbnails** | A cover only, matched by file name | Nothing |
 
-**Enrich** adds screenshots and linking tags to games that already matched.
+**Getting Twitch credentials.** Sign in at the
+[Twitch developer console](https://dev.twitch.tv/console), register an
+application (any name; OAuth redirect URL `http://localhost`; category
+*Application Integration*), and copy its **Client ID** and a new **Client
+Secret**. Twitch's own steps may change; theirs are authoritative.
 
-**Franchise proposals** suggests a series for games IGDB left without one, for
-example grouping the Mario Kart titles. These are proposals: you review and
-accept them in the interface rather than having them applied for you.
+**Entering them.** Open **Settings > Metadata and artwork**. Type the client ID
+and the secret, press **Test connection** (it shows a tick if both Twitch and
+IGDB accept them, or which stage failed), then **Save metadata and artwork**.
+Once saved, both fields lock: the secret shows as dots and is never shown
+again. The pencil at a field's end opens it to change it.
 
-Matching is by normalised title, which is deliberately forgiving. It folds roman
-numerals, punctuation, leetspeak (`Metal Gear Ac!d` matches `Metal Gear Acid`)
-and edition words like `3D`, `HD` or `Remastered`. That is also how it spots the
-same game on two different systems.
+**Running it.** The two buttons at the top of the tab:
+
+| Button | Does |
+|---|---|
+| **Run Initial**, then **Update Metadata** | Looks up every game not looked up yet, then fills any missing cover from libretro. Run it after adding games. |
+| **Refresh Metadata** | Asks first, then looks up every game again and replaces what each has, except games you matched by hand. Use it after changing the match threshold. |
+
+**The tracker** beside the settings shows the run. Its badge says which view
+you are looking at: **Not run yet**, **Running since** a time, **Complete**,
+**Failed** or **Stopped**. While a run goes, the ring is its progress, with the
+game being looked up, the time left, and **Stop**. Leaving the page does not
+stop a run or lose its progress.
+
+The four counts under the ring are your library's state:
+
+| Count | Means |
+|---|---|
+| Matched | IGDB found the game and gave it details. |
+| Not matched | Looked up, but no IGDB entry scored above the match threshold. Usually compilations, homebrew, hacks, translations and very regional titles. Most still get a libretro cover. Use **Fix match** in a game's details, or lower the threshold and refresh. |
+| Not looked up | New since the last run. **Update Metadata** takes them. |
+| Without a cover | Neither IGDB nor libretro had box art for it. |
+
+**The match threshold** (0 to 1, default 0.55) is how close a candidate's name
+must be to accept it. Lower matches more games, and more of them wrongly.
 
 ## 7. Connecting a device
 
-Plug the device in and ROM-Sync finds it. Three kinds are supported:
+Plug the device in, then open **Devices**. Every device ROM-Sync can reach is a
+card. It looks every 15 seconds; the reload icon looks again now.
 
-| Kind | Used for |
-|---|---|
-| **Volume** | Anything with a drive letter: a microSD in a reader, a USB stick, an external SSD, a network share |
-| **ADB** | An Android handheld with USB debugging turned on |
-| **MTP** | An Android device without USB debugging |
+| Device | How it is reached | Notes |
+|---|---|---|
+| A drive (SD card, USB drive) | Its drive letter | The ROMs folder is `ROMs` at the drive's root. A drive whose `ROMs` folder is, holds or sits inside your library is never offered. |
+| Android, ADB | `adb.exe`, over USB debugging | Fast, and verifies copies on the device itself. Turn on **USB debugging** in the device's Developer options and accept the prompt on the device. Set the path to `adb.exe` in **Settings > Transports and tools** if it is not found. |
+| Android, MTP | Windows' own connection, as Explorer uses | Needs the device in **File transfer** mode. Slower. |
 
-**Prefer ADB if you can.** It transfers at roughly 50 MB/s against MTP's few,
-reports real progress rather than polling for arrivals, scans a whole device in
-about two seconds instead of several minutes, and can hash files on the device so
-verification costs no transfer. To use it, put `adb.exe` in
-`_tools\platform-tools\` and turn on USB debugging on the handheld. If `adb.exe`
-is absent, the ADB option simply does not appear and MTP is used instead.
+The same device can appear on more than one transport. ROM-Sync recognises it
+as one device and prefers ADB, then a drive, then MTP.
 
-**Creating a profile.** The first time you use a device, give it a name. ROM-Sync
-writes a small marker file, `ROM-Sync.json`, at the ROMs root on the device. That
-marker, not the USB serial number, is how the device is recognised next time.
-This matters in practice: if you later turn USB debugging on, the device starts
-arriving over ADB instead of MTP, and because the marker is the link it keeps its
-profile, its selection and its whole inventory. Nothing has to be migrated.
+**A new device** shows **New profile…**. Give it a name and choose whether to
+write `ROM-Sync.json` to its ROMs folder. That small file lets ROM-Sync
+recognise the device on any PC and over any transport. Creating a profile reads
+nothing from and writes nothing to the device except that file, and only if you
+ticked it.
 
-**Scan the device.** This is read-only. It records what is already on the device
-so the first sync does not re-send things that are already there.
+**A device with a profile from another PC** carries that file and shows
+**Adopt profile**, which recreates the profile here.
+
+**A device ROM-Sync can see but not use** says why, for example that the USB
+debugging prompt is waiting on the device.
 
 ## 8. Choosing what goes on the device
 
-Open the device page.
+Choose the device in the header's **Device** list. Then:
 
-- **Per system**, use the all or none buttons to take a whole system or drop it.
-- **Per game**, mark individual titles in or out, overriding the system setting.
-- **Versions.** Where the same game exists on more than one system, the detail
-  panel offers a version picker, so you can swap a Nintendo 64 copy for the
-  GameCube one without hunting for it. A badge on the cover marks games that
-  have a twin elsewhere in the library, and an amber mark means you currently
-  have both selected.
+- **Per system**, on the device's page: **all** (every game), **none** (no
+  games, removing any already there) or **left alone** (ROM-Sync neither sends
+  nor removes anything in that system).
+- **Per game**, in the Library: each cover has a checkbox for the chosen
+  device. A tick in a system set to none adds that game; an untick in a system
+  set to all excludes it. **Select shown**, **Clear shown** and **Clear all**
+  act on what the current search and filters show.
 
-A system with no selection counts as none. Nothing is selected by default.
+The bar at the top of the Library says how many games are selected, how much
+space they need, and whether they fit, keeping the margin you set in
+**Settings > Sync behaviour and guards**.
 
 ## 9. Syncing
 
-One button, **Sync**, on the Library toolbar. A dialog shows what will happen
-before anything moves:
+Open the device's page, or press **Sync** on its card. The page shows what a
+sync would do: games to send, replace and remove, with sizes.
 
-| | |
-|---|---|
-| send | selected games not on the device |
-| update | selected games whose store copy differs or is newer |
-| remove | unselected items sitting in a managed system folder |
-| in place | already correct, nothing to do |
+Press **Sync**. The confirmation lists the same, and:
 
-It also shows the net change in bytes and your free space before and after.
-Start or Cancel.
+- **If anything would be removed**, you must tick *Remove N games from* the
+  device before **Start** is enabled.
+- **A device's first sync** always asks before removing anything, however few.
+- Nothing outside your library's systems, nothing in `bios`, and no emulator
+  state folder is ever removed.
 
-**What a sync never touches:**
+Progress shows on the device page and in the Library's selection bar, and the
+end of a sync is announced whichever page you are on. **Cancel sync** stops
+between games; what was already copied stays. Each run is kept in the device's
+**History**.
 
-- Folders on the device that are not systems in your store.
-- `bios` and any system file. Those move only through the System Files page.
-- An emulator's own state. `psp\PSP`, `n3ds\nand`, `n3ds\cheats` and their kin
-  sit inside managed systems but hold your saves and cheats, not games. The
-  remove pass skips them. Without this they would look like unselected games and
-  be deleted.
+Copies are checked: over ADB by hashing the copy on the device, on a drive by
+reading the copy back and hashing it. A copy that does not match is removed and
+reported, never left half-written. Over MTP, Windows offers no way to read a
+copy back cheaply, so a copy is judged by its size alone.
 
-**Progress.** The button becomes a spinner with a percentage and an estimate,
-measured by bytes rather than file count, with the on-device count and free
-space updating as it goes.
-
-**Removal from the device is permanent.** The recycle-bin protection in this
-project covers your PC's library, not the handheld.
+**A removal on a device is a real delete.** The device has no recycle bin.
 
 ## 10. BIOS, firmware and keys
 
-ROM-Sync never writes into an emulator's own folders. Instead, the System Files
-page **stages** a system's files into a holding folder on the device:
+ROM-Sync never ships or fetches these. It reads them from the `bios` folder in
+your ROMs folder.
 
-```
-ROMs\bios\<system>\
-```
+**System files** lists, per system, the files its emulators need, which your
+`bios` folder has, and, for the chosen device, which the device has. Press
+**Refresh from device** to read the device. The reload icon reads your `bios`
+folder again; it is also read again whenever the window comes back to the
+front.
 
-for example `ROMs\bios\nds\bios7.bin`. You then install from there using each
-emulator's own menus. Some emulators, such as RetroArch, read a single system
-directory; for those you copy from the staged folder by hand.
+**Stage** copies a system's files to a holding folder on the device
+(`ROM-Sync/{system}` by default). Install them from there with each emulator's
+own menus. ROM-Sync never writes into an emulator's own folders. Files in the
+holding folder that the last survey found and your library does not have are
+listed, and can be removed.
 
-Two statuses are shown per file, never a date:
+## 11. Recovering a game from a device
 
-- **Staged**: current, a different version, or not staged. Judged by size, and
-  for files up to 32 MB by comparing an MD5 of a copy pulled back from the
-  device.
-- **Installed**: what the emulator actually reads, listed read-only from a scan
-  of the emulator's own folders. The readiness dot comes from this, not from
-  what is staged.
+If a device holds a game your library does not, **Recover** appears in the
+header. It lists each such item. **Recover** copies a single-file game back
+into your library. Folders, and anything that would replace a file your
+library already has, are refused and say why.
 
-ROM-Sync does not supply BIOS files, firmware or keys, and will not fetch them.
-You provide them.
+Until you recover or remove it, the next sync with that system set to all or
+none would remove it from the device, and the Recover page says so.
 
-## 11. When a game does not work
+## 12. Notifications
 
-A completed transfer is not proof of an intact file. If a synced game misbehaves:
+The bell in the header counts what is new: a device connected or disconnected,
+a sync finished, a metadata run, a scan, a recovery, and anything that failed.
+Each also shows briefly as a message at the bottom. Open the bell to read them;
+**×** clears one, **Clear all** clears every one. A notification that points
+somewhere opens it when clicked.
 
-1. Find the run. Every sync appends a line to `data\records\sync-log.tsv`, and
-   each run keeps its own folder under `data\runs\<run>\` with the plan, a line
-   per operation, and a status file.
-2. Prove the copy on your PC by its contents, not its name.
-3. Prove the copy on the device by hash. `_tools\device-verify.py` does this over
-   ADB.
-4. On a mismatch, delete it on the device and send it again.
+## 13. Settings
 
-A frequent cause is not ROM-Sync at all: a front end such as Cocoon keys games
-by filename and caches its own database, so after files move it needs a rescan
-before it will find them.
+Settings is the cog in the header. Each group is a tab, and **Save** and
+**Cancel** act on that tab only; a tab with unsaved changes has a dot.
 
-## 12. Troubleshooting
-
-| Symptom | Likely cause |
+| Tab | Holds |
 |---|---|
-| The window never opens | The Edge WebView2 runtime is missing. Install it from Microsoft, or use the browser launcher. |
-| `No module named webview` | The dependency install did not run, or the launcher is pointing at the wrong Python. |
-| "No IGDB credentials in the config" | Settings has no Client ID and Secret yet. See section 4. |
-| The scan finds no games | The store root is wrong, or your games are not in per-system folders. |
-| The device does not appear | For ADB: USB debugging off, or `adb.exe` missing. For MTP: the phone is in charging-only mode rather than file transfer. |
-| The device appears twice | It should not. ROM-Sync hides the MTP entry when the same device is reachable over ADB, matched by the marker file. If you see two, the marker is missing from one of them. |
-| A transfer stalls partway and nothing new lands | A killed copy can wedge an Android USB session. Unplug the device and plug it back in. Do not kill a transfer mid-copy. |
-| Games are on the device but the front end cannot see them | Rescan in the front end. Its database is its own. |
+| Library | The ROMs folder, rescan on launch; **Rescan ROMs folder**; the systems found. |
+| Metadata and artwork | **Run Initial / Update Metadata**, **Refresh Metadata**, the tracker; Twitch credentials; match threshold, request rate, error limit; libretro covers on or off. |
+| Tag suggestions | **Propose franchise tags**. |
+| Transports and tools | **Look for devices again** and what each transport reported; ADB on or off and its path; MTP on or off and its timing; the device staging folder; how large a staged file is verified; how often devices are looked for. |
+| Sync behaviour and guards | Space kept free on a device; when the capacity meter warns; how many removals need confirming; writing the device file after each sync. |
+| Data and storage | **Reveal the data folder**; the data folder; run and job history kept; what the data folder holds, with upkeep (compact the database, clear caches, delete unreferenced covers, prune old runs). |
+| Diagnostics | **Export a support bundle**; version, address, folders, last sync, recent errors, jobs; port, listen address, log level. |
 
-## 13. Where your data lives
+A saved value is locked: the pencil at its end opens it, the undo icon puts the
+saved value back. Bounded numbers are sliders with a box to type an exact
+value. [SETTINGS.md](SETTINGS.md) specifies every field.
 
-Everything ROM-Sync creates sits under `ROM-Sync\data\`:
+## 14. Troubleshooting
 
-| | |
+| What you see | What to do |
 |---|---|
-| `romsync.db` | The catalogue, your selections, and your IGDB credentials |
-| `covers\`, `screens\` | Downloaded artwork |
-| `records\` | The sync log and verification records |
-| `runs\<n>\` | Per-run plan, results and status |
-| `logs\` | Server logs |
-| `webview\` | The embedded browser's profile |
+| A device is missing from **Devices** | Press the reload icon. For Android: unlock the device, check it is in **File transfer** mode for MTP, and for ADB that USB debugging is on and its prompt accepted. |
+| A device shows on MTP but not ADB | USB debugging is off, its prompt is waiting, or Android has forgotten the PC's permission (after about 7 days unused, unless *Disable adb authorization timeout* is on in Developer options). Unplug, plug in, and accept the prompt. |
+| A Windows "Error Copying File or Folder" dialog during a sync | It comes from Windows' MTP copy. Press OK; the game is reported as failed and the next sync retries it. ADB avoids it. |
+| A metadata run fails with "stopped after N failures in a row" | IGDB or Twitch is unreachable, or the credentials were revoked. Press **Test connection**. |
+| Many games are **Not matched** | See [section 6](#6-game-details-and-covers). |
+| The window does not open | The WebView2 runtime is missing; install it from Microsoft. |
+| Anything else | **Settings > Diagnostics > Export a support bundle** makes a zip of versions, settings (with every secret removed), recent jobs and log tails, for a bug report. |
 
-Two consequences worth knowing. **Back up `romsync.db`**: it holds your
-selections, which are the work you have actually put in. And **never share it**:
-your IGDB client secret is inside it, and it lists your whole library.
+## 15. Where your data lives
 
-## 14. Command line reference
+Everything ROM-Sync keeps is in `%LOCALAPPDATA%\ROM-Sync\data`, apart from the
+application. **Settings > Data and storage** shows each part's size.
 
-The interface covers everything; these exist for scripting and for when you want
-to see exactly what a sync would do.
+| Part | Holds |
+|---|---|
+| `romsync.db` | The library, device profiles, selections, sync history, settings and the Twitch secret. |
+| `covers\` | Box art from IGDB and libretro. |
+| `logs\romsync.log` | The log, rotated at 1 MB, three kept. Secrets are removed from every line. |
+| `runs\` | One folder per sync, with its record. |
+| `webview\` | The window's browser profile. |
+
+Uninstalling leaves this folder. Delete it yourself to remove everything.
+
+## 16. Moving from version 1
+
+Version 2 does not read version 1's database by itself. To bring your games,
+selections, tag decisions and device profiles across, run the importer from a
+source checkout (see the README's *Build from source*), with ROM-Sync closed:
 
 ```
-python -m romsync scan                        index the store
-python -m romsync systems                     per-system counts
-python -m romsync where                       the paths the app is using
-python -m romsync devices                     what is plugged in, and which profile each is
-python -m romsync profiles                    list profiles
-python -m romsync profile-new <n> "<name>"    create a profile for candidate n
-python -m romsync scan-device <n>             read-only inventory of candidate n
-python -m romsync device <id>                 per-system summary of a profile
-python -m romsync select <profile> <system> all|none
-python -m romsync select-game <profile> <system> "<name>" in|out
-python -m romsync plan <profile> [--full]     what a sync would do, read-only
-python -m romsync sync <profile> [--go]       run it
-python -m romsync run-status <run>            status and results of a run
-python -m romsync sysfiles [<profile>]        BIOS, firmware and key status
-python -m romsync scrape [--all] [sys ...]    match games against IGDB
-python -m romsync enrich [--all]              screenshots and tags for matched games
-python -m romsync reason [--dry]              propose franchise tags
+python tools/import_v1.py --from "D:\path\to\version-1\romsync.db" --data "%LOCALAPPDATA%\ROM-Sync\data" --dry-run
 ```
 
-`plan` changes nothing. Run it before `sync --go` on any device you care about.
+`--dry-run` reports what would be imported and writes nothing. Run it again
+without `--dry-run` to import. It never changes the version 1 database, and it
+refuses a version 2 database that already holds a library. Sync history,
+settings and credentials are not carried; enter the credentials again in
+Settings.

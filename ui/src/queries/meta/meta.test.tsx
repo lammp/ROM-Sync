@@ -38,7 +38,7 @@ describe('engine facts and shell actions', () => {
         capabilities: ['reveal', 'pick_folder', 'browse_folders', 'open_url', 'notify'],
       }),
     )
-    expect(result.current.version.data?.version).toBe('2.0.0.dev0')
+    expect(result.current.version.data?.version).toBe('2.0.0')
   })
 
   it('asks the shell for a folder and to reveal one the engine knows by name', async () => {
