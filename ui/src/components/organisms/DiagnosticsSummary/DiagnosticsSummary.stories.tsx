@@ -6,7 +6,7 @@ const meta = {
   title: 'Organisms/DiagnosticsSummary',
   component: DiagnosticsSummary,
   args: {
-    version: 'ROM-Sync 2.0.0.dev0 · API v1',
+    version: 'ROM-Sync 2.0.0 · API v1',
     host: 'desktop window',
     address: 'http://127.0.0.1:8765/',
     bundleHref: '/api/v1/diagnostics/bundle',

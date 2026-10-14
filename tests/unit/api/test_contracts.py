@@ -109,7 +109,7 @@ def test_error_envelope() -> None:
 def test_version(client: TestClient) -> None:
     got = client.get(f"{PREFIX}/version")
     assert got.status_code == 200
-    assert got.json() == {"application": "ROM-Sync", "version": "2.0.0.dev0", "api": "v1"}
+    assert got.json() == {"application": "ROM-Sync", "version": "2.0.0", "api": "v1"}
 
 
 def test_an_app_built_to_describe_itself_has_no_engine() -> None:

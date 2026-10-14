@@ -20,7 +20,7 @@ describe('DiagnosticsSummary', () => {
   it('says each fact, the last sync in words, and each recent failure', () => {
     render(<Working />)
     expect(facts()).toEqual({
-      Version: 'ROM-Sync 2.0.0.dev0 · API v1',
+      Version: 'ROM-Sync 2.0.0 · API v1',
       Shell: 'desktop window',
       Address: 'http://127.0.0.1:8765/',
       'Data folder': 'X:/LocalAppData/ROM-Sync/data',

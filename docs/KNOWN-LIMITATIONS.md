@@ -1,90 +1,93 @@
 # Known limitations
 
-Written so nothing here is a surprise after you have cloned it. Every item is a
-real constraint of the current code, not a disclaimer.
+For ROM-Sync 2.0.0. Written so nothing here is a surprise after you install it.
+Every item is a real constraint of the current release, not a disclaimer.
 
-## 1. Fixed paths
+## 1. Windows only
 
-ROM-Sync was written for one library at `D:\Games`. Those paths are in the
-source rather than in configuration, so a clone elsewhere will not run until
-they are changed. Nothing below is a secret; it is simply the wrong default for
-anyone but the author.
+The desktop window uses Microsoft Edge WebView2, the MTP transport uses the
+Windows shell, and the installer is an Inno Setup program. There is no macOS or
+Linux build, and none is planned by the author.
 
-**Making these configurable is the next piece of work.** The intended end state
-is that every one is resolved from configuration, set on first run and editable
-in Settings, with defaults relative to the install rather than absolute.
+## 2. The installer is not code-signed
 
-| File | Line | Value today | Should become |
-|---|---|---|---|
-| `ROM-Sync/ROM-Sync.bat` | 3, 4, 5 | `D:\Games\ROM-Sync`, `D:\Games\.venv\Scripts\pythonw.exe` | Paths relative to the launcher's own folder |
-| `ROM-Sync/ROM-Sync (browser).bat` | 3, 4, 6 | the same two | the same |
-| `ROM-Sync/romsync/db.py` | 248 | store root defaults to `D:\Games\ROMs` | No default: asked for on first run, held in config |
-| `ROM-Sync/romsync/adb.py` | 20 | bundled adb at `D:\Games\_tools\platform-tools\adb.exe` | Config value, falling back to `adb` on PATH |
-| `ROM-Sync/romsync/sysfiles.py` | 39 | firmware store at `D:\Games\_firmware` | Config value, optional |
-| `ROM-Sync/romsync/igdb.py` | 21 | credential fallback reads a retired app's database on `D:` | Removed |
-| `ROM-Sync/romsync/legacy.py` | 12 | metadata import from the same retired app | Removed, or made a path you choose |
-| `ROM-Sync/ui/app.js` | 973 | prints the firmware path in the interface | Reads the configured value |
-| `_tools/*.py` | various | each library tool hardcodes `D:\Games\...` | Arguments with config defaults |
-| `_tools/SavePoint.ps1` | 49, 51 | library root and off-limits list | Parameters |
+Windows SmartScreen may warn that the publisher is unknown. Each release lists
+the SHA-256 of every file it ships in `SHA256SUMS.txt`, and every release is
+built and proved (installed, self-tested, started and uninstalled) on a
+GitHub-hosted Windows runner from the tagged commit. There is no automatic
+update: check [Releases](https://github.com/lammp/ROM-Sync/releases).
 
-The agent skills under `.claude/skills/` also name an interpreter at
-`D:\Games\.venv\Scripts\python.exe`. They are the author's operating
-instructions rather than application code, but they carry the same problem for
-anyone adopting the framework.
+## 3. MTP is the slow, coarse transport
 
-## 2. The RomCurator import is dead weight
+When an Android device is reached over MTP rather than ADB:
 
-`legacy.py` and the credential fallback in `igdb.py` exist to migrate from
-"ROM Curator 1", an earlier app by the same author that no longer exists
-publicly. No new user can use either path. They are carried here rather than
-deleted so the history of the data model stays legible, and they are first in
-line for removal.
+| Constraint | Consequence |
+|---|---|
+| Copies go through the Windows shell | A copy that fails can raise Windows' own "Error Copying File or Folder" dialog, which holds that copy until OK is pressed. Reads from the device are made with dialogs off; sends are not yet. |
+| No cheap read-back | A sent copy is judged by its size, not by a hash. Over ADB and to a drive, every copy is hashed. |
+| The device must be in File transfer mode | In charging-only mode it is not seen at all. |
+| Arrival is polled | MTP reports a growing file's size in coarse steps, so a large copy is judged stalled only after a time that scales with its size. |
 
-## 3. Windows only
+ADB avoids all four. When a device is reachable both ways, ROM-Sync uses ADB.
 
-The transports, the paths and the launchers assume Windows. The MTP transport
-uses Windows shell COM. There is no macOS or Linux support and none is planned
-by the author.
+## 4. ADB depends on the device's goodwill
 
-## 4. Dependencies were under-declared
+USB debugging must be on, and its prompt accepted on the device. Android can
+also stop offering the debugging connection after a reconnect, or forget the
+PC after about seven days unused. ROM-Sync then reaches the device over MTP if
+it can, and says which transport each device is on.
 
-`requirements.txt` previously listed only PyYAML, which the application does not
-use. The application needs `pywebview`; PyYAML belongs to the agent framework's
-memory engine. That is now corrected, but it means early clones may have failed
-to start with an import error on `webview`.
-
-## 5. No automated tests
-
-There is one test harness, `_tools/test-twins2.js`, for the cross-system title
-matcher. Everything else has been verified by hand against a real library and a
-real device. Treat the sync against a device you care about accordingly, and
-read what a sync will do before running it.
-
-## 6. The sync is games-only, deliberately
+## 5. The sync is games-only, deliberately
 
 A sync sends, replaces and removes games. It does not touch `bios`, emulator
-state folders, or any folder on the device that is not a system in your store.
-That is a safety property, not an omission: the planner's remove pass skips
-`planner.EMULATOR_STATE` so a device's saves, cheats and NAND are never
-mistaken for unselected games.
+state folders, or any folder on the device that is not a system in your
+library. That is a safety property, not an omission: a device's saves, cheats
+and NAND are never mistaken for unselected games.
 
 The consequence is that save data does not come back from the device. There is
 no save sync.
 
-## 7. Removal from a device is a real delete
+## 6. Removal from a device is a real delete
 
-The recycle-bin protection in this project covers the store on your PC, not the
-device. When a sync removes a game from a handheld, the file is gone.
+A device has no recycle bin. When a sync removes a game from a handheld or a
+card, the file is gone. ROM-Sync asks before any sync that removes games, and
+before a device's first sync removes even one, but once you confirm, the
+removal is final. A game that exists only on a device can be copied back first
+with **Recover**.
 
-## 8. Metadata depends on a third party
+## 7. Game details depend on a third party
 
-Cover art, summaries and screenshots come from IGDB through Twitch OAuth. You
-supply your own client ID and secret. If IGDB changes its terms, its schema or
-its rate limits, the scraper is what breaks. The library itself does not depend
-on it: without credentials you get a working, artwork-free catalogue.
+Game details come from IGDB through Twitch OAuth, with your own client ID and
+secret, at no more than four requests a second (IGDB's limit). A first run
+over a large library takes a while: at least half an hour for 8,000 games, as
+a title can take more than one lookup. If IGDB changes its terms, its schema or its limits, matching is what
+breaks. The library itself does not depend on it: without credentials you get
+a working catalogue with libretro box art.
 
-## 9. Single author, no support commitment
+Some games are never matched automatically: compilations, homebrew, hacks,
+translations and very regional titles that IGDB does not list as single
+games. They are counted as **Not matched** and can be matched by hand.
 
-This is a personal tool published in the hope it is useful. There is no release
-cadence, no support promise and no guarantee the next commit will not change
-behaviour you relied on.
+## 8. Known security items
+
+These are open, each tracked in [docs/rewrite/SCOPE.md](rewrite/SCOPE.md) under
+residual risk. None exposes anything beyond your own PC.
+
+| Item | Consequence |
+|---|---|
+| A device's `ROM-Sync.json` names a profile but is not bound to the device's own identity | A marker copied to another device makes that device be taken for the profile's device. |
+| The sync confirmation is checked by count | The engine checks that the number of removals you confirmed matches its plan, not that the items are the same ones. |
+| The Twitch secret is stored unencrypted | It is in `romsync.db` in your own data folder, which is never published. Anyone who can read your user folder can read it. |
+| Listing devices starts the transport tools | Opening Devices runs `adb` and a PowerShell probe. |
+
+## 9. Moving from version 1 needs a source checkout
+
+The importer for a version 1 database is a command-line tool in the source
+(`tools/import_v1.py`), not part of the installed application. See
+[the user guide](USER-GUIDE.md#16-moving-from-version-1).
+
+## 10. Single author, no support commitment
+
+This is a personal tool published in the hope it is useful. There is no
+release cadence, no support promise and no guarantee the next release will not
+change behaviour you relied on. Issues are welcome; answers are not promised.

@@ -377,6 +377,17 @@ def release_version(tag: str) -> str:
     return version
 
 
+def same_version(released: str, application: str) -> None:
+    """Refuse a release whose tag names a version other than the application's
+    own: the installer and the app's About would disagree about what is
+    installed. Raises ValueError."""
+    if released != application:
+        raise ValueError(
+            f"the tag names {released} but the application is {application}; "
+            "bump the version in pyproject.toml and romsync/__init__.py first"
+        )
+
+
 def checksums(files: Sequence[Path]) -> str:
     """SHA-256 sums in the form `sha256sum --check` reads, one file per line by name."""
     lines = []
@@ -433,6 +444,7 @@ def main(argv: Sequence[str] | None = None) -> int:  # pragma: no cover - runs t
     args = parser.parse_args(argv)
     out: Path = args.out
     version = release_version(args.version)
+    same_version(version, release_version(_version()))
     if args.command == "build":
         # PyInstaller is a build tool (the `build` extra), not something the engine imports
         freeze = importlib.import_module("PyInstaller.__main__").run

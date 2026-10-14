@@ -2876,7 +2876,7 @@
   },
   "info": {
     "title": "ROM-Sync",
-    "version": "2.0.0.dev0"
+    "version": "2.0.0"
   },
   "openapi": "3.1.0",
   "paths": {

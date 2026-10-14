@@ -1085,7 +1085,7 @@ const route = (method: string, path: string, handle: Route['handle']): Route => 
 const ROUTES: Route[] = [
   route('GET', '/api/v1/version', () => ({
     status: 200,
-    body: { application: 'ROM-Sync', version: '2.0.0.dev0', api: 'v1' },
+    body: { application: 'ROM-Sync', version: '2.0.0', api: 'v1' },
   })),
   route('GET', '/api/v1/storage', (w) => {
     const back = (action: string, bytes: number) => (w.maintained.includes(action) ? 0 : bytes)
@@ -1116,7 +1116,7 @@ const ROUTES: Route[] = [
       status: 200,
       body: {
         application: 'ROM-Sync',
-        version: '2.0.0.dev0',
+        version: '2.0.0',
         api: 'v1',
         ...w.shell,
         address: 'http://127.0.0.1:8765/',

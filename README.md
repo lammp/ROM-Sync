@@ -1,19 +1,17 @@
 # ROM-Sync
 
-A desktop app that keeps a curated retro game library in order and syncs a
-chosen subset of it to an Android handheld, a memory card or an external drive.
+A Windows desktop app that keeps a curated retro game library in order and
+syncs a chosen subset of it to an Android handheld, a memory card or an
+external drive.
 
 It is built for the case a general file-sync tool handles badly: a library far
 larger than the device, where what goes on the device is a **selection** rather
 than a folder, and where the device also holds saves, cheats and emulator state
 that must never be touched.
 
-> **Read this before you install.** ROM-Sync was written by one person for one
-> library, and several paths are still fixed to that author's machine. It will
-> not run from another folder without editing source. The exact lines are listed
-> in [docs/KNOWN-LIMITATIONS.md](docs/KNOWN-LIMITATIONS.md), and making them
-> configurable is the next piece of work. The code is public now so the refactor
-> can happen in the open.
+**Current release: 2.0.0.** Download it from
+[Releases](https://github.com/lammp/ROM-Sync/releases). What changed is in
+[docs/CHANGELOG.md](docs/CHANGELOG.md).
 
 ---
 
@@ -21,66 +19,118 @@ that must never be touched.
 
 | Capability | Detail |
 |---|---|
-| Inventory | Scans your library into SQLite. The database is the inventory; there is no index file to maintain. |
-| Metadata | IGDB via Twitch OAuth: cover art, summaries, ratings, screenshots, franchise tags. |
-| Cross-system identity | Normalises titles across platforms, including roman numerals, leetspeak and edition suffixes, so the same game on two consoles is recognised as one title. |
-| Selection | Per-device selection, with per-system modes and per-game overrides. |
-| Three transports | A drive letter, an Android device over ADB, or an Android device over MTP. All implement one contract, so the planner never asks which it has. |
-| Sync | A mirror diff over the selection: send, update, remove. |
-| Guards | Unmanaged folders, `bios`, and emulator state such as `psp\PSP` or `n3ds\nand` are never removed. |
-| System files | BIOS, firmware and keys are staged to a holding folder on the device for you to install with each emulator's own menus, never written into an emulator's directories. |
-| Verification | Hashes device copies on the device itself over ADB, so proving a transfer costs no transfer. |
+| Library | Scans your ROMs folder (one subfolder per system, as ES-DE lays it out) into a local database. Browse by cover, search with a small query language (`system:snes year>1995 rating>=80`), filter by system, genre, franchise and more. |
+| Metadata | One action fills it: game details from IGDB (summary, year, rating, genres) and box art from IGDB or, for anything IGDB has none for, the public libretro thumbnails. A game matched by hand stays matched. |
+| Cross-system identity | The same game on two consoles is recognised as one title, so you can compare the versions side by side. |
+| Selection | Per device: each system is all, none or left alone, with per-game exceptions. |
+| Three transports | A drive letter, an Android device over ADB, or an Android device over MTP. A device is recognised over whichever it is plugged in on. |
+| Sync | Works out what to send, replace and remove, shows it, and asks before it removes anything. |
+| Guards | Folders that are not systems in your library, `bios`, and emulator state such as `psp\PSP` or `n3ds\nand` are never removed. |
+| System files | Shows which BIOS, firmware and key files each system needs, which your library has, and stages them on the device for you to install with each emulator's own menus. |
+| Recover | Copies a game that is on a device but not in your library back into the library. |
+| Notifications | Device connected, sync finished, metadata passes, scans and failures, kept in a bell until you clear them. |
 
 ## What it does not do
 
 - It does not acquire anything. There is no downloader and no sources list.
 - It does not ship BIOS files, firmware or keys, and will not fetch them.
-- It is Windows-only today. The transports and the paths assume Windows.
-- It does not sync save files back from the device. Reading saves is on the
-  roadmap; the sync is games-only by design.
+- It is Windows-only.
+- It does not sync save files back from the device. The sync is games-only by
+  design.
+
+Everything else worth knowing before you rely on it is in
+[docs/KNOWN-LIMITATIONS.md](docs/KNOWN-LIMITATIONS.md).
 
 ---
 
-## Requirements
+## Install
 
 | | |
 |---|---|
-| Windows | 10 or 11 |
-| Python | 3.11 to 3.15. Developed on 3.14. |
-| Runtime | Microsoft Edge WebView2, for the desktop window. Already present on most Windows 11 machines. |
-| Packages | `pywebview` for the window, `PyYAML` only if you use the agent framework |
-| Optional | `adb.exe` for the fast Android transport. Without it, MTP is used instead and nothing breaks. |
-| Account | A free Twitch developer application, for IGDB metadata. The app works without it, with no artwork. |
+| Windows | 10 or 11, 64-bit |
+| Runtime | Microsoft Edge WebView2, for the window. Present on Windows 11 and most Windows 10 machines; the installer says if it is missing. |
+| Optional | `adb.exe` (Android platform tools) for the faster Android transport. Without it, MTP is used and nothing breaks. |
+| Optional | A free Twitch developer application, for IGDB game details. Without it you still get libretro box art. |
 
-## Install from source
+1. Download `ROM-Sync-2.0.0-setup.exe` from the
+   [release](https://github.com/lammp/ROM-Sync/releases/tag/v2.0.0).
+2. Run it. It installs for your user only, needs no administrator rights, and
+   puts the application in `%LOCALAPPDATA%\Programs\ROM-Sync`.
+3. Windows may warn that the publisher is unknown: the installer is not
+   code-signed. Choose **More info**, then **Run anyway**. The release lists
+   SHA-256 sums in `SHA256SUMS.txt` if you want to check the file first.
+
+Your data (the library database, covers, logs) lives apart from the
+application, in `%LOCALAPPDATA%\ROM-Sync\data`. Uninstalling removes the
+application and leaves the data, and says so.
+
+A portable zip, `ROM-Sync-2.0.0-portable.zip`, is attached to the release too:
+unzip it anywhere and run `ROM-Sync\ROM-Sync.exe`.
+
+**Then read [docs/USER-GUIDE.md](docs/USER-GUIDE.md).** It walks through first
+run, metadata, connecting a device, choosing games and syncing, without
+assuming you will read the code.
+
+---
+
+## How it is built
+
+Version 2 is a rewrite of the original application, specified in
+[docs/rewrite/SPEC.md](docs/rewrite/SPEC.md) and built story by story from
+[docs/rewrite/BACKLOG.md](docs/rewrite/BACKLOG.md).
+[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) is the overview.
+
+| Part | What it is |
+|---|---|
+| `engine/` | The application: domain rules, use cases, ports and their adapters (SQLite, the file system, ADB, MTP, drives, IGDB, libretro). Python 3.12. |
+| `api/` | A FastAPI HTTP API over the engine, on loopback only. |
+| `desktop/` | The desktop shell: runs the engine and API in-process and shows the interface in a WebView2 window. |
+| `ui/` | The interface: Next.js, exported as static files, built from atoms, molecules and organisms, each with stories and tests. |
+| `tools/` | The verification gate, the installer and release builder, the version 1 importer. |
+| `tests/` | Unit, contract and golden tests for the engine and API. |
+| `docs/` | This documentation, and the rewrite's specifications under `docs/rewrite/`. |
+| `ROM-Sync/` | Version 1's source, kept for reference. Version 2 does not use it. |
+
+### Build from source
+
+You need Python 3.12 and Node.js 22.
 
 ```
 git clone https://github.com/lammp/ROM-Sync.git
 cd ROM-Sync
 python -m venv .venv
-.venv\Scripts\python -m pip install -r requirements.txt
+.venv\Scripts\python -m pip install -e ".[dev]"
+npm ci --prefix ui
+npx --prefix ui playwright install chromium
 ```
 
-Then edit the two launchers in `ROM-Sync\` so the paths point at your clone and
-your virtual environment, and set your library path. The lines to change are
-listed in [docs/KNOWN-LIMITATIONS.md](docs/KNOWN-LIMITATIONS.md).
-
-Run it:
+Run every check the continuous integration runs, in 12 stages:
 
 ```
-ROM-Sync\ROM-Sync.bat             a desktop window
-ROM-Sync\ROM-Sync (browser).bat   serves on 127.0.0.1:8765 in your browser
+.venv\Scripts\python tools\verify.py
 ```
 
-Both wrap `python -m romsync.app`.
+Build and run the desktop app:
 
-Planning work on it? [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) is the lint of the
-current code and the plan to split it into an engine, a browser UI and a desktop
-UI. [docs/SETTINGS.md](docs/SETTINGS.md) is the Settings page design.
+```
+npm run bundle --prefix ui
+.venv\Scripts\python -m pip install -e ".[build]"
+.venv\Scripts\python tools\installer.py build
+reports\release\dist\ROM-Sync\ROM-Sync.exe
+```
 
-New here? [docs/USER-GUIDE.md](docs/USER-GUIDE.md) walks through first run,
-metadata, connecting a device, choosing games and syncing, without assuming you
-will read the code.
+`ROM-Sync.exe --self-test report.json` checks a build without opening a window.
+
+### Continuous integration
+
+| Workflow | When | What |
+|---|---|---|
+| `gate` | Every push to `v2` and every pull request | The 12-stage gate on a Windows runner. |
+| `installer` | Every push to `v2` | Builds the installer, installs it silently, self-tests it with no Python present, starts it, and uninstalls it keeping the data. |
+| `nightly` | Daily | The gate with every dependency resolved fresh, and the tests in random order. Opens an issue if it fails. |
+| `release` | A `v*` tag | The gate, then the installer and portable zip, checksums, the same install proof, and the GitHub release. |
+
+Work happens on `v2` and reaches `main` by pull request.
 
 ---
 
@@ -96,29 +146,7 @@ agent, and it is reusable on its own. The pattern is described
 [here](https://blog.matthelam.com/blog/a-legal-framework-for-agent-context).
 
 The paths it names, `D:\Games` and its subfolders, are the author's. Read them
-as the worked example they are.
-
-## Layout
-
-```
-CLAUDE.md               Constitution: values and supreme laws
-.claude/skills/         Agent skills: save, restore, memory, triage, lint
-scripts/                Common Law memory engine
-ROM-Sync/
-  romsync/              Application source
-  ui/                   Interface: one HTML page, one stylesheet, one script
-  CLAUDE.md             Legislation for the application
-  data/                 Runtime state. Empty in a clone.
-_tools/                 Library tooling, the save/restore mechanism, the publication lint
-ROMs/                   Where the library goes. Empty in a clone.
-_firmware/ _torrents/   Firmware store and download intake. Empty in a clone.
-memory/                 Common Law facts. Empty in a clone.
-docs/                   User guide and known limitations
-```
-
-A clone reproduces the shape of the workspace and none of its contents. The
-empty directories are deliberate: the application and the Legislation both
-assume they exist.
+as the worked example they are. The application itself has no fixed paths.
 
 ## Working on this repository
 
@@ -130,7 +158,8 @@ python _tools/repo-lint.py --strict
 The ignore rules deny by default: the first rule excludes the whole tree and
 everything published is named explicitly. A pre-commit hook reads staged content
 for credentials and personal paths. [SECURITY.md](SECURITY.md) explains what must
-never be committed and how to verify it rather than trust it.
+never be committed, how to verify it rather than trust it, and the application's
+own security model.
 
 ## Licence
 
